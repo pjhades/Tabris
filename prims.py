@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-
 from stypes import *
 from errors import *
 
