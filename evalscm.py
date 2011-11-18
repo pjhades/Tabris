@@ -3,8 +3,8 @@
 import env
 import syntax as syn
 from stypes import *
-from prims import prim_handlers
 from errors import *
+from prims import prim_handlers
 
 def eval_define(expr, en):
     syn.check_define(expr)
