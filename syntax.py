@@ -17,13 +17,13 @@ RE_COMPLEX = re.compile(r'''(    # both real and imaginary part
                                   [+-]?(\d+\.\d*|\.\d+) | # real is decimal
                                   [+-]?\d+/\d+)           # real is fraction
 
-                                 ([+-]                  |
+                                 ([+-]                 |
                                   [+-]\d+              |
                                   [+-](\d+\.\d*|\.\d+) |
                                   [+-]\d+/\d+)i$ ) 
-                                                        |
+                                                       |
                                  # no real part
-                               ^ ([+-]                 | # imaginary==1 or -1
+                               ^ ([+-]                  | # imaginary==1 or -1
                                   [+-]?\d+              |
                                   [+-]?(\d+\.\d*|\.\d+) |
                                   [+-]?\d+/\d+)i$ )
@@ -57,28 +57,22 @@ def parse(tokens):
     return expr_stack[0]
 
 def is_string(expr):
-    return not isinstance(expr, list) and \
-           RE_STRING.search(expr) != None
+    return not isinstance(expr, list) and RE_STRING.search(expr) != None
 
 def is_integer(expr):
-    return not isinstance(expr, list) and \
-           RE_INTEGER.search(expr) != None
+    return not isinstance(expr, list) and RE_INTEGER.search(expr) != None
 
 def is_decimal(expr):
-    return not isinstance(expr, list) and \
-           RE_DECIMAL.search(expr) != None
+    return not isinstance(expr, list) and RE_DECIMAL.search(expr) != None
 
 def is_fraction(expr):
-    return not isinstance(expr, list) and \
-           RE_FRACTION.search(expr) != None
+    return not isinstance(expr, list) and RE_FRACTION.search(expr) != None
 
 def is_complex(expr):
-    return not isinstance(expr, list) and \
-           RE_COMPLEX.search(expr) != None
+    return not isinstance(expr, list) and RE_COMPLEX.search(expr) != None
 
 def is_identifier(expr):
-    return not isinstance(expr, list) and \
-           not expr in RESERVED and \
+    return not isinstance(expr, list) and not expr in RESERVED and \
            RE_IDENTIFIER.search(expr) != None
 
 def is_sharp(expr):
