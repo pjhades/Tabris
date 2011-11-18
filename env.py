@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from errors import *
-from types import Procedure
+from stypes import Procedure
 
 # each env is represented by a dict, new->old, from left to right
 all_envs = []

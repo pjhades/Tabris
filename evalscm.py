@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import types
 import env
 import syntax as syn
+from stypes import *
 from prims import prim_handlers
 from errors import *
 
@@ -15,9 +15,9 @@ def eval_define(expr, en):
 def eval_quote(expr, en):
     syn.check_quote(expr)
     if not isinstance(expr, list):
-        return types.Symbol(expr)
+        return Symbol(expr)
     else:
-        return types.List(expr)
+        return List(expr)
 
 def eval_set(expr, en):
     syn.check_set(expr)
@@ -26,7 +26,7 @@ def eval_set(expr, en):
 
 def eval_if(expr, en):
     syn.check_if(expr)
-    if types.Boolean.true(eval(syn.if_pred(expr), en)):
+    if Boolean.true(eval(syn.if_pred(expr), en)):
         return eval(syn.if_yes(expr), en)
     elif syn.if_has_no(expr):
         return eval(syn.if_no(expr), en)
@@ -35,7 +35,7 @@ def eval_if(expr, en):
 
 def eval_lambda(expr, en):
     syn.check_lambda(expr)
-    return types.Procedure(syn.lambda_params(expr), syn.lambda_body(expr), en)
+    return Procedure(syn.lambda_params(expr), syn.lambda_body(expr), en)
 
 def eval_begin(expr, en):
     syn.check_begin(expr)
@@ -47,7 +47,7 @@ def eval_cond(expr, en):
     # all clauses except else
     for clause in syn.cond_clauses(expr):
         test = eval(clause[0], en)
-        if types.Boolean.true(test):
+        if Boolean.true(test):
             # <test> => <proc> form
             # TODO: modify this after finishing apply()
             #if clause[1] == '=>':
@@ -79,15 +79,15 @@ def eval_letrec(expr, en):
 
 def eval_and(expr, en):
     for e in syn.and_or_exprs(expr):
-        if not types.Boolean.true(eval(e, en)):
-            return types.Boolean(False)
-    return types.Boolean(True)
+        if not Boolean.true(eval(e, en)):
+            return Boolean(False)
+    return Boolean(True)
 
 def eval_or(expr, en):
     for e in syn.and_or_exprs(expr):
-        if types.Boolean.true(eval(e, en)):
-            return types.Boolean(True)
-    return types.Boolean(False)
+        if Boolean.true(eval(e, en)):
+            return Boolean(True)
+    return Boolean(False)
 
 def eval_apply(expr, en):
     syn.check_apply(expr)
@@ -118,17 +118,17 @@ expr_handlers = {'define': eval_define, \
 def eval(expr, en):
     if not isinstance(expr, list):
         if syn.is_string(expr):
-            return types.String(expr)
+            return String(expr)
 
         elif syn.is_integer(expr):
-            return types.Rational(int(expr), 1)
+            return Rational(int(expr), 1)
 
         elif syn.is_decimal(expr):
-            return types.Real(float(expr))
+            return Real(float(expr))
 
         elif syn.is_fraction(expr):
             x, y = expr.split('/')
-            return types.Rational(int(x), int(y))
+            return Rational(int(x), int(y))
 
         elif syn.is_complex(expr):
             # extract each part from the pattern
@@ -146,10 +146,10 @@ def eval(expr, en):
 
             real, imag = eval(real, en), eval(imag, en)
 
-            if types.Boolean.true(imag == types.Rational(0, 1)):
+            if Boolean.true(imag == Rational(0, 1)):
                 return real
 
-            return types.Complex(real, imag)
+            return Complex(real, imag)
 
         elif expr in syn.RESERVED:
             raise BadSyntaxError(expr, 'bad use of reserved word')
@@ -158,7 +158,7 @@ def eval(expr, en):
             return env.lookup_variable(expr, en) 
 
         elif syn.is_sharp(expr):
-            return types.Boolean(True) if expr == '#t' else types.Boolean(False)
+            return Boolean(True) if expr == '#t' else Boolean(False)
 
         else:
             raise SchemeEvalError(expr, 'unknown expression type')
