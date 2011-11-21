@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
     Read-Evaluate-Print Loop
 """
