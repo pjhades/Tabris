@@ -2,19 +2,19 @@
 
 import env
 import syntax as syn
+
 from stypes import *
 from errors import *
 from prims import prim_handlers
 
 def eval_define(expr, en):
     syn.check_define(expr)
-    env.add_binding(syn.define_var(expr), \
-                    eval(syn.define_value(expr), en), en)
+    env.add_binding(syn.define_var(expr), eval(syn.define_value(expr), en), en)
     return syn.define_var(expr)
 
 def eval_quote(expr, en):
     syn.check_quote(expr)
-    if not isinstance(expr, list):
+    if not isinstance(expr[1], list):
         return Symbol(expr)
     else:
         return List(expr)

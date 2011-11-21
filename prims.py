@@ -12,7 +12,7 @@ def check_argc(min_argc, max_argc=float('inf')):
         return func
     return inner
 
-@check_argc(1)
+@check_argc(0)
 def prim_add(args):
     result = Rational(0, 1)
     for arg in args:
@@ -32,7 +32,7 @@ def prim_sub(args):
 
     return result
 
-@check_argc(1)
+@check_argc(0)
 def prim_mul(args):
     result = Rational(1, 1)
     for arg in args:

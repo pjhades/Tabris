@@ -206,6 +206,7 @@ def check_operand(f):
     return func
 
 
+# Separate the detail of arithmic operations from use
 @check_operand
 def _add(a, b):
     return _op_table['+'][a.tag](a, b)

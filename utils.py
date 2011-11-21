@@ -10,20 +10,17 @@ def get_clean_code(expr):
     """
     if not isinstance(expr, list):
         return expr
+
     if expr == []:
         return '()'
 
-    # add ' or ( for quote or list
-    s = '\'' if expr[0] == 'quote\'' else '('
-    # omit the first one for quote
-    seq = expr[1:] if expr[0] == 'quote\'' else expr
-    for exp in seq:
-        if isinstance(exp, list):
-            if exp != [] and exp[0] == 'quote\'':
-                s += ('\'' if s == '' or s[-1] in '(\'' else ' \'') + get_clean_code(exp[1])
-            else:
-                s += ('' if s == '' or s[-1] in '(\'' else ' ') + get_clean_code(exp)
-        else:
-            s += exp if s == '' or s[-1] in '(\'' else ' ' + exp
-    return s + ('' if expr[0] == 'quote\'' else ')')
+    if expr[0] == 'quote' or expr[0] == 'quote\'':
+        return '\'' + get_clean_code(expr[1])
+
+    s = '(' + get_clean_code(expr[0])
+    for exp in expr[1:]:
+        s += ' ' + get_clean_code(exp)
+    s += ')'
+
+    return s
 
