@@ -32,7 +32,7 @@ def repl_stdin():
         for expr in exprs:
             print(' in:', expr)
             #print('  code:', utils.get_clean_code(expr))
-            print('out:', evalscm.eval(expr, env.global_env))
+            #print('out:', evalscm.eval(expr, env.global_env))
             print()
         #print(' in:', syntax.parse(tk.token_list))
         #print('out:', evalscm.eval(syntax.parse(tk.token_list), env.global_env))

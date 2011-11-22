@@ -128,6 +128,8 @@ class Tokenizer:
                 elif char in LEX_IMGUNIT:
                     state = COMPLEX
                 elif char in LEX_WHITESPACE:
+                    if imaginary:
+                        raise SchemeParseError(self.lineno, self.expr, 'bad complex number syntax')
                     return cur_token
                 elif char in LEX_QUOTATION or char in LEX_QUOTE or \
                      char in LEX_SEMICOLON or char in LEX_LPAREN or \
@@ -148,6 +150,8 @@ class Tokenizer:
                 elif char in LEX_IMGUNIT:
                     state = COMPLEX
                 elif char in LEX_WHITESPACE:
+                    if imaginary:
+                        raise SchemeParseError(self.lineno, self.expr, 'bad complex number syntax')
                     return cur_token
                 elif char in LEX_QUOTATION or char in LEX_QUOTE or \
                      char in LEX_SEMICOLON or char in LEX_LPAREN or \
@@ -174,6 +178,8 @@ class Tokenizer:
                 elif char in LEX_IMGUNIT:
                     state = COMPLEX
                 elif char in LEX_WHITESPACE:
+                    if imaginary:
+                        raise SchemeParseError(self.lineno, self.expr, 'bad complex number syntax')
                     return cur_token
                 elif char in LEX_QUOTATION or char in LEX_QUOTE or \
                      char in LEX_SEMICOLON or char in LEX_LPAREN or \
@@ -186,6 +192,13 @@ class Tokenizer:
             elif state == SINGLE_DOT:
                 if char in LEX_DIGIT:
                     state = DECIMAL
+                elif char in LEX_QUOTATION or char in LEX_QUOTE or \
+                     char in LEX_SEMICOLON or char in LEX_LPAREN or \
+                     char in LEX_RPAREN or char in LEX_WHITESPACE:
+                    if imaginary:
+                        raise SchemeParseError(self.lineno, self.expr, 'bad complex number syntax')
+                    self.cursor -= 1
+                    return cur_token
                 else:
                     raise SchemeParseError(self.lineno, self.expr, 'bad floating point number syntax')
 
@@ -201,6 +214,8 @@ class Tokenizer:
                         raise SchemeParseError(self.lineno, self.expr, 'bad complex number syntax')
                     state = IDENTIFIER
                 elif char in LEX_WHITESPACE:
+                    if imaginary:
+                        raise SchemeParseError(self.lineno, self.expr, 'bad complex number syntax')
                     return cur_token
                 elif char in LEX_QUOTATION or char in LEX_QUOTE or \
                      char in LEX_SEMICOLON or char in LEX_LPAREN or \
