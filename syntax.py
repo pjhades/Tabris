@@ -32,10 +32,7 @@ RE_IDENTIFIER = re.compile(r'^([+-]|[+-]?[a-zA-Z!$%&*/:<=>?^_~@][\w!$%&*/:<=>?^_
 RE_SHARP = re.compile(r'^#[tf]$')
 
 def parse(tokens):
-    """
-        Perform syntax analysis, construct the syntax tree
-        represented by a nested list.
-    """
+    """Construct the syntax tree (a nested list)."""
     expr_stack = [[]]
 
     for tok in tokens:
@@ -73,15 +70,11 @@ def is_complex(expr):
 
 def is_identifier(expr):
     return not isinstance(expr, list) and not expr in RESERVED and \
-           RE_IDENTIFIER.search(expr) != None
+            RE_IDENTIFIER.search(expr) != None
 
 def is_sharp(expr):
     return not isinstance(expr, list) and RE_SHARP.search(expr) != None
 
-def get_expr_type(expr):
-    if expr == []:
-        raise SchemeBadSyntaxError(expr, 'misssing procedure expression')
-    return expr[0]
 
 # define
 # (define foo <expr>)
@@ -109,6 +102,7 @@ def define_var(expr):
 def define_value(expr):
     return expr[2] if not isinstance(expr[1], list) else make_lambda(expr[1][1:], expr[2:])
 
+
 # set!
 # (set! var <expr>)
 def check_set(expr):
@@ -123,11 +117,13 @@ def set_var(expr):
 def set_value(expr):
     return expr[2]
 
+
 # quote
 # (quote a)
 def check_quote(expr):
     if len(expr) != 2:
         raise SchemeBadSyntaxError(expr, 'bad quote syntax')
+
 
 # if
 # (if <predicate>
@@ -149,6 +145,7 @@ def if_has_no(expr):
 def if_no(expr):
     return expr[3]
 
+
 # lambda
 # (lambda (arg1 arg2 arg3)
 #     <expr1>
@@ -160,12 +157,12 @@ def check_lambda(expr):
 
 def lambda_params(expr):
     return expr[1]
-
 def lambda_body(expr):
     return expr[2:]
 
 def make_lambda(args, body):
     return ['lambda', args] + body
+
 
 # begin
 # (begin <expr1>
@@ -177,6 +174,7 @@ def check_begin(expr):
 
 def begin_exprs(expr):
     return expr[1:]
+
 
 # cond
 # (cond (<predicate1> <consequent1>)
@@ -190,7 +188,9 @@ def check_cond(expr):
         raise SchemeBadSyntaxError(expr, 'cond clause has no action')
     if [x for x in expr[1:] if x[1] == '=>' and len(x) != 3] != []:
         raise SchemeBadSyntaxError(expr, 'bad cond => syntax')
-    if [x[0] for x in expr[1:]].index('else') != len(expr[1:]) - 1:
+    tmp = [x[0] for x in expr[1:]]
+    if tmp.count('else') > 1 or \
+            tmp.count('else') == 1 and tmp.index('else') != len(expr[1:]) - 1:
         raise SchemeBadSyntaxError(expr, 'else clause is not the last one')
 
 def cond_has_else(expr):
@@ -201,6 +201,7 @@ def cond_clauses(expr):
 
 def cond_else(expr):
     return expr[-1]
+
 
 # let
 # (let ((var1 <expr1>)
@@ -222,6 +223,7 @@ def let_bindings(expr):
 def let_body(expr):
     return expr[2:]
 
+
 # let*
 # syntax same as let
 def letstar_to_lambda(expr):
@@ -235,6 +237,7 @@ def letstar_to_lambda(expr):
         body = [make_lambda([b[0]], [body]), b[1]]
     return body
 
+
 # letrec
 # syntax same as let
 def letrec_to_lambda(expr):
@@ -247,11 +250,13 @@ def letrec_to_lambda(expr):
     return [make_lambda(args, set_exprs + let_body(expr))] + \
            [['quote', '*unassigned*']] * len(bindings)
 
+
 # and/or
 # (and <expr1> <expr2> <expr3>)
 # (or <expr1> <expr2> <expr3>)
 def and_or_exprs(expr):
     return expr[1:]
+
 
 # apply
 # (apply proc '(arg1 arg2 arg3))
@@ -265,6 +270,7 @@ def apply_proc(expr):
 def apply_args(expr):
     return expr[2]
 
+
 # application
 # (proc arg1 arg2 arg3)
 def call_proc(expr):
@@ -272,3 +278,13 @@ def call_proc(expr):
 
 def call_args(expr):
     return expr[1:]
+
+
+# dotted notation of pair 
+def check_dotted_pair(expr):
+    if not isinstance(expr, list):
+        return
+    if expr.count('.') > 1 or expr.count('.') == 1 and expr.index('.') != len(expr) - 2:
+        raise SchemeBadSyntaxError(expr, 'bad dotted notation of pairs')
+    for item in expr:
+        check_dotted_pair(item)

@@ -3,6 +3,7 @@
 import env
 import syntax as syn
 
+from arith import *
 from stypes import *
 from errors import *
 from prims import prim_handlers
@@ -14,9 +15,12 @@ def eval_define(expr, en):
 
 def eval_quote(expr, en):
     syn.check_quote(expr)
+    syn.check_dotted_pair(expr[1])
     if not isinstance(expr[1], list):
+        print('symbol')
         return Symbol(expr)
     else:
+        print('list')
         return List(expr)
 
 def eval_set(expr, en):
@@ -44,30 +48,33 @@ def eval_begin(expr, en):
 
 def eval_cond(expr, en):
     syn.check_cond(expr)
+
     # all clauses except else
     for clause in syn.cond_clauses(expr):
         test = eval(clause[0], en)
+
         if Boolean.true(test):
-            # <test> => <proc> form
-            # TODO: modify this after finishing apply()
-            #if clause[1] == '=>':
-            #    apply(eval(clause[2], en), [test])
-            # normal form
+            if clause[1] == '=>':
+                return apply(eval(clause[2], en), [test])
+
             for sub_expr in clause[1:-1]:
                 eval(sub_expr, en)
             return eval(clause[-1], en)
+        
     # else clause
     if syn.cond_has_else(expr):
         for sub_expr in syn.cond_else(expr)[1:-1]:
             eval(sub_expr, en)
         return eval(syn.cond_else(expr)[-1], en)
-    return None
 
 def eval_let(expr, en):
     syn.check_let(expr)
-    return eval([syn.make_lambda([x[0] for x in syn.let_bindings(expr)], \
-                                    syn.let_body(expr))] + \
-                    [x[1] for x in syn.let_bindings(expr)], en)
+
+    var = [x[0] for x in syn.let_bindings(expr)]
+    body = syn.let_body(expr)
+    param = [x[1] for x in syn.let_bindings(expr)]
+
+    return eval([syn.make_lambda(var, body)] + param, en)
 
 def eval_letstar(expr, en):
     syn.check_let(expr)
@@ -97,6 +104,11 @@ def eval_apply(expr, en):
 def eval_call(expr, en):
     proc = eval(syn.call_proc(expr), en)
     args = [eval(arg, en) for arg in syn.call_args(expr)]
+    return apply(proc, args)
+
+def eval_apply(expr, en):
+    proc = eval(expr[0], en)
+    args = [eval(arg, en) for arg in expr[1:]]
     return apply(proc, args)
 
 # handlers for each expression type
@@ -131,13 +143,9 @@ def eval(expr, en):
             return Rational(int(x), int(y))
 
         elif syn.is_complex(expr):
-            # extract each part from the pattern
             part = syn.RE_COMPLEX.search(expr).groups()
 
-            if part[2] and part[4]:
-                real, imag = part[2], part[4]
-            else:
-                real, imag = '0', part[6]
+            real, imag = (part[2], part[4]) if part[2] and part[4] else ('0', part[6])
 
             if imag == '-':
                 imag = '-1'
@@ -163,15 +171,16 @@ def eval(expr, en):
         else:
             raise SchemeEvalError(expr, 'unknown expression type')
     else:
-        tag = syn.get_expr_type(expr)
-        return expr_handlers[tag](expr, en) if tag in expr_handlers else \
-               eval_call(expr, en)
+        tag = expr[0]
+        if isinstance(tag, list):
+            return eval_apply(expr, en)
+        return expr_handlers[tag](expr, en) if tag in expr_handlers else eval_call(expr, en)
 
 def apply(proc, args):
     if proc.is_prim:
         return prim_handlers[proc.body](args)
     else:
-        en = env.extend_env([proc.params] if proc.is_var_args else proc.params, args, proc.en)
+        en = env.extend_env([proc.params] if proc.is_var_args else proc.params, args, proc.env)
         for expr in proc.body[:-1]:
             eval(expr, en)
         result = eval(proc.body[-1], en)

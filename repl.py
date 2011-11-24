@@ -32,7 +32,7 @@ def repl_stdin():
         for expr in exprs:
             print(' in:', expr)
             #print('  code:', utils.get_clean_code(expr))
-            #print('out:', evalscm.eval(expr, env.global_env))
+            print('out:', evalscm.eval(expr, env.global_env))
             print()
         #print(' in:', syntax.parse(tk.token_list))
         #print('out:', evalscm.eval(syntax.parse(tk.token_list), env.global_env))
@@ -43,6 +43,7 @@ def repl_stdin():
         tk.reset()
 
 def repl_file(infile):
+    setup()
     tk = tokens.Tokenizer(infile)
     while not tk.eof:
         while not tk.eof and tk.more_expr:
@@ -56,10 +57,10 @@ def repl_file(infile):
             ##########################
             # TODO: all eval here
             exprs = syntax.parse(tk.token_list)
-            print('~-->', exprs)
             for expr in exprs:
-                print('syntax:', expr)
-                print('  code:', get_clean_code(expr))
+                print(' in:', expr)
+                print('  code:', utils.get_clean_code(expr))
+                print('out:', evalscm.eval(expr, env.global_env))
                 print()
             #print(tokens.get_clean_code(tk.token_list))
             #print('out:', evalscm.eval(syntax.parse(tk.token_list), env.global_env))
