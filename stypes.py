@@ -30,25 +30,6 @@ class String:
     def __str__(self):
         return self.value
 
-class Symbol:
-    def __init__(self, value):
-        self.value = value
-    def __str__(self):
-        return '\'' + str(self.value)
-
-class Pair:
-    def __init__(self, car, cdr):
-        self.car = car
-        self.cdr = cdr
-    def __str__(self):
-        return '({0} . {1})'.format(str(self.car), str(self.cdr))
-
-class List:
-    def __init__(self, value):
-        self.value = value
-    def __str__(self):
-        return utils.get_clean_code(self.value)
-
 class Procedure:
     def __init__(self, params, body, env, is_prim=False):
         self.params = params # name of params

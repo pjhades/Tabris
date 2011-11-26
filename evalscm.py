@@ -4,6 +4,7 @@ import env
 import syntax as syn
 
 from arith import *
+from pairs import *
 from stypes import *
 from errors import *
 from prims import prim_handlers
@@ -20,13 +21,12 @@ def eval_quote(expr, en):
         print('symbol')
         return Symbol(expr)
     else:
-        print('list')
-        return List(expr)
+        print('pair')
+        return Pair.chain(expr[1])
 
 def eval_set(expr, en):
     syn.check_set(expr)
     env.set_variable(syn.set_var(expr), eval(syn.set_value(expr), en), en)
-    return None
 
 def eval_if(expr, en):
     syn.check_if(expr)
@@ -34,8 +34,6 @@ def eval_if(expr, en):
         return eval(syn.if_yes(expr), en)
     elif syn.if_has_no(expr):
         return eval(syn.if_no(expr), en)
-    else:
-        return None
 
 def eval_lambda(expr, en):
     syn.check_lambda(expr)
@@ -111,7 +109,7 @@ def eval_apply(expr, en):
     args = [eval(arg, en) for arg in expr[1:]]
     return apply(proc, args)
 
-# handlers for each expression type
+
 expr_handlers = {'define': eval_define, \
                  'quote': eval_quote, \
                  'quote\'': eval_quote, \
@@ -146,12 +144,7 @@ def eval(expr, en):
             part = syn.RE_COMPLEX.search(expr).groups()
 
             real, imag = (part[2], part[4]) if part[2] and part[4] else ('0', part[6])
-
-            if imag == '-':
-                imag = '-1'
-            elif imag == '+':
-                imag = '+1'
-
+            imag = ('-1' if imag == '-' else '+1') if imag in '+-' else imag
             real, imag = eval(real, en), eval(imag, en)
 
             if Boolean.true(imag == Rational(0, 1)):
@@ -172,8 +165,10 @@ def eval(expr, en):
             raise SchemeEvalError(expr, 'unknown expression type')
     else:
         tag = expr[0]
+
         if isinstance(tag, list):
             return eval_apply(expr, en)
+
         return expr_handlers[tag](expr, en) if tag in expr_handlers else eval_call(expr, en)
 
 def apply(proc, args):

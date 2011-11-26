@@ -11,7 +11,6 @@ RE_STRING = re.compile(r'^".*"$', flags = re.DOTALL)
 RE_INTEGER = re.compile(r'^[+-]?\d+$')
 RE_DECIMAL = re.compile(r'^[+-]?(\d+\.\d*|\.\d+)$')
 RE_FRACTION = re.compile(r'^[+-]?\d+/\d+$')
-# fuck this, just the repetition
 RE_COMPLEX = re.compile(r'''(    # both real and imaginary part
                               ^( ([+-]?\d+              | # real is integer
                                   [+-]?(\d+\.\d*|\.\d+) | # real is decimal
@@ -39,8 +38,6 @@ def parse(tokens):
         if tok == '(':
             expr_stack.append([])
         elif tok == ')':
-            #if len(expr_stack) == 1:
-            #    return expr_stack[0]
             expr_stack[-2].append(expr_stack.pop())
             while expr_stack[-1][0] == 'quote\'':
                 expr_stack[-2].append(expr_stack.pop())
@@ -77,12 +74,14 @@ def is_sharp(expr):
 
 
 # define
-# (define foo <expr>)
-# (define (foo arg1 arg2 arg3)
-#     <expr1>
-#     <expr2>
-#     <expr3>)
 def check_define(expr):
+    """
+        (define foo <expr>)
+        (define (foo arg1 arg2 arg3)
+            <expr1>
+            <expr2>
+            <expr3>)
+    """
     if len(expr) < 3:
         raise SchemeBadSyntaxError(expr, 'bad define syntax')
     if isinstance(expr[1], list):
@@ -103,8 +102,6 @@ def define_value(expr):
     return expr[2] if not isinstance(expr[1], list) else make_lambda(expr[1][1:], expr[2:])
 
 
-# set!
-# (set! var <expr>)
 def check_set(expr):
     if len(expr) != 3:
         raise SchemeBadSyntaxError(expr, 'bad set! syntax')
@@ -118,18 +115,15 @@ def set_value(expr):
     return expr[2]
 
 
-# quote
-# (quote a)
 def check_quote(expr):
     if len(expr) != 2:
         raise SchemeBadSyntaxError(expr, 'bad quote syntax')
 
 
-# if
-# (if <predicate>
-#     <consequent>
-#     <alternative>)
 def check_if(expr):
+    """
+        (if <predicate> <consequent> <alternative>)
+    """
     if len(expr) != 3 and len(expr) != 4:
         raise SchemeBadSyntaxError(expr, 'bad if syntax')
 
@@ -146,12 +140,13 @@ def if_no(expr):
     return expr[3]
 
 
-# lambda
-# (lambda (arg1 arg2 arg3)
-#     <expr1>
-#     <expr2>
-#     <expr3>)
 def check_lambda(expr):
+    """
+        (lambda (arg1 arg2 arg3)
+            <expr1>
+            <expr2>
+            <expr3>)
+    """
     if len(expr) < 3:
         raise SchemeBadSyntaxError(expr, 'bad lambda syntax')
 
@@ -164,10 +159,6 @@ def make_lambda(args, body):
     return ['lambda', args] + body
 
 
-# begin
-# (begin <expr1>
-#        <expr2>
-#        <expr3>)
 def check_begin(expr):
     if len(expr) < 2:
         raise SchemeBadSyntaxError(expr, 'empty begin form')
@@ -176,12 +167,13 @@ def begin_exprs(expr):
     return expr[1:]
 
 
-# cond
-# (cond (<predicate1> <consequent1>)
-#       (<predicate2> <consequent2>)
-#       (<predicate2> => <recipient>)
-#       (else <alternative>))
 def check_cond(expr):
+    """
+        (cond (<pred1> <cons1>)
+              (<pred2> <cons2>)
+              (<pred2> => <recipient>)
+              (else <alter>))
+    """
     if len(expr) < 2:
         raise SchemeBadSyntaxError(expr, 'no cond clauses')
     if [x for x in expr[1:] if len(x) < 2] != []:
@@ -203,12 +195,13 @@ def cond_else(expr):
     return expr[-1]
 
 
-# let
-# (let ((var1 <expr1>)
-#       (var2 <expr2>))
-#    <body>)
 #TODO: add support for named let
 def check_let(expr):
+    """
+        (let ((var1 <expr1>)
+              (var2 <expr2>))
+           <body>)
+    """
     if len(expr) < 3:
         raise SchemeBadSyntaxError(expr, 'bad let syntax')
     if not isinstance(expr[1], list):
@@ -224,8 +217,6 @@ def let_body(expr):
     return expr[2:]
 
 
-# let*
-# syntax same as let
 def letstar_to_lambda(expr):
     bindings = let_bindings(expr)
     if bindings == []:
@@ -238,8 +229,6 @@ def letstar_to_lambda(expr):
     return body
 
 
-# letrec
-# syntax same as let
 def letrec_to_lambda(expr):
     bindings = let_bindings(expr)
     if bindings == []:
@@ -247,20 +236,23 @@ def letrec_to_lambda(expr):
 
     args = [b[0] for b in bindings]
     set_exprs = [['set!'] + b for b in bindings]
+
     return [make_lambda(args, set_exprs + let_body(expr))] + \
            [['quote', '*unassigned*']] * len(bindings)
 
 
-# and/or
-# (and <expr1> <expr2> <expr3>)
-# (or <expr1> <expr2> <expr3>)
 def and_or_exprs(expr):
+    """
+        (and <expr1> <expr2> <expr3>)
+        (or <expr1> <expr2> <expr3>)
+    """
     return expr[1:]
 
 
-# apply
-# (apply proc '(arg1 arg2 arg3))
 def check_apply(expr):
+    """
+        (apply proc '(arg1 arg2 arg3))
+    """
     if len(expr) != 3:
         raise SchemeBadSyntaxError(expr, 'bad apply syntax')
 
@@ -271,16 +263,16 @@ def apply_args(expr):
     return expr[2]
 
 
-# application
-# (proc arg1 arg2 arg3)
 def call_proc(expr):
+    """
+        (proc arg1 arg2 arg3)
+    """
     return expr[0]
 
 def call_args(expr):
     return expr[1:]
 
 
-# dotted notation of pair 
 def check_dotted_pair(expr):
     if not isinstance(expr, list):
         return
