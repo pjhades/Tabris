@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from errors import *
-
 import re
+from errors import *
 
 RESERVED = ('define', 'if', 'cond', 'else', 'let', 'quote', 'begin', \
             'lambda', 'set!')
@@ -30,6 +29,7 @@ RE_COMPLEX = re.compile(r'''(    # both real and imaginary part
 RE_IDENTIFIER = re.compile(r'^([+-]|[+-]?[a-zA-Z!$%&*/:<=>?^_~@][\w!$%&*/:<=>?^_~@\.+-]*)$')
 RE_SHARP = re.compile(r'^#[tf]$')
 
+
 def parse(tokens):
     """Construct the syntax tree (a nested list)."""
     expr_stack = [[]]
@@ -38,14 +38,18 @@ def parse(tokens):
         if tok == '(':
             expr_stack.append([])
         elif tok == ')':
+            if len(expr_stack) < 2:
+                continue
             expr_stack[-2].append(expr_stack.pop())
-            while expr_stack[-1][0] == 'quote\'':
+            while expr_stack[-1][0] == '\'':
+                expr_stack[-1][0] = 'quote'
                 expr_stack[-2].append(expr_stack.pop())
         elif tok == '\'':
-            expr_stack.append(['quote\''])
+            expr_stack.append(['\''])
         else:
             expr_stack[-1].append(tok)
-            while expr_stack[-1][0] == 'quote\'':
+            while expr_stack[-1][0] == '\'':
+                expr_stack[-1][0] = 'quote'
                 expr_stack[-2].append(expr_stack.pop())
 
     return expr_stack[0]
@@ -66,8 +70,7 @@ def is_complex(expr):
     return not isinstance(expr, list) and RE_COMPLEX.search(expr) != None
 
 def is_identifier(expr):
-    return not isinstance(expr, list) and not expr in RESERVED and \
-            RE_IDENTIFIER.search(expr) != None
+    return not isinstance(expr, list) and RE_IDENTIFIER.search(expr) != None
 
 def is_sharp(expr):
     return not isinstance(expr, list) and RE_SHARP.search(expr) != None

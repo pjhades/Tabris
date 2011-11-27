@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import syntax as syn
 from errors import *
 
 class Symbol:
@@ -12,32 +13,46 @@ class Pair:
     def __init__(self, car, cdr):
         self.car = car
         self.cdr = cdr
-        if not self.car and not self.cdr or cdr.is_list:
+
+        if not self.car and not self.cdr:
+            # empty list
             self.is_list = True
+            self.length = 0
+        elif isinstance(cdr, Pair) and cdr.is_list:
+            # cdr is a list
+            self.is_list = True
+            self.length = 1 + self.cdr.length
         else:
             self.is_list = False
 
-    @staticmethod
-    def chain(expr):
-        if not isinstance(expr, list):
-            return Symbol(expr)
+        print('create pair, car={0} of type {1},   cdr={2} of type {3}'.format(str(self.car), type(self.car), str(self.cdr), type(self.cdr)))
 
-        if expr == []:
-            return Pair('', '')
+    def _to_str(self):
+        # TODO: rethink the s-exp structure
+        if not self.car and not self.cdr:
+            # empty list
+            return ''
 
-        if '.' not in expr:
-            expr = expr[0:1] + ['.'] + [expr[1:]]
+        if isinstance(self.car, Symbol) and self.car.value == 'quote' and self.length == 2:
+            # simplify (quote x) by 'x
+            if isinstance(self.cdr, Symbol):
+                return '\'' + self.cdr.value
+            else:
+                cdr = self.cdr._to_str()
+                return '\'' + ('()' if cdr == '' else cdr)
 
-        car = Pair.chain(expr[0])
-        cdr = Pair.chain(expr[2])
+        # the car part without leading single quote
+        s = self.car.value if isinstance(self.car, Symbol) else '(' + str(self.car)[1:] + ')'
 
-        return Pair(car, cdr)
+        if isinstance(self.cdr, Symbol):
+            # cdr is a symbol
+            return s + ' . ' + self.cdr.value
+        else:
+            # or we can omit the dot
+            cdr = self.cdr._to_str()
+            return s + (' (' + cdr + ')' if cdr != '' else '')
 
     def __str__(self):
-        print('(' + self.car)
-        if isinstance(self.cdr, Symbol):
-            print(' . ' + self.cdr)
-        elif self.cdr.is_list:
-            print(' ' + self.cdr)
-        else:
-            print(' . ' + self.cdr)
+        # TODO
+        #return '\'(' + self._to_str() + ')'
+        return '\'' + self._to_str()

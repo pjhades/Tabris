@@ -14,15 +14,39 @@ def eval_define(expr, en):
     env.add_binding(syn.define_var(expr), eval(syn.define_value(expr), en), en)
     return syn.define_var(expr)
 
+def chain(expr):
+    if not isinstance(expr, list):
+        if syn.is_identifier(expr):
+            return Symbol(expr)
+        else:
+            eval_atom(expr, None)
+
+    if expr == []:
+        return Pair('', '')
+
+    if len(expr) == 1:
+        expr = expr[0:1] + ['.', []]
+    elif len(expr) == 2 and isinstance(expr[1], list):
+        expr.insert(1, '.')
+    else:
+        expr = expr[0:1] + ['.'] + [expr[1:]]
+
+    car = chain(expr[0])
+    cdr = chain(expr[2])
+
+    return Pair(car, cdr)
+
 def eval_quote(expr, en):
     syn.check_quote(expr)
     syn.check_dotted_pair(expr[1])
+
     if not isinstance(expr[1], list):
-        print('symbol')
-        return Symbol(expr)
+        if syn.is_identifier(expr[1]):
+            return Symbol(expr[1])
+        else:
+            eval_atom(expr[1], en)
     else:
-        print('pair')
-        return Pair.chain(expr[1])
+        return chain(expr[1])
 
 def eval_set(expr, en):
     syn.check_set(expr)
@@ -109,10 +133,47 @@ def eval_apply(expr, en):
     args = [eval(arg, en) for arg in expr[1:]]
     return apply(proc, args)
 
+def eval_atom(expr, en):
+    if syn.is_string(expr):
+        return String(expr)
+
+    elif syn.is_integer(expr):
+        return Rational(int(expr), 1)
+
+    elif syn.is_decimal(expr):
+        return Real(float(expr))
+
+    elif syn.is_fraction(expr):
+        x, y = expr.split('/')
+        return Rational(int(x), int(y))
+
+    elif syn.is_complex(expr):
+        part = syn.RE_COMPLEX.search(expr).groups()
+
+        real, imag = (part[2], part[4]) if part[2] and part[4] else ('0', part[6])
+        imag = ('-1' if imag == '-' else '+1') if imag in '+-' else imag
+        real, imag = eval(real, en), eval(imag, en)
+
+        if Boolean.true(imag == Rational(0, 1)):
+            return real
+
+        return Complex(real, imag)
+
+    elif expr in syn.RESERVED:
+        raise SchemeBadSyntaxError(expr, 'bad use of reserved word')
+
+    elif syn.is_identifier(expr):
+        return env.lookup_variable(expr, en) 
+
+    elif syn.is_sharp(expr):
+        return Boolean(True) if expr == '#t' else Boolean(False)
+
+    else:
+        raise SchemeEvalError(expr, 'unknown expression type')
 
 expr_handlers = {'define': eval_define, \
                  'quote': eval_quote, \
-                 'quote\'': eval_quote, \
+                 '\'': eval_quote, \
                  'set!': eval_set, \
                  'if': eval_if, \
                  'lambda': eval_lambda, \
@@ -127,42 +188,7 @@ expr_handlers = {'define': eval_define, \
 
 def eval(expr, en):
     if not isinstance(expr, list):
-        if syn.is_string(expr):
-            return String(expr)
-
-        elif syn.is_integer(expr):
-            return Rational(int(expr), 1)
-
-        elif syn.is_decimal(expr):
-            return Real(float(expr))
-
-        elif syn.is_fraction(expr):
-            x, y = expr.split('/')
-            return Rational(int(x), int(y))
-
-        elif syn.is_complex(expr):
-            part = syn.RE_COMPLEX.search(expr).groups()
-
-            real, imag = (part[2], part[4]) if part[2] and part[4] else ('0', part[6])
-            imag = ('-1' if imag == '-' else '+1') if imag in '+-' else imag
-            real, imag = eval(real, en), eval(imag, en)
-
-            if Boolean.true(imag == Rational(0, 1)):
-                return real
-
-            return Complex(real, imag)
-
-        elif expr in syn.RESERVED:
-            raise BadSyntaxError(expr, 'bad use of reserved word')
-
-        elif syn.is_identifier(expr):
-            return env.lookup_variable(expr, en) 
-
-        elif syn.is_sharp(expr):
-            return Boolean(True) if expr == '#t' else Boolean(False)
-
-        else:
-            raise SchemeEvalError(expr, 'unknown expression type')
+        return eval_atom(expr, en)
     else:
         tag = expr[0]
 
