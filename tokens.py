@@ -42,8 +42,8 @@ class Tokenizer:
             self.eof: if we reach EOF of the source file
             self.infile: source file
     """
-    def __init__(self, infile = ''):
-        self.expr = ''
+    def __init__(self, expr='', infile=''):
+        self.expr = expr
         self.cursor = 0
         self.lineno = 0
         self.paren_level = 0

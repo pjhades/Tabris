@@ -44,7 +44,7 @@ def repl_stdin():
 
 def repl_file(infile):
     setup()
-    tk = tokens.Tokenizer(infile)
+    tk = tokens.Tokenizer(infile=infile)
     while not tk.eof:
         while not tk.eof and tk.more_expr:
             tk.read_new_line()

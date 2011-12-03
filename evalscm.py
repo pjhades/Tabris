@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import env
+import utils
 import syntax as syn
 
 from arith import *
@@ -19,22 +20,19 @@ def chain(expr):
         if syn.is_identifier(expr):
             return Symbol(expr)
         else:
-            eval_atom(expr, None)
+            return eval_atom(expr, None)
 
     if expr == []:
-        return Pair('', '')
-
-    if len(expr) == 1:
-        expr = expr[0:1] + ['.', []]
-    elif len(expr) == 2 and isinstance(expr[1], list):
-        expr.insert(1, '.')
-    else:
-        expr = expr[0:1] + ['.'] + [expr[1:]]
+        return Pair('', '', '()')
 
     car = chain(expr[0])
-    cdr = chain(expr[2])
+    if len(expr) == 3:
+        cdr = chain(expr[2]) if expr[1] == '.' else chain(expr[1:])
+    else:
+        #cdr = chain(expr[2:]) if expr[1] == '.' else chain(expr[1:])
+        cdr = chain(expr[1:])
 
-    return Pair(car, cdr)
+    return Pair(car, cdr, utils.get_clean_code(expr))
 
 def eval_quote(expr, en):
     syn.check_quote(expr)

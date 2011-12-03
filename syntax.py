@@ -279,7 +279,9 @@ def call_args(expr):
 def check_dotted_pair(expr):
     if not isinstance(expr, list):
         return
-    if expr.count('.') > 1 or expr.count('.') == 1 and expr.index('.') != len(expr) - 2:
+    if expr.count('.') > 1 or expr.count('.') == 1 and (\
+            expr.index('.') != len(expr) - 2 or \
+            expr.index('.') == 0):
         raise SchemeBadSyntaxError(expr, 'bad dotted notation of pairs')
     for item in expr:
         check_dotted_pair(item)
