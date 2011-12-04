@@ -12,7 +12,7 @@ from prims import prim_handlers
 
 def eval_define(expr, en):
     syn.check_define(expr)
-    env.add_binding(syn.define_var(expr), eval(syn.define_value(expr), en), en)
+    en.add_var(syn.define_var(expr), eval(syn.define_value(expr), en))
     return syn.define_var(expr)
 
 def chain(expr):
@@ -29,7 +29,6 @@ def chain(expr):
     if len(expr) == 3:
         cdr = chain(expr[2]) if expr[1] == '.' else chain(expr[1:])
     else:
-        #cdr = chain(expr[2:]) if expr[1] == '.' else chain(expr[1:])
         cdr = chain(expr[1:])
 
     return Pair(car, cdr, utils.get_clean_code(expr))
@@ -161,7 +160,7 @@ def eval_atom(expr, en):
         raise SchemeBadSyntaxError(expr, 'bad use of reserved word')
 
     elif syn.is_identifier(expr):
-        return env.lookup_variable(expr, en) 
+        return en.get_var(expr) 
 
     elif syn.is_sharp(expr):
         return Boolean(True) if expr == '#t' else Boolean(False)
@@ -171,7 +170,6 @@ def eval_atom(expr, en):
 
 expr_handlers = {'define': eval_define, \
                  'quote': eval_quote, \
-                 '\'': eval_quote, \
                  'set!': eval_set, \
                  'if': eval_if, \
                  'lambda': eval_lambda, \
@@ -189,10 +187,8 @@ def eval(expr, en):
         return eval_atom(expr, en)
     else:
         tag = expr[0]
-
         if isinstance(tag, list):
             return eval_apply(expr, en)
-
         return expr_handlers[tag](expr, en) if tag in expr_handlers else eval_call(expr, en)
 
 def apply(proc, args):
@@ -203,6 +199,6 @@ def apply(proc, args):
         for expr in proc.body[:-1]:
             eval(expr, en)
         result = eval(proc.body[-1], en)
-        env.remove_env(en)
+        del en
 
         return result

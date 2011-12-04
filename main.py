@@ -28,6 +28,4 @@ if __name__ == '__main__':
     # interactive mode
     repl.repl_stdin()
     # normal mode
-    #repl.repl_file('./test/test_parse_quote.scm')
-    #repl.repl_file('./test/test_lexical.scm')
-    #repl.repl_file('./test/test_check_dotted_pair.scm')
+    #repl.repl_file('./test/test_env.scm')

@@ -32,10 +32,12 @@ class String:
 
 class Procedure:
     def __init__(self, params, body, env, is_prim=False):
-        self.params = params # name of params
+        # this should be a list
+        self.params = params
         self.body = body
         self.env = env
-        self.is_prim = is_prim # var arg list if not list
+        self.is_prim = is_prim 
+        # if not list, self.params represents a list
         self.is_var_args = not isinstance(params, list)
 
     def __str__(self):

@@ -3,57 +3,49 @@
 from errors import *
 from stypes import Procedure
 
-# each env is represented by a dict, new->old, from left to right
-all_envs = []
-global_env = {}
+# each en is represented by a dict, new->old, from left to right
 
-#TODO: is the environment structure linear at any time?
-def lookup_variable(var, env):
-    while env:
-        if var in env:
-            return env[var]
-        env = next_env(env)
-    raise SchemeUnboundError(var)
+class Env:
+    def __init__(self, var_list=[], val_list=[], outer=None):
+        self.bindings = {}
+        for var, val in zip(var_list, val_list):
+            self.bindings[var] = val
+        self.outer = outer
 
-def set_variable(var, value, env):
-    while env:
-        if var in env:
-            env[var] = value
-            return
-        env = next_env(env)
-    raise SchemeUnboundError(var)
+    def get_var(self, var):
+        e = self
+        while e:
+            if var not in e.bindings:
+                e = e.outer
+            else:
+                return e.bindings[var]
+        raise SchemeUnboundError(var)
 
-#TODO: this may be wrong, and needs gc?
+    def add_var(self, var, val):
+        self.bindings[var] = val
+
+    def set_var(self, var, val):
+        e = self
+        while e:
+            if var not in e.bindings:
+                e = e.outer
+            else:
+                e.bindings[var] = val
+                return
+        raise SchemeUnboundError(var)
+
 def extend_env(var_list, value_list, base_env):
-    all_envs.insert(0, {var: val for (var, val) in zip (var_list, value_list)})
-    return all_envs[0]
+    return Env(var_list, value_list, base_env)
 
-def remove_env(env):
-    all_envs.remove(env)
-
-def add_binding(var, value, env):
-    env[var] = value
-
-#TODO: this may be wrong, two frames are the same?
-def next_env(env):
-    if env == global_env:
-        return None
-    return all_envs[all_envs.index(env) + 1]
+global_env = Env()
 
 def init_env():
-    #TODO: add global bindings to global_env, put global_env to all_envs
-
-    # primitives
-    global_env['+'] = Procedure('', '+', global_env, True)
-    global_env['-'] = Procedure('', '-', global_env, True)
-    global_env['*'] = Procedure('', '*', global_env, True)
-    global_env['/'] = Procedure('', '/', global_env, True)
-    global_env['='] = Procedure('', '=', global_env, True)
-    global_env['>'] = Procedure('', '>', global_env, True)
-    global_env['<'] = Procedure('', '<', global_env, True)
-    global_env['>='] = Procedure('', '>=', global_env, True)
-    global_env['<='] = Procedure('', '<=', global_env, True)
-    global_env['cons'] = Procedure('', 'cons', global_env, True)
-    global_env['car'] = Procedure('', 'car', global_env, True)
-    global_env['cdr'] = Procedure('', 'cdr', global_env, True)
-    all_envs.append(global_env)
+    global_env.add_var('+', Procedure('', '+', global_env, is_prim=True))
+    global_env.add_var('-', Procedure('', '-', global_env, is_prim=True))
+    global_env.add_var('*', Procedure('', '*', global_env, is_prim=True))
+    global_env.add_var('/', Procedure('', '/', global_env, is_prim=True))
+    global_env.add_var('=', Procedure('', '=', global_env, is_prim=True))
+    global_env.add_var('>', Procedure('', '>', global_env, is_prim=True))
+    global_env.add_var('<', Procedure('', '<', global_env, is_prim=True))
+    global_env.add_var('>=', Procedure('', '>=', global_env, is_prim=True))
+    global_env.add_var('<=', Procedure('', '<=', global_env, is_prim=True))

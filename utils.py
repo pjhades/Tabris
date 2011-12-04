@@ -11,9 +11,11 @@ def get_clean_code(expr, paren=True):
     if expr == []:
         return '()' if paren else ''
 
-    if expr[0] == 'quote':
-        if len(expr) == 2:
-            return "'" + get_clean_code(expr[1])
+    #if expr[0] == 'quote' and not paren:
+    #    if len(expr) == 2:
+    #        return "'" + get_clean_code(expr[1])
+    if expr[0] == 'quote' and len(expr) == 2 and paren:
+        return "'" + get_clean_code(expr[1])
 
     s = get_clean_code(expr[0])
     need_paren = True

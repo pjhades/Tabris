@@ -27,4 +27,4 @@ class Pair:
             self.is_list = False
 
     def __str__(self):
-        return '\'' + self.code
+        return "'" + self.code
