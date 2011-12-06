@@ -370,7 +370,7 @@ class Tokenizer:
             self.cursor += 1
         
         if self.paren_level < 0:
-            raise SchemeParseError(self.lineno, self.expr, 'unexpected `)\'')
+            raise SchemeParseError(self.lineno, self.expr, "unexpected `)'")
         elif self.paren_level > 0:
             self.more_expr = True
         else:
