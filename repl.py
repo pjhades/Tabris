@@ -3,7 +3,7 @@
     Read-Evaluate-Print Loop
 """
 
-import tokens
+import tokenizer
 import syntax
 import evalscm
 import env
@@ -19,7 +19,7 @@ def setup():
 
 def repl_stdin():
     setup()
-    tk = tokens.Tokenizer()
+    tk = tokenizer.Tokenizer()
 
     # TODO: capture SIGINT and SIGQUIT for C-c and C-\ hotkeys
     while True:
@@ -44,7 +44,7 @@ def repl_stdin():
 
 def repl_file(infile):
     setup()
-    tk = tokens.Tokenizer(infile=infile)
+    tk = tokenizer.Tokenizer(infile=infile)
     while not tk.eof:
         while not tk.eof and tk.more_expr:
             tk.read_new_line()
@@ -62,7 +62,7 @@ def repl_file(infile):
                 print('code:', utils.get_clean_code(expr))
                 print(' out:', evalscm.eval(expr, env.global_env))
                 print()
-            #print(tokens.get_clean_code(tk.token_list))
+            #print(tokenizer.get_clean_code(tk.token_list))
             #print('out:', evalscm.eval(syntax.parse(tk.token_list), env.global_env))
             ##########################
             tk.reset()

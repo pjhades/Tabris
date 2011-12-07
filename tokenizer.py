@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-    Input processing and tokenization
-    
+    Implement tokenizer.
     This module reads input code from stdin or source files and
     returns the tokenized code. It extracts the lexical elements
     in the code and removes all comments and insignificant whitespaces.
@@ -26,21 +25,22 @@ LEX_LPAREN = '('
 LEX_RPAREN = ')'
 LEX_WHITESPACE = ' \n\t'
 
+
 class Tokenizer:
     """
         Tokenize the given code string with simple DFAs.
 
-        Status: 
             self.expr: current code string
             self.cursor: current cursor position
             self.lineno: current line number
             self.paren_level: parenthesis level, `(' is +1, `)' is -1
             self.token_list: tokens found
+            self.infile: source file
+        Status: 
             self.more_str: if we're in a string
             self.more_expr : if we need more code to complete an expression
             self.more_quote: if we're in a quote
             self.eof: if we reach EOF of the source file
-            self.infile: source file
     """
     def __init__(self, expr='', infile=''):
         self.expr = expr

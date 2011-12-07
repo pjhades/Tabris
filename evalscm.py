@@ -49,6 +49,7 @@ def eval_set(expr, en):
     syn.check_set(expr)
     env.set_variable(syn.set_var(expr), eval(syn.set_value(expr), en), en)
 
+#TODO: optimize tail call
 def eval_if(expr, en):
     syn.check_if(expr)
     if Boolean.true(eval(syn.if_pred(expr), en)):
@@ -60,11 +61,19 @@ def eval_lambda(expr, en):
     syn.check_lambda(expr)
     return Procedure(syn.lambda_params(expr), syn.lambda_body(expr), en)
 
+#TODO: optimize tail call
 def eval_begin(expr, en):
-    syn.check_begin(expr)
-    ret = [eval(subexpr, en) for subexpr in syn.begin_exprs(expr)]
-    return None if ret == [] else ret[-1]
+    subexprs = syn.begin_exprs(expr)
 
+    if subexprs == []:
+        return
+
+    for e in subexprs[:-1]:
+        eval(e, en)
+
+    return eval(subexprs[-1], en)
+
+#TODO: optimize tail call
 def eval_cond(expr, en):
     syn.check_cond(expr)
 
@@ -75,7 +84,6 @@ def eval_cond(expr, en):
         if Boolean.true(test):
             if clause[1] == '=>':
                 return apply(eval(clause[2], en), [test])
-
             for sub_expr in clause[1:-1]:
                 eval(sub_expr, en)
             return eval(clause[-1], en)
@@ -86,6 +94,7 @@ def eval_cond(expr, en):
             eval(sub_expr, en)
         return eval(syn.cond_else(expr)[-1], en)
 
+#TODO: optimize tail call
 def eval_let(expr, en):
     syn.check_let(expr)
 
@@ -95,10 +104,12 @@ def eval_let(expr, en):
 
     return eval([syn.make_lambda(var, body)] + param, en)
 
+#TODO: optimize tail call
 def eval_letstar(expr, en):
     syn.check_let(expr)
     return eval(syn.letstar_to_lambda(expr), en)
 
+#TODO: optimize tail call
 def eval_letrec(expr, en):
     syn.check_let(expr)
     return eval(syn.letrec_to_lambda(expr), en)
@@ -115,19 +126,26 @@ def eval_or(expr, en):
             return Boolean(True)
     return Boolean(False)
 
+#TODO: optimize tail call
 def eval_apply(expr, en):
+    """
+        Scheme apply
+    """
     syn.check_apply(expr)
-    return apply(eval(syn.apply_proc(expr), en), \
-                 eval(syn.apply_args(expr), en))
+    #TODO: this apply is the Scheme apply, not apply of interpreter.
+    # therefore the apply_args(expr) will be interpreted to a list
+    # which is represented by Pair objects
+    # We need to change this list to python list
+    # Implement car and cdr first !
+    return apply(eval(syn.apply_proc(expr), en), eval(syn.apply_args(expr), en))
 
+#TODO: optimize tail call
 def eval_call(expr, en):
+    """
+        Procedure call
+    """
     proc = eval(syn.call_proc(expr), en)
     args = [eval(arg, en) for arg in syn.call_args(expr)]
-    return apply(proc, args)
-
-def eval_apply(expr, en):
-    proc = eval(expr[0], en)
-    args = [eval(arg, en) for arg in expr[1:]]
     return apply(proc, args)
 
 def eval_atom(expr, en):
@@ -168,6 +186,7 @@ def eval_atom(expr, en):
     else:
         raise SchemeEvalError(expr, 'unknown expression type')
 
+
 expr_handlers = {'define': eval_define, \
                  'quote': eval_quote, \
                  'set!': eval_set, \
@@ -188,9 +207,10 @@ def eval(expr, en):
     else:
         tag = expr[0]
         if isinstance(tag, list):
-            return eval_apply(expr, en)
+            return eval_call(expr, en)
         return expr_handlers[tag](expr, en) if tag in expr_handlers else eval_call(expr, en)
 
+#TODO: optimize tail call
 def apply(proc, args):
     if proc.is_prim:
         return prim_handlers[proc.body](args)
@@ -198,7 +218,4 @@ def apply(proc, args):
         en = env.extend_env([proc.params] if proc.is_var_args else proc.params, args, proc.env)
         for expr in proc.body[:-1]:
             eval(expr, en)
-        result = eval(proc.body[-1], en)
-        del en
-
-        return result
+        return eval(proc.body[-1], en)

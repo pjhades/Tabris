@@ -3,8 +3,6 @@
 from errors import *
 from stypes import Procedure
 
-# each en is represented by a dict, new->old, from left to right
-
 class Env:
     def __init__(self, var_list=[], val_list=[], outer=None):
         self.bindings = {}
