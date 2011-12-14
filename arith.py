@@ -248,20 +248,9 @@ def _ne(a, b):
     return _op_table['!='][a.tag](a, b)
 
 
-# Number types
-class Complex:
-    """Real and imaginary parts are guaranteed to be the same type"""
-    def __init__(self, real, imag):
-        if real.tag > imag.tag:
-            imag = _convert(imag, real)
-        elif real.tag < imag.tag:
-            real = _convert(real, imag)
-        self.real = real
-        self.imag = imag
-        self.tag = _COMPLEX
-
-    def _conjugate(self):
-        return Complex(self.real, -self.imag)
+class Num:
+    def __init__(self):
+        raise SchemeError()
 
     def __add__(self, other):
         return _add(self, other)
@@ -287,6 +276,46 @@ class Complex:
     def __ne__(self, other):
         return _ne(self, other)
 
+
+# Number types
+class Complex:
+    """Real and imaginary parts are guaranteed to be the same type"""
+    def __init__(self, real, imag):
+        if real.tag > imag.tag:
+            imag = _convert(imag, real)
+        elif real.tag < imag.tag:
+            real = _convert(real, imag)
+        self.real = real
+        self.imag = imag
+        self.tag = _COMPLEX
+
+    def _conjugate(self):
+        return Complex(self.real, -self.imag)
+
+    # def __add__(self, other):
+    #     return _add(self, other)
+    # def __sub__(self, other):
+    #     return _sub(self, other)
+    # def __mul__(self, other):
+    #     return _mul(self, other)
+    # def __truediv__(self, other):
+    #     return _div(self, other)
+    # def __neg__(self):
+    #     return Complex(-self.real, -self.imag)
+
+    # def __lt__(self, other):
+    #     return _lt(self, other)
+    # def __le__(self, other):
+    #     return _le(self, other)
+    # def __gt__(self, other):
+    #     return _gt(self, other)
+    # def __ge__(self, other):
+    #     return _ge(self, other)
+    # def __eq__(self, other):
+    #     return _eq(self, other)
+    # def __ne__(self, other):
+    #     return _ne(self, other)
+
     def __str__(self):
         if Boolean.true(self.imag == Rational(0, 1)):
             return str(self.real)
@@ -311,29 +340,29 @@ class Real:
         self.value = value
         self.tag = _REAL
 
-    def __add__(self, other):
-        return _add(self, other)
-    def __sub__(self, other):
-        return _sub(self, other)
-    def __mul__(self, other):
-        return _mul(self, other)
-    def __truediv__(self, other):
-        return _div(self, other)
-    def __neg__(self):
-        return Real(-self.value)
+    # def __add__(self, other):
+    #     return _add(self, other)
+    # def __sub__(self, other):
+    #     return _sub(self, other)
+    # def __mul__(self, other):
+    #     return _mul(self, other)
+    # def __truediv__(self, other):
+    #     return _div(self, other)
+    # def __neg__(self):
+    #     return Real(-self.value)
 
-    def __lt__(self, other):
-        return _lt(self, other)
-    def __le__(self, other):
-        return _le(self, other)
-    def __gt__(self, other):
-        return _gt(self, other)
-    def __ge__(self, other):
-        return _ge(self, other)
-    def __eq__(self, other):
-        return _eq(self, other)
-    def __ne__(self, other):
-        return _ne(self, other)
+    # def __lt__(self, other):
+    #     return _lt(self, other)
+    # def __le__(self, other):
+    #     return _le(self, other)
+    # def __gt__(self, other):
+    #     return _gt(self, other)
+    # def __ge__(self, other):
+    #     return _ge(self, other)
+    # def __eq__(self, other):
+    #     return _eq(self, other)
+    # def __ne__(self, other):
+    #     return _ne(self, other)
 
     def __str__(self):
         return str(self.value)
@@ -359,29 +388,29 @@ class Rational:
             a, b = b, a % b
         return a
 
-    def __add__(self, other):
-        return _add(self, other)
-    def __sub__(self, other):
-        return _sub(self, other)
-    def __mul__(self, other):
-        return _mul(self, other)
-    def __truediv__(self, other):
-        return _div(self, other)
-    def __neg__(self):
-        return Rational(-self.numer, self.denom)
+    # def __add__(self, other):
+    #     return _add(self, other)
+    # def __sub__(self, other):
+    #     return _sub(self, other)
+    # def __mul__(self, other):
+    #     return _mul(self, other)
+    # def __truediv__(self, other):
+    #     return _div(self, other)
+    # def __neg__(self):
+    #     return Rational(-self.numer, self.denom)
 
-    def __lt__(self, other):
-        return _lt(self, other)
-    def __le__(self, other):
-        return _le(self, other)
-    def __gt__(self, other):
-        return _gt(self, other)
-    def __ge__(self, other):
-        return _ge(self, other)
-    def __eq__(self, other):
-        return _eq(self, other)
-    def __ne__(self, other):
-        return _ne(self, other)
+    # def __lt__(self, other):
+    #     return _lt(self, other)
+    # def __le__(self, other):
+    #     return _le(self, other)
+    # def __gt__(self, other):
+    #     return _gt(self, other)
+    # def __ge__(self, other):
+    #     return _ge(self, other)
+    # def __eq__(self, other):
+    #     return _eq(self, other)
+    # def __ne__(self, other):
+    #     return _ne(self, other)
 
     def __str__(self):
         if self.numer == 0:

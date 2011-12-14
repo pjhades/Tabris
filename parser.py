@@ -21,7 +21,7 @@ class Tokenizer:
         self.lineno = 0
 
     def need_more_code(self):
-        """Check if current code is imcomplete"""
+        """Check if current code is incomplete"""
         return self.paren_count > 0 or self.string_not_end or \
                self.quote_not_end or self._tokens == []
 
