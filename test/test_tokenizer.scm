@@ -13,14 +13,16 @@
 
 
 
-       (foo ; now let's take some roooooooock music!
-	   "this is a string"
+       (foo ; now let's take some evil input
+	   "this is a string spans
+  multiple 
+                 lines"
 	   '          
 
 ''''    ''(
 
 
-	   this is the symbol quasiquote)
+	   this is the symbol quote)
 
 	   )
 
@@ -31,7 +33,10 @@
 (incomplete 'ok)
 
 
+'one'two'three
 
+"string""after""another""
+final one is multiline"
 
 
 
