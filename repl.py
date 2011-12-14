@@ -13,6 +13,27 @@ import signal
 
 from errors import *
 
+
+import parser
+
+
+class Prompt:
+    def __init__(self):
+        self.tokenizer = parser.Tokenizer()
+        self.PS1 = "scheme >>> "
+        self.PS2 = "       ... "
+
+    # TODO: capture C-c C-\ signals
+    def loop(self):
+        while True:
+            self.tokenizer.tokenize(input(self.PS1) + '\n')
+            while self.tokenizer.need_more_code():
+                self.tokenizer.tokenize(input(self.PS2) + '\n')
+            print('tokens:', self.tokenizer.get_tokens())
+
+            
+
+
 def setup():
     env.init_env()
     #TODO: other initializations here

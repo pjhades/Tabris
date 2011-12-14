@@ -26,6 +26,10 @@ if __name__ == '__main__':
     #print(environment.all_envs)
 
     # interactive mode
-    repl.repl_stdin()
+    #repl.repl_stdin()
     # normal mode
     #repl.repl_file('./test/test_env.scm')
+
+    prompt = repl.Prompt()
+    prompt.loop()
+
