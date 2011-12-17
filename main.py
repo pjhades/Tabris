@@ -30,6 +30,7 @@ if __name__ == '__main__':
     # normal mode
     #repl.repl_file('./test/test_env.scm')
 
+    repl.setup()
     prompt = repl.Prompt()
     prompt.loop()
 

@@ -3,7 +3,7 @@
     Read-Evaluate-Print Loop
 """
 
-import tokenizer
+import parser
 import syntax
 import evalscm
 import env
@@ -29,7 +29,13 @@ class Prompt:
             self.tokenizer.tokenize(input(self.PS1) + '\n')
             while self.tokenizer.need_more_code():
                 self.tokenizer.tokenize(input(self.PS2) + '\n')
-            print('tokens:', self.tokenizer.get_tokens())
+
+            tokens = self.tokenizer.get_tokens()
+            print('tokens:', tokens)
+            ps = syntax.parse(tokens)
+            print(ps)
+            for p in ps:
+                print(evalscm.eval(p, env.global_env))
 
             
 
