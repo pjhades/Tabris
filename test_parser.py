@@ -45,15 +45,32 @@ lines\"""", [("\"a string\nspans multiple\nlines\"", "string")]), \
 
                  ("; this is \"comm\"ent", []), \
 
-                 ('";not comment"', [('";not comment"', "string")])]
+                 ('";not comment"', [('";not comment"', "string")]), \
+                     
+                 ("#t", [("#t", "boolean")])]
 
         for case in cases:
             self.tokenizer.tokenize(case[0] + '\n')
             self.assertEqual(self.tokenizer.get_tokens(), case[1])
 
+    def testFileParsing(self):
+        tokens = [("(", "("),               ("once", "symbol"),  ("upon", "symbol"), \
+                  ("(", "("),               ("a", "symbol"),     ("time", "symbol"), \
+                  ("'", "'"),               ("there", "symbol"), ("(", "("), \
+                  ("+", "symbol"),          ("1/2", "fraction"), ("4.5-7i", "complex"), \
+                  (")", ")"),               ("1.", "float"),     (")", ")"), \
+                  ("(", "("),               ("was", "symbol"),   ("a", "symbol"), \
+                  ('"magic\nian"', "string"), (")", ")"),          (")", ")")]
+
+        with open('test/token.scm', 'r') as fin:
+            for line in fin:
+                self.tokenizer.tokenize(line)
+            self.assertEqual(self.tokenizer.get_tokens(), tokens)
+
 def suite():
     suite = unittest.TestSuite()
     suite.addTest(TokenizerTest('testTokenizer'))
+    suite.addTest(TokenizerTest('testFileParsing'))
     return suite
 
 if __name__ == '__main__':
