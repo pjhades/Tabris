@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import re
 from errors import *
 
 
@@ -7,6 +8,44 @@ from errors import *
 # a token and need to add it to the token list.
 delim_char = '"\'\n\t;( )'
 
+
+# Token types
+token_types = {
+    'string':   re.compile(r'^".*"$', flags = re.DOTALL), \
+    'integer':  re.compile(r'^[+-]?\d+$'), \
+    'float':    re.compile(r'^[+-]?(\d+\.\d*|\.\d+)$'), \
+    'fraction': re.compile(r'^[+-]?\d+/\d+$'), \
+    'complex':  re.compile(r'''(# both real and imaginary part
+                                ^( ([+-]?\d+              | # real is integer
+                                    [+-]?(\d+\.\d*|\.\d+) | # real is decimal
+                                    [+-]?\d+/\d+)           # real is fraction
+
+                                   ([+-]                 |
+                                    [+-]\d+              |
+                                    [+-](\d+\.\d*|\.\d+) |
+                                    [+-]\d+/\d+)i$ ) 
+                                                         |
+                                   # no real part
+                                 ^ ([+-]                  | # imaginary==1 or -1
+                                    [+-]?\d+              |
+                                    [+-]?(\d+\.\d*|\.\d+) |
+                                    [+-]?\d+/\d+)i$ 
+                                )
+                                  ''', flags=re.VERBOSE), \
+    'symbol':   re.compile(r'^([+-]|[+-]?[a-hj-zA-Z!$%&*/:<=>?^_~@][\w!$%&*/:<=>?^_~@\.+-]*)$'), \
+    'boolean':  re.compile(r'^#[tf]$'), \
+    '(':        re.compile(r'^\($'), \
+    ')':        re.compile(r'^\)$'), \
+    "'":   re.compile(r"^'$"), \
+    '.':      re.compile(r'^\.$')
+}
+
+def get_token_type(tok):
+    for t in token_types:
+        mobj = token_types[t].match(tok)
+        if mobj:
+            return (tok, t)
+    raise SchemeParseError('unknown token ' + tok)
 
 class Tokenizer:
     def __init__(self):
@@ -26,11 +65,14 @@ class Tokenizer:
                self.quote_not_end or self._tokens == []
 
     def get_tokens(self):
-        """Return the tokens found, get ready for the next round"""
+        """
+            Return the tokens found, get ready for the next round,
+            should only be called when need_more_code() returns False
+        """
         tokens = self._tokens
         self._tokens = []
         self._cur_token = ''
-        return tokens
+        return [get_token_type(tok) for tok in tokens]
 
     def tokenize(self, code):
         """Tokenize a given piece of code"""
