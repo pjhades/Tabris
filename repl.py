@@ -5,7 +5,7 @@
 
 import parser
 import syntax
-import evalscm
+#import evalscm
 import env
 import utils
 
@@ -33,13 +33,15 @@ class Prompt:
 
             tokens = self.tokenizer.get_tokens()
             print('tokens:', tokens)
-            ps = syntax.parse(tokens)
-            print(ps)
-            for p in ps:
-                print(evalscm.eval(p, env.global_env))
+            ps = parser.parse(tokens)
+            # print(ps)
+            # for p in ps:
+            #     print(evalscm.eval(p, env.global_env))
 
             
 
+
+# these are to be deleted
 
 def setup():
     env.init_env()

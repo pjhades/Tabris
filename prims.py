@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from arith import *
-from stypes import *
+from number import *
+from typedef import *
 from errors import *
 
 def check_argc(min_argc, max_argc=float('inf')):
@@ -56,7 +56,7 @@ def prim_div(args):
 @check_argc(2)
 def prim_eq(args):
     for arg in args[1:]:
-        if Boolean.true(arg == args[0]):
+        if typedef.is_true(arg == args[0]):
             continue
         return Boolean(False)
     return Boolean(True)
@@ -65,7 +65,7 @@ def prim_eq(args):
 def prim_lt(args):
     now = args[0]
     for arg in args[1:]:
-        if Boolean.true(now >= arg):
+        if typedef.is_true(now >= arg):
             return Boolean(False)
     return Boolean(True)
 
@@ -73,7 +73,7 @@ def prim_lt(args):
 def prim_le(args):
     now = args[0]
     for arg in args[1:]:
-        if Boolean.true(now > arg):
+        if typedef.is_true(now > arg):
             return Boolean(False)
     return Boolean(True)
 
@@ -81,7 +81,7 @@ def prim_le(args):
 def prim_gt(args):
     now = args[0]
     for arg in args[1:]:
-        if Boolean.true(now <= arg):
+        if typedef.is_true(now <= arg):
             return Boolean(False)
     return Boolean(True)
 
@@ -89,7 +89,7 @@ def prim_gt(args):
 def prim_ge(args):
     now = args[0]
     for arg in args[1:]:
-        if Boolean.true(now < arg):
+        if typedef.is_true(now < arg):
             return Boolean(False)
     return Boolean(True)
 

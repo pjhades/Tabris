@@ -3,6 +3,8 @@
 import syntax as syn
 from errors import *
 
+symbol_table = {}
+
 class Symbol:
     def __init__(self, value):
         self.value = value

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from errors import *
-from stypes import Procedure
+from typedef import Procedure
 
 class Env:
     def __init__(self, var_list=[], val_list=[], outer=None):

@@ -14,7 +14,7 @@ class TramplineTest(unittest.TestCase):
         # trampolined factorial
         def fact(n, ans):
             if n < 2:
-                return trampoline.fall_death(ans)
+                return trampoline.fall(ans)
             else:
                 return trampoline.bounce(fact, n-1, n*ans)
 
@@ -28,9 +28,9 @@ class TramplineTest(unittest.TestCase):
         # member search
         def memq(target, lst):
             if lst == []:
-                return trampoline.fall_death(False)
+                return trampoline.fall(False)
             elif target == lst[0]:
-                return trampoline.fall_death(True)
+                return trampoline.fall(True)
             else:
                 return trampoline.bounce(memq, target, lst[1:])
 

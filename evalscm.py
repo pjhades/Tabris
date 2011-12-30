@@ -4,9 +4,9 @@ import env
 import utils
 import syntax as syn
 
-from arith import *
+from number import *
 from pairs import *
-from stypes import *
+from typedef import *
 from errors import *
 from prims import prim_handlers
 
@@ -52,7 +52,7 @@ def eval_set(expr, en):
 #TODO: optimize tail call
 def eval_if(expr, en):
     syn.check_if(expr)
-    if Boolean.true(eval(syn.if_pred(expr), en)):
+    if typedef.is_true(eval(syn.if_pred(expr), en)):
         return eval(syn.if_yes(expr), en)
     elif syn.if_has_no(expr):
         return eval(syn.if_no(expr), en)
@@ -81,7 +81,7 @@ def eval_cond(expr, en):
     for clause in syn.cond_clauses(expr):
         test = eval(clause[0], en)
 
-        if Boolean.true(test):
+        if typedef.is_true(test):
             if clause[1] == '=>':
                 return apply(eval(clause[2], en), [test])
             for sub_expr in clause[1:-1]:
@@ -116,13 +116,13 @@ def eval_letrec(expr, en):
 
 def eval_and(expr, en):
     for e in syn.and_or_exprs(expr):
-        if not Boolean.true(eval(e, en)):
+        if not typedef.is_true(eval(e, en)):
             return Boolean(False)
     return Boolean(True)
 
 def eval_or(expr, en):
     for e in syn.and_or_exprs(expr):
-        if Boolean.true(eval(e, en)):
+        if typedef.is_true(eval(e, en)):
             return Boolean(True)
     return Boolean(False)
 
@@ -169,7 +169,7 @@ def eval_atom(expr, en):
         imag = ('-1' if imag == '-' else '+1') if imag in '+-' else imag
         real, imag = eval(real, en), eval(imag, en)
 
-        if Boolean.true(imag == Rational(0, 1)):
+        if typedef.is_true(imag == Rational(0, 1)):
             return real
 
         return Complex(real, imag)
