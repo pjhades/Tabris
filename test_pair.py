@@ -21,14 +21,12 @@ class TokenizerTest(unittest.TestCase):
 
     def testListMaking(self):
         self.assertEqual(pair.make_list(1, 2), [1, [2, []]])
-        self.assertEqual(pair.make_list(1, [2, 3]), [1, [[2, [3, []]], []])
-        self.assertEqual(pair.make_list([1, 2], [3, 4]), [[1, [2, []]], [[3, [4, []]], []]])
+        self.assertEqual(pair.make_list(1, [2, 3]), [1, [[2, 3], []]])
+        self.assertEqual(pair.make_list([1, 2], [3, 4]), [[1, 2], [[3, 4], []]])
 
-    def testCar(self):
+    def testCarCdr(self):
         self.assertEqual(pair.car(pair.cons(1, 2)), 1)
         self.assertEqual(pair.car(pair.cons([1, 2], 3)), [1, 2])
-
-    def testCdr(self):
         self.assertEqual(pair.cdr(pair.cons(1, 2)), 2)
         self.assertEqual(pair.cdr(pair.cons(1, [2, 3])), [2, 3])
 
@@ -37,8 +35,7 @@ def suite():
     suite.addTest(TokenizerTest('testPairCreating'))
     suite.addTest(TokenizerTest('testConsing'))
     suite.addTest(TokenizerTest('testListMaking'))
-    suite.addTest(TokenizerTest('testCar'))
-    suite.addTest(TokenizerTest('testCdr'))
+    suite.addTest(TokenizerTest('testCarCdr'))
     return suite
 
 if __name__ == '__main__':

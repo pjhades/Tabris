@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import utils
 from errors import *
 
 class Boolean:

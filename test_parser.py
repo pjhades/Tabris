@@ -4,6 +4,8 @@ import unittest
 import parser
 import typedef
 import number
+import pair
+import trampoline
 
 class TokenizerTest(unittest.TestCase):
     def setUp(self):
@@ -133,6 +135,36 @@ class TokenizerTest(unittest.TestCase):
             sexp = parser.parse(self.tokenizer.tokenize_single(case[0] + '\n'))[0]
             self.assertEqual(sexp, case[1])
 
+    def testStringRepr(self):
+        """Test the string representation of the parsed S-expressions."""
+
+        cases = [("'x", "(quote x)"), \
+                 ("''x", "(quote (quote x))"), \
+                 ("'(quote 'x)", "(quote (quote (quote x)))"), \
+                 ("'(quote 'x 'y)", "(quote (quote (quote x) (quote y)))"), \
+                 ("(a b c)", "(a b c)"), \
+                 ("'(a b c)", "(quote (a b c))"), \
+                 ("(a b . c)", "(a b . c)"), \
+                 ("(a . (b . (c . ())))", "(a b c)"), \
+                 ("(a . (b . (c . d)))", "(a b c . d)")]
+
+        for case in cases:
+            sexp = parser.parse(self.tokenizer.tokenize_single(case[0] + '\n'))[0]
+            self.assertEqual(pair.to_str(sexp), case[1])
+
+    def testDeepParsing(self):
+        """S-expressions that require deep recursion."""
+        
+        import sys
+        sys.setrecursionlimit(50)
+
+        cases = [("'"*1000 + "x", "(quote "*1000 + "x" + ")"*1000), \
+                 ("(x . "*1000 + "()" + ")"*1000, "(" + "x " * 999 + "x)")]
+
+        for case in cases:
+            sexp = parser.parse(self.tokenizer.tokenize_single(case[0] + '\n'))[0]
+            self.assertEqual(pair.to_str(sexp), case[1])
+
 def suite():
     suite = unittest.TestSuite()
     suite.addTest(TokenizerTest('testTokenizer'))
@@ -140,6 +172,8 @@ def suite():
     suite.addTest(TokenizerTest('testFileTokenizing'))
     suite.addTest(TokenizerTest('testLexemeParsing'))
     suite.addTest(TokenizerTest('testSexpParsing'))
+    suite.addTest(TokenizerTest('testStringRepr'))
+    suite.addTest(TokenizerTest('testDeepParsing'))
     return suite
 
 if __name__ == '__main__':

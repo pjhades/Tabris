@@ -5,13 +5,8 @@ import sys
 import logging
 import traceback
 import parser
+import pair
 from trampoline import *
-
-def ill_fact(n, r):
-    if n == 1:
-        return fall(r)
-    #return bounce(fact, n-1, n*r)
-    return sequence(add1, bounce(ill_fact, n-1, n*r))
 
 def fact(n, r):
     if n == 1:
@@ -26,20 +21,40 @@ def mem(n, ls):
     return bounce(mem, n, ls[1:])
 
 def add1(n):
+    #print('add1(): n=', n)
     return fall(n+1)
 
+def to_str(p):
+    if not isinstance(p, pair.Pair):
+        return fall(str(p))
+
+    if len(p) == 0:
+        return fall('()')
+
+    def f(car):
+        def g(cdr):
+            if cdr[0] == '(':
+                if cdr[1:-1] == '':
+                    return fall('(' + car + ')')
+                else:
+                    return fall('(' + car + ' ' + cdr[1:-1] + ')')
+            else:
+                return fall('(' + car + ' . ' + cdr + ')')
+        return sequence([g], bounce(to_str, p[1]))
+
+    return sequence([f], bounce(to_str, p[0]))
+
 if __name__ == '__main__':
-    sys.setrecursionlimit(10)
+    sys.setrecursionlimit(15)
 
-    code ="'''''x"
-
-    #code = "''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''x"
+    #code = "lambda"
+    code = "''''x"
 
     try:
-        sexp = parser.parse(parser.Tokenizer().tokenize_single(code + '\n'))[0]
-        print(sexp)
+        exp = parser.parse(parser.Tokenizer().tokenize_single(code + '\n'))[0]
+        #print(pogo_stick(to_str(exp)))
+        print(exp)
+        print(pair.is_list(exp))
     except RuntimeError as e:
-        print(e)
+        print('this can never happen')
 
-    #print(pogo_stick(sequence(add1, bounce(fact, 5, 1))))
-    #print(pogo_stick(ill_fact(10, 1)))

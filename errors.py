@@ -3,10 +3,12 @@
 class SchemeError(Exception):
     pass
 
+
 class SchemeParseError(SchemeError):
     pass
 
-
+class SchemeEvalError(SchemeError):
+    pass
 
 
 

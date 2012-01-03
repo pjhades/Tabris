@@ -66,14 +66,14 @@ class Tokenizer:
 
     def need_more_code(self):
         """Check if current code is incomplete"""
+
         return self.paren_count > 0 or self.string_not_end or \
                self.quote_not_end or self._tokens == []
 
     def get_tokens(self):
-        """
-            Return the tokens found, get ready for the next round,
-            should only be called when need_more_code() returns False
-        """
+        """Return the tokens found, get ready for the next round, 
+        should only be called when need_more_code() returns False.""" 
+
         tokens = self._tokens
         self._tokens = []
         self._cur_token = ''
@@ -87,6 +87,7 @@ class Tokenizer:
 
     def tokenize(self, code):
         """Tokenize a given piece of code"""
+
         for char in code:
             # take everything inside a string
             if self.string_not_end:
@@ -142,16 +143,13 @@ def consume(tokens, exp_type):
         raise SchemeParseError('meet empty token list')
 
     if tokens[0][1] != exp_type:
-        raise SchemeParseError('expect', expected, 'but see', tokens[0][0])
+        raise SchemeParseError('expect {0}, given {1}'.format(exp_type, tokens[0][0]))
 
     return tokens.pop(0)
 
 def parse_lexeme_datum(tokens):
     token = tokens[0]
     token_type = token[1]
-
-    print('>>> parse_lexeme_datum(), tokens:', tokens)
-    print('*** consume', tokens[0])
 
     if token_type == 'boolean':
         consume(tokens, 'boolean')
@@ -212,77 +210,46 @@ def parse_rest_sexps(tokens):
     token_type = tokens[0][1]
     
     if token_type == '.':
-        # dotted list
-        #
-        # 1. consume the dot
-        # 2. parse_sexp() the final token
-        # 3. return the parsed final token
         consume(tokens, '.')
         return trampoline.bounce(parse_sexp, tokens)
     elif token_type != ')':
-        # normal list datum
-        #
-        # 1. parse the datum
-        # 2. parse_rest_sexps() the rest tokens
-        # 3. cons the result of 1. and 2.
-        #TODO
         def f(v):
             def g(first):
                 def h(rest):
                     return trampoline.fall(pair.cons(first, rest))
                 return h
-            return trampoline.sequence(g(v), trampoline.bounce(parse_rest_sexps, tokens))
+            return trampoline.sequence([g(v)], trampoline.bounce(parse_rest_sexps, tokens))
 
-        return trampoline.sequence(f, trampoline.bounce(parse_sexp, tokens))
+        return trampoline.sequence([f], trampoline.bounce(parse_sexp, tokens))
     else:
-        # closing )
-        #
-        # return NIL
         return trampoline.fall(pair.NIL)
 
 def parse_list(tokens):
-    # list
-    #
-    # 1. consume the opening (
-    # 2. parse_rest_sexps() the content of the list
-    # 3. consume the closing )
-    # TODO
+    """Parse a Scheme list."""
+
     def f(v):
         consume(tokens, ')')
         return trampoline.fall(v)
     consume(tokens, '(')
-    return trampoline.sequence(f, trampoline.bounce(parse_rest_sexps, tokens))
+    return trampoline.sequence([f], trampoline.bounce(parse_rest_sexps, tokens))
 
 def parse_sexp(tokens):
     """Parse a single S-expressions."""
 
     token_type = tokens[0][1]
 
-    print('>>> parse_sexp(), tokens:', tokens)
-
     if token_type in ('boolean', 'integer', 'float', 'fraction', \
                       'complex', 'string', 'symbol'):
-        #return parse_lexeme_datum(tokens)
         return trampoline.bounce(parse_lexeme_datum, tokens)
 
     elif token_type == "'":
-        # quote abbreviation
-        #
-        # 1. consume the quote
-        # 2. parse_sexp() the remaining tokens
-        # 3. make_list the symbol 'quote' and the result of 2.
-
         def f(v):
             return trampoline.fall(pair.make_list('quote', v))
-        print('*** consume', tokens[0])
         consume(tokens, "'")
-        return trampoline.sequence(f, trampoline.bounce(parse_sexp, tokens))
-
-        #TODO
+        return trampoline.sequence([f], trampoline.bounce(parse_sexp, tokens))
 
     elif token_type == '(':
         return trampoline.bounce(parse_list, tokens)
-
     else:
         raise SchemeParseError('bad expression syntax')
 
