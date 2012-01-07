@@ -353,3 +353,9 @@ class Rational(Num):
             return str(self.numer)
         else:
             return '{0}/{1}'.format(self.numer, self.denom)
+
+
+def is_number(v):
+    return isinstance(v, Rational) or \
+            isinstance(v, Real) or \
+            isinstance(v, Complex)

@@ -5,9 +5,18 @@ from errors import *
 import trampoline
 
 class Pair(list):
-    pass
+    def __eq__(self, v):
+        return super().__eq__(v)
+
 
 NIL = Pair([])
+
+
+def is_pair(v):
+    return isinstance(v, Pair) 
+
+def is_null(v):
+    return v == NIL
 
 
 def cons(first, second):
@@ -19,6 +28,14 @@ def make_list(*elems):
     res = NIL
     for elem in reversed(elems):
         res = cons(elem, res)
+    return res
+
+def to_python_list(lst):
+    """Convert a Scheme list back into a Python list."""
+    res = []
+    while not is_null(lst):
+        res.append(car(lst))
+        lst = cdr(lst)
     return res
 
 def is_list(p):

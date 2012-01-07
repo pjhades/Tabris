@@ -29,9 +29,10 @@ class Symbol(str):
             return str.__new__(cls, sym)
         else:
             return sym_table[sym]
-
     def __init__(self, sym):
         sym_table[sym] = self
+    def __eq__(self, other):
+        return super().__eq__(other)
 
 
 class String:
@@ -55,3 +56,14 @@ class Procedure:
         return '<procedure> ' + \
                ('params:{0}, body:{1}, env:{2}'.format(self.params, self.body, self.env) \
                if not self.is_prim else self.body)
+
+
+def is_boolean(v):
+    return isinstance(v, Boolean)
+
+def is_string(v):
+    return isinstance(v, String)
+
+def is_symbol(v):
+    return isinstance(v, Symbol)
+

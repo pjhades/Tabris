@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 
+"""
+    Implementation of the tokenizer for lexical analysis and
+    the parser for syntax analysis.
+"""
+
 import re
 from errors import *
 
@@ -37,7 +42,10 @@ token_patterns = {
                                     [+-]?\d+/\d+)i$ 
                                 )
                                   ''', flags=re.VERBOSE), \
-    'symbol':   re.compile(r'^([+-]|[+-]?[a-hj-zA-Z!$%&*/:<=>?^_~@][\w!$%&*/:<=>?^_~@\.+-]*)$'), \
+
+    #TODO: fix the re for symbols
+
+    'symbol':   re.compile(r'^([+-]|[+-]?[a-hj-zA-Z!$%&*/:<=>?^_~@]|[+-]?[\w!$%&*/:<=>?^_~@\.+-]{2,})$'), \
     'boolean':  re.compile(r'^#[tf]$'), \
     '(':        re.compile(r'^\($'), \
     ')':        re.compile(r'^\)$'), \

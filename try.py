@@ -48,13 +48,11 @@ if __name__ == '__main__':
     sys.setrecursionlimit(15)
 
     #code = "lambda"
-    code = "''''x"
+    code = "'"*10000 + "x"
 
     try:
         exp = parser.parse(parser.Tokenizer().tokenize_single(code + '\n'))[0]
-        #print(pogo_stick(to_str(exp)))
-        print(exp)
-        print(pair.is_list(exp))
+        print(pogo_stick(to_str(exp)))
     except RuntimeError as e:
         print('this can never happen')
 
