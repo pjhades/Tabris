@@ -73,7 +73,7 @@ def get_lambda_body(exp):
     return pair.cddr(exp)
 
 def make_lambda(params, body):
-    return pair.make_list(typedef.Symbol('lambda'), params, body)
+    return pair.cons(typedef.Symbol('lambda'), pair.cons(params, body))
 
 
 # if form
@@ -140,20 +140,53 @@ def get_cond_action(clause):
     return pair.cdr(clause)
 
 def is_cond_else(clause):
-    return get_cond_predicate(clause) == Symbol('else')
+    return get_cond_predicate(clause) == typedef.Symbol('else')
 
 def cond_to_if(exp):
     return expand_clauses(get_cond_clauses(exp))
 
 def expand_clauses(clauses):
-    cls = reversed(pair.to_python_list(clauses))
+    cls = list(reversed(pair.to_python_list(clauses)))
 
     if is_cond_else(cls[0]):
         alter = seq_to_exp(get_cond_action(cls[0]))
+        cls = cls[1:]
     else:
         alter = typedef.Boolean(False)
 
-    for c in cls[1:]:
+    for c in cls:
         alter = make_if(get_cond_predicate(c), seq_to_exp(get_cond_action(c)), alter)
 
     return alter
+
+
+# let
+def is_let(exp):
+    return is_tagged_list(exp, typedef.Symbol('let'))
+
+def get_let_bindings(exp):
+    return pair.cadr(exp)
+
+def get_let_body(exp):
+    return pair.cddr(exp)
+
+def get_binding_var(b):
+    return pair.car(b)
+
+def get_binding_val(b):
+    return pair.cadr(b)
+
+def let_to_application(exp):
+    """Convert a let form to application of a lambda."""
+    bds = get_let_bindings(exp)
+    var_lst = []
+    val_lst = []
+
+    while bds != pair.NIL:
+        var_lst.append(get_binding_var(pair.car(bds)))
+        val_lst.append(get_binding_val(pair.car(bds)))
+        bds = pair.cdr(bds)
+
+    lambda_exp = make_lambda(pair.make_list(*var_lst), get_let_body(exp))
+    return pair.cons(lambda_exp, pair.make_list(*val_lst))
+

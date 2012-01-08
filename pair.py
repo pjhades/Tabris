@@ -8,44 +8,10 @@ class Pair(list):
     def __eq__(self, v):
         return super().__eq__(v)
 
-
-NIL = Pair([])
-
-
-def is_pair(v):
-    return isinstance(v, Pair) 
-
-def is_null(v):
-    return v == NIL
-
-
 def cons(first, second):
     return Pair([first, second])
 
-def make_list(*elems):
-    """Cons the elements to form a Scheme list."""
-
-    res = NIL
-    for elem in reversed(elems):
-        res = cons(elem, res)
-    return res
-
-def to_python_list(lst):
-    """Convert a Scheme list back into a Python list."""
-    res = []
-    while not is_null(lst):
-        res.append(car(lst))
-        lst = cdr(lst)
-    return res
-
-def is_list(p):
-    """Tell if a pair is a list."""
-
-    while isinstance(p, Pair):
-        if len(p) == 0:
-            return True
-        p = cdr(p)
-    return False
+NIL = Pair([])
 
 
 def _to_str(p):
@@ -208,3 +174,91 @@ def cdddar(p):
 def cddddr(p):
 	return p[1][1][1][1]
 
+
+# library for list manipulation
+def is_pair(v):
+    """(pair? x)"""
+    return isinstance(v, Pair) 
+
+def is_null(v):
+    """(null? x)"""
+    return v == NIL
+
+def make_list(*elems):
+    """(list 1 2 3)"""
+    res = NIL
+    for elem in reversed(elems):
+        res = cons(elem, res)
+    return res
+
+def to_python_list(lst):
+    """Convert a Scheme list back into a Python list."""
+    res = []
+    while not is_null(lst):
+        res.append(car(lst))
+        lst = cdr(lst)
+    return res
+
+def is_list(p):
+    """Tell if a pair is a list."""
+    while isinstance(p, Pair):
+        if len(p) == 0:
+            return True
+        p = cdr(p)
+    return False
+
+def get_length(p):
+    """(length '(1 2 3))"""
+    try:
+        res = 0
+        while p != NIL:
+            res += 1
+            p = cdr(p)
+        return res
+    except SchemeEvalError:
+        raise SchemeEvalError('expects proper list, given {0}'.format(to_str(p)))
+
+def append_lst(*args):
+    """(append '(1 2) '(a b))"""
+    if len(args) == 0:
+        return NIL
+
+    import copy
+    lsts = [copy.deepcopy(x) for x in args]
+
+    res = lsts[-1]
+    for lst in reversed(lsts[:-1]):
+        try:
+            if lst == NIL:
+                continue
+            p = lst
+            while cdr(p) != NIL:
+                p = cdr(p)
+            p[1] = res
+            res = lst
+        except SchemeEvalError:
+            raise SchemeEvalError('expects proper list, given {0}'.format(to_str(p)))
+
+    return res
+
+def reverse_lst(p):
+    """(reverse '(a b c))"""
+    elems = []
+    while p != NIL:
+        elems.append(car(p))
+        p = cdr(p)
+    return make_list(*list(reversed(elems)))
+
+def get_list_tail(p, start):
+    """(list-tail '(a b c) 1)"""
+    orig = p
+    try:
+        now = 0
+        while now != start:
+            p = cdr(p)
+            now += 1
+        return p
+    except SchemeEvalError:
+        raise SchemeEvalError('index {0} is too large for {1}'.format(start, to_str(orig)))
+
+# TODO map, filter, for-each

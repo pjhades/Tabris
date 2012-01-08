@@ -20,44 +20,48 @@ DELIMS = '"\'\n\t;( )'
 
 
 # Token types
-token_patterns = {
-    'string':   re.compile(r'^".*"$', flags=re.DOTALL), \
-    'integer':  re.compile(r'^[+-]?\d+$'), \
-    'float':    re.compile(r'^[+-]?(\d+\.\d*|\.\d+)$'), \
-    'fraction': re.compile(r'^[+-]?\d+/\d+$'), \
-    'complex':  re.compile(r'''(# both real and imaginary part
-                                ^( ([+-]?\d+              | # real is integer
-                                    [+-]?(\d+\.\d*|\.\d+) | # real is decimal
-                                    [+-]?\d+/\d+)           # real is fraction
+token_patterns = [
+    ('string',   re.compile(r'^".*"$', flags=re.DOTALL)), \
+    ('integer',  re.compile(r'^[+-]?\d+$')), \
+    ('float',    re.compile(r'^[+-]?(\d+\.\d*|\.\d+)$')), \
+    ('fraction', re.compile(r'^[+-]?\d+/\d+$')), \
+    ('complex',  re.compile(r'''(
+                                ^( ([+-]?\d+              
+                                    |
+                                    [+-]?(\d+\.\d*|\.\d+) 
+                                    |
+                                    [+-]?\d+/\d+)          
 
-                                   ([+-]                 |
-                                    [+-]\d+              |
-                                    [+-](\d+\.\d*|\.\d+) |
-                                    [+-]\d+/\d+)i$ ) 
-                                                         |
-                                   # no real part
-                                 ^ ([+-]                  | # imaginary==1 or -1
-                                    [+-]?\d+              |
-                                    [+-]?(\d+\.\d*|\.\d+) |
+                                   ([+-]                 
+                                    |
+                                    [+-]\d+              
+                                    |
+                                    [+-](\d+\.\d*|\.\d+) 
+                                    |
+                                    [+-]\d+/\d+)i$ )
+                                 |
+                                 ^ ([+-]                  
+                                    |
+                                    [+-]?\d+              
+                                    |
+                                    [+-]?(\d+\.\d*|\.\d+) 
+                                    |
                                     [+-]?\d+/\d+)i$ 
                                 )
-                                  ''', flags=re.VERBOSE), \
-
-    #TODO: fix the re for symbols
-
-    'symbol':   re.compile(r'^([+-]|[+-]?[a-hj-zA-Z!$%&*/:<=>?^_~@]|[+-]?[\w!$%&*/:<=>?^_~@\.+-]{2,})$'), \
-    'boolean':  re.compile(r'^#[tf]$'), \
-    '(':        re.compile(r'^\($'), \
-    ')':        re.compile(r'^\)$'), \
-    "'":        re.compile(r"^'$"), \
-    '.':        re.compile(r'^\.$')
-}
+                            ''', flags=re.VERBOSE)), \
+    ('boolean',  re.compile(r'^#[tf]$')), \
+    ('(',        re.compile(r'^\($')), \
+    (')',        re.compile(r'^\)$')), \
+    ("'",        re.compile(r"^'$")), \
+    ('.',        re.compile(r'^\.$')), \
+    ('symbol',   re.compile(r'^[\w!$%&*+-./:<=>?@^_~]+$'))
+]
 
 def get_token_type(tok):
     for t in token_patterns:
-        mobj = token_patterns[t].match(tok)
+        mobj = t[1].match(tok)
         if mobj:
-            return (tok, t)
+            return (tok, t[0])
     raise SchemeParseError('unknown token ' + tok)
 
 class Tokenizer:
@@ -189,7 +193,7 @@ def parse_lexeme_datum(tokens):
 
     elif token_type == 'complex':
         consume(tokens, 'complex')
-        part = token_patterns['complex'].search(token[0]).groups()
+        part = token_patterns[4][1].search(token[0]).groups()
 
         # fetch the two parts
         if part[2] and part[4]:
