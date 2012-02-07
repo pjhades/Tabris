@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 
-from number import *
-from typedef import *
+from typedef import Boolean, is_true
+from number import Rational, Real, Complex
 from errors import *
 
 def check_argc(min_argc, max_argc=float('inf')):
     def inner(f):
         def func(args):
             if not min_argc <= len(args) <= max_argc:
-                raise SchemeEvalError('', 'wrong argument number')
+                raise SchemeError('', 'wrong argument number')
             return f(args)
         return func
     return inner
@@ -56,7 +56,7 @@ def prim_div(args):
 @check_argc(2)
 def prim_eq(args):
     for arg in args[1:]:
-        if typedef.is_true(arg == args[0]):
+        if is_true(arg == args[0]):
             continue
         return Boolean(False)
     return Boolean(True)
@@ -65,7 +65,7 @@ def prim_eq(args):
 def prim_lt(args):
     now = args[0]
     for arg in args[1:]:
-        if typedef.is_true(now >= arg):
+        if is_true(now >= arg):
             return Boolean(False)
     return Boolean(True)
 
@@ -73,7 +73,7 @@ def prim_lt(args):
 def prim_le(args):
     now = args[0]
     for arg in args[1:]:
-        if typedef.is_true(now > arg):
+        if is_true(now > arg):
             return Boolean(False)
     return Boolean(True)
 
@@ -81,7 +81,7 @@ def prim_le(args):
 def prim_gt(args):
     now = args[0]
     for arg in args[1:]:
-        if typedef.is_true(now <= arg):
+        if is_true(now <= arg):
             return Boolean(False)
     return Boolean(True)
 
@@ -89,33 +89,6 @@ def prim_gt(args):
 def prim_ge(args):
     now = args[0]
     for arg in args[1:]:
-        if typedef.is_true(now < arg):
+        if is_true(now < arg):
             return Boolean(False)
     return Boolean(True)
-
-@check_argc(2)
-def prim_cons(args):
-    # TODO
-    pass
-
-def prim_car(args):
-    # TODO
-    pass
-
-def prim_cdr(args):
-    # TODO
-    pass
-
-# handlers for primitives
-prim_handlers = {'+': prim_add, \
-                 '-': prim_sub, \
-                 '*': prim_mul, \
-                 '/': prim_div, \
-                 '=': prim_eq, \
-                 '<': prim_lt, \
-                 '>': prim_gt, \
-                 '<=': prim_le, \
-                 '>=': prim_ge, \
-                 'car': prim_car, \
-                 'cdr': prim_cdr, \
-                 'cons': prim_cons}

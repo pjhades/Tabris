@@ -32,6 +32,7 @@ def make_list(*elems):
 
 def to_python_list(lst):
     """Convert a Scheme list back into a Python list."""
+
     res = []
     while not is_null(lst):
         res.append(car(lst))
@@ -51,6 +52,8 @@ def is_list(p):
 def _to_str(p):
     """Give the neat string representation of a pair."""
 
+    #TODO: modify this, make '''x be displayed as it is
+
     def f(first):
         def g(rest):
             if rest[0] == '(':
@@ -60,13 +63,13 @@ def _to_str(p):
                     return trampoline.fall('(' + first + ' ' + rest[1:-1] + ')')
             else:
                 return trampoline.fall('(' + first + ' . ' + rest + ')')
-        return trampoline.sequence([g], trampoline.bounce(_to_str, p[1]))
+        return trampoline.sequence([g], trampoline.bounce(_to_str, cdr(p)))
 
     if not isinstance(p, Pair):
         return trampoline.fall(str(p))
     if len(p) == 0:
         return trampoline.fall('()')
-    return trampoline.sequence([f], trampoline.bounce(_to_str, p[0]))
+    return trampoline.sequence([f], trampoline.bounce(_to_str, car(p)))
 
 def to_str(p):
     return trampoline.pogo_stick(_to_str(p))
@@ -78,11 +81,11 @@ def check_cxr_param(cxr):
     def f(func):
         def g(p):
             if not isinstance(p, Pair):
-                raise SchemeEvalError('expect {0}able pairs, given {1}'.format(cxr, to_str(p)))
+                raise SchemeError('expect {0}able pairs, given {1}'.format(cxr, to_str(p)))
             try:
                 return func(p)
             except Exception:
-                raise SchemeEvalError('expect {0}able pairs, given {1}'.format(cxr, to_str(p)))
+                raise SchemeError('expect {0}able pairs, given {1}'.format(cxr, to_str(p)))
         return g
     return f
 

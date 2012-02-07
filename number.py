@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import typedef
+from typedef import Boolean, is_true
 from errors import *
 
 _COMPLEX = 4
@@ -11,7 +11,7 @@ _RATIONAL = 1
 def _add_complex(a, b):
     new_real = a.real + b.real
     new_imag = a.imag + b.imag
-    if typedef.is_true(new_imag == Rational(0, 1)):
+    if is_true(new_imag == Rational(0, 1)):
         return new_real
     return Complex(new_real, new_imag)
 
@@ -33,7 +33,7 @@ def _add_rational(a, b):
 def _sub_complex(a, b):
     new_real = a.real - b.real
     new_imag = a.imag - b.imag
-    if typedef.is_true(new_imag == Rational(0, 1)):
+    if is_true(new_imag == Rational(0, 1)):
         return new_real
     return Complex(new_real, new_imag)
 
@@ -54,7 +54,7 @@ def _sub_rational(a, b):
 def _mul_complex(a, b):
     new_real = a.real * b.real - a.imag * b.imag
     new_imag = a.real * b.imag + a.imag * b.real
-    if typedef.is_true(new_imag == Rational(0, 1)):
+    if is_true(new_imag == Rational(0, 1)):
         return new_real
     return Complex(new_real, new_imag)
 
@@ -100,41 +100,41 @@ def _ne_complex(a, b):
 
 
 def _lt_real(a, b):
-    return typedef.Boolean(a.value < b.value)
+    return Boolean(a.value < b.value)
 
 def _le_real(a, b):
-    return typedef.Boolean(a.value <= b.value)
+    return Boolean(a.value <= b.value)
 
 def _gt_real(a, b):
-    return typedef.Boolean(a.value > b.value)
+    return Boolean(a.value > b.value)
 
 def _ge_real(a, b):
-    return typedef.Boolean(a.value >= b.value)
+    return Boolean(a.value >= b.value)
 
 def _eq_real(a, b):
-    return typedef.Boolean(a.value == b.value)
+    return Boolean(a.value == b.value)
 
 def _ne_real(a, b):
-    return typedef.Boolean(a.value != b.value)
+    return Boolean(a.value != b.value)
 
 
 def _lt_rational(a, b):
-    return typedef.Boolean(a.numer * b.denom < a.denom * b.numer)
+    return Boolean(a.numer * b.denom < a.denom * b.numer)
 
 def _le_rational(a, b):
-    return typedef.Boolean(a.numer * b.denom <= a.denom * b.numer)
+    return Boolean(a.numer * b.denom <= a.denom * b.numer)
 
 def _gt_rational(a, b):
-    return typedef.Boolean(a.numer * b.denom > a.denom * b.numer)
+    return Boolean(a.numer * b.denom > a.denom * b.numer)
 
 def _ge_rational(a, b):
-    return typedef.Boolean(a.numer * b.denom >= a.denom * b.numer)
+    return Boolean(a.numer * b.denom >= a.denom * b.numer)
 
 def _eq_rational(a, b):
-    return typedef.Boolean(a.numer * b.denom == a.denom * b.numer)
+    return Boolean(a.numer * b.denom == a.denom * b.numer)
 
 def _ne_rational(a, b):
-    return typedef.Boolean(a.numer * b.denom != a.denom * b.numer)
+    return Boolean(a.numer * b.denom != a.denom * b.numer)
 
 
 def _rational_to_complex(a):
@@ -200,9 +200,9 @@ def check_operand(f):
             else:
                 return f(a, b)
         except AttributeError:
-            raise SchemeTypeError('', 'expects numbers as arguments')
+            raise SchemeError('', 'expects numbers as arguments')
         except KeyError:
-            raise SchemeTypeError('', 'operation is not supported')
+            raise SchemeError('', 'operation is not supported')
     return func
 
 
@@ -277,7 +277,6 @@ class Num:
 
 # Number types
 class Complex(Num):
-    """Real and imaginary parts are guaranteed to be the same type"""
     def __init__(self, real, imag):
         if real.tag > imag.tag:
             imag = convert(imag, real)
@@ -294,21 +293,21 @@ class Complex(Num):
         return Complex(-self.real, -self.imag)
 
     def __str__(self):
-        if typedef.is_true(self.imag == Rational(0, 1)):
+        if is_true(self.imag == Rational(0, 1)):
             return str(self.real)
 
-        if typedef.is_true(self.real == Rational(0, 1)):
-            if typedef.is_true(self.imag == Rational(1, 1)):
+        if is_true(self.real == Rational(0, 1)):
+            if is_true(self.imag == Rational(1, 1)):
                 return 'i'
-            elif typedef.is_true(self.imag == Rational(-1, 1)):
+            elif is_true(self.imag == Rational(-1, 1)):
                 return '-i'
             return '{0}i'.format(self.imag)
-        elif typedef.is_true(self.imag > Rational(0, 1)):
-            if typedef.is_true(self.imag == Rational(1, 1)):
+        elif is_true(self.imag > Rational(0, 1)):
+            if is_true(self.imag == Rational(1, 1)):
                 return '{0}+i'.format(self.real)
             return '{0}+{1}i'.format(self.real, self.imag)
         else:
-            if typedef.is_true(self.imag == Rational(-1, 1)):
+            if is_true(self.imag == Rational(-1, 1)):
                 return '{0}-i'.format(self.real, self.imag)
             return '{0}{1}i'.format(self.real, self.imag)
 
@@ -325,7 +324,7 @@ class Real(Num):
 class Rational(Num):
     def __init__(self, numer, denom):
         if denom == 0:
-            raise SchemeDivByZeroError(str(numer) + '/' + str(denom))
+            raise SchemeError('divided by zero: ' + str(numer) + '/' + str(denom))
         
         gcd = Rational._gcd(numer, denom)
         self.numer = numer // gcd
@@ -356,6 +355,4 @@ class Rational(Num):
 
 
 def is_number(v):
-    return isinstance(v, Rational) or \
-            isinstance(v, Real) or \
-            isinstance(v, Complex)
+    return isinstance(v, Rational) or isinstance(v, Real) or isinstance(v, Complex)

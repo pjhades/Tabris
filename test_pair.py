@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-import pair
+from pair import *
 
 class TokenizerTest(unittest.TestCase):
     def setUp(self):
@@ -11,24 +11,24 @@ class TokenizerTest(unittest.TestCase):
         pass
 
     def testPairCreating(self):
-        self.assertEqual(pair.Pair([1, 2]), [1, 2])
-        self.assertEqual(pair.Pair([[1, 2], [3, 4]]), [[1, 2], [3, 4]])
+        self.assertEqual(Pair([1, 2]), [1, 2])
+        self.assertEqual(Pair([[1, 2], [3, 4]]), [[1, 2], [3, 4]])
 
     def testConsing(self):
-        self.assertEqual(pair.cons(1, 2), [1, 2])
-        self.assertEqual(pair.cons(1, [2, 3]), [1, [2, 3]])
-        self.assertEqual(pair.cons([1, 2], [3, 4]), [[1, 2], [3, 4]])
+        self.assertEqual(cons(1, 2), [1, 2])
+        self.assertEqual(cons(1, [2, 3]), [1, [2, 3]])
+        self.assertEqual(cons([1, 2], [3, 4]), [[1, 2], [3, 4]])
 
     def testListMaking(self):
-        self.assertEqual(pair.make_list(1, 2), [1, [2, []]])
-        self.assertEqual(pair.make_list(1, [2, 3]), [1, [[2, 3], []]])
-        self.assertEqual(pair.make_list([1, 2], [3, 4]), [[1, 2], [[3, 4], []]])
+        self.assertEqual(make_list(1, 2), [1, [2, []]])
+        self.assertEqual(make_list(1, [2, 3]), [1, [[2, 3], []]])
+        self.assertEqual(make_list([1, 2], [3, 4]), [[1, 2], [[3, 4], []]])
 
     def testCarCdr(self):
-        self.assertEqual(pair.car(pair.cons(1, 2)), 1)
-        self.assertEqual(pair.car(pair.cons([1, 2], 3)), [1, 2])
-        self.assertEqual(pair.cdr(pair.cons(1, 2)), 2)
-        self.assertEqual(pair.cdr(pair.cons(1, [2, 3])), [2, 3])
+        self.assertEqual(car(cons(1, 2)), 1)
+        self.assertEqual(car(cons([1, 2], 3)), [1, 2])
+        self.assertEqual(cdr(cons(1, 2)), 2)
+        self.assertEqual(cdr(cons(1, [2, 3])), [2, 3])
 
 def suite():
     suite = unittest.TestSuite()

@@ -6,12 +6,12 @@
 """
 
 import re
-from errors import *
-
 import pair
-import number
-import typedef
 import trampoline
+
+from number import Rational, Real, Complex
+from typedef import *
+from errors import *
 
 
 # Delimiter characters. If we see these, we have found
@@ -19,46 +19,43 @@ import trampoline
 DELIMS = '"\'\n\t;( )'
 
 
-# Token types
-token_patterns = {
-    'string':   re.compile(r'^".*"$', flags=re.DOTALL), \
-    'integer':  re.compile(r'^[+-]?\d+$'), \
-    'float':    re.compile(r'^[+-]?(\d+\.\d*|\.\d+)$'), \
-    'fraction': re.compile(r'^[+-]?\d+/\d+$'), \
-    'complex':  re.compile(r'''(# both real and imaginary part
-                                ^( ([+-]?\d+              | # real is integer
-                                    [+-]?(\d+\.\d*|\.\d+) | # real is decimal
-                                    [+-]?\d+/\d+)           # real is fraction
 
-                                   ([+-]                 |
-                                    [+-]\d+              |
-                                    [+-](\d+\.\d*|\.\d+) |
-                                    [+-]\d+/\d+)i$ ) 
-                                                         |
-                                   # no real part
-                                 ^ ([+-]                  | # imaginary==1 or -1
+# Token types
+token_patterns = [ \
+    ('(', re.compile(r'^\($')),
+    (')', re.compile(r'^\)$')),
+    ("'", re.compile(r"^'$")),
+    ('.', re.compile(r'^\.$')),
+    ('boolean', re.compile(r'^#[tf]$')),
+    ('string', re.compile(r'^".*"$', flags=re.DOTALL)),
+    ('integer', re.compile(r'^[+-]?\d+$')),
+    ('float', re.compile(r'^[+-]?(\d+\.\d*|\.\d+)$')),
+    ('fraction', re.compile(r'^[+-]?\d+/\d+$')),
+    ('complex', re.compile(r'''(# both real and imaginary part
+                                  ^( ([+-]?\d+              | # real is integer
+                                      [+-]?(\d+\.\d*|\.\d+) | # real is decimal
+                                      [+-]?\d+/\d+)           # real is fraction
+
+                                     ([+-]                 |
+                                      [+-]\d+              |
+                                      [+-](\d+\.\d*|\.\d+) |
+                                      [+-]\d+/\d+)i$ ) 
+                                                           |
+                                     # no real part
+                                  ^([+-]                  | # imaginary==1 or -1
                                     [+-]?\d+              |
                                     [+-]?(\d+\.\d*|\.\d+) |
                                     [+-]?\d+/\d+)i$ 
-                                )
-                                  ''', flags=re.VERBOSE), \
-
-    #TODO: fix the re for symbols
-
-    'symbol':   re.compile(r'^([+-]|[+-]?[a-hj-zA-Z!$%&*/:<=>?^_~@]|[+-]?[\w!$%&*/:<=>?^_~@\.+-]{2,})$'), \
-    'boolean':  re.compile(r'^#[tf]$'), \
-    '(':        re.compile(r'^\($'), \
-    ')':        re.compile(r'^\)$'), \
-    "'":        re.compile(r"^'$"), \
-    '.':        re.compile(r'^\.$')
-}
+                                )''', flags=re.VERBOSE)),
+    ('symbol', re.compile(r'^(\+|-|\.\.\.|[a-zA-Z!$%&*+-./:<=>?@^_~][a-zA-Z0-9!$%&*+-./:<=>?@^_~]*)$'))
+]
 
 def get_token_type(tok):
-    for t in token_patterns:
-        mobj = token_patterns[t].match(tok)
+    for pattern in token_patterns:
+        mobj = pattern[1].match(tok)
         if mobj:
-            return (tok, t)
-    raise SchemeParseError('unknown token ' + tok)
+            return (tok, pattern[0])
+    raise SchemeError('unknown token ' + tok)
 
 class Tokenizer:
     def __init__(self):
@@ -91,6 +88,10 @@ class Tokenizer:
         self._tokens = []
         self._cur_token = ''
         self.tokenize(code)
+
+        if self.need_more_code():
+            raise SchemeError('bad single line expression ' + code)
+
         return self.get_tokens()
 
     def tokenize(self, code):
@@ -135,7 +136,7 @@ class Tokenizer:
                 elif char == ')':
                     self.paren_count -= 1
                     if self.paren_count < 0:
-                        raise SchemeParseError('Unexpected ) at line ' + str(self.lineno))
+                        raise SchemeError('Unexpected ) at line ' + str(self.lineno))
                     self._tokens.append(char)
 
             else:
@@ -148,10 +149,10 @@ def consume(tokens, exp_type):
     the expected token type."""
 
     if len(tokens) == 0:
-        raise SchemeParseError('meet empty token list')
+        raise SchemeError('meet empty token list')
 
     if tokens[0][1] != exp_type:
-        raise SchemeParseError('expect {0}, given {1}'.format(exp_type, tokens[0][0]))
+        raise SchemeError('expect {0}, given {1}'.format(exp_type, tokens[0][0]))
 
     return tokens.pop(0)
 
@@ -162,34 +163,34 @@ def parse_lexeme_datum(tokens):
     if token_type == 'boolean':
         consume(tokens, 'boolean')
         if token[0] == '#t':
-            return trampoline.fall(typedef.Boolean(True))
+            return trampoline.fall(Boolean(True))
         else:
-            return trampoline.fall(typedef.Boolean(False))
+            return trampoline.fall(Boolean(False))
 
     elif token_type == 'string':
         consume(tokens, 'string')
-        return trampoline.fall(typedef.String(token[0]))
+        return trampoline.fall(String(token[0]))
 
     elif token_type == 'symbol':
         consume(tokens, 'symbol')
-        return trampoline.fall(typedef.Symbol(token[0]))
+        return trampoline.fall(Symbol(token[0]))
 
     elif token_type == 'integer':
         consume(tokens, 'integer')
-        return trampoline.fall(number.Rational(int(token[0]), 1))
+        return trampoline.fall(Rational(int(token[0]), 1))
 
     elif token_type == 'float':
         consume(tokens, 'float')
-        return trampoline.fall(number.Real(float(token[0])))
+        return trampoline.fall(Real(float(token[0])))
 
     elif token_type == 'fraction':
         consume(tokens, 'fraction')
         numer, denom = token[0].split('/')
-        return trampoline.fall(number.Rational(int(numer), int(denom)))
+        return trampoline.fall(Rational(int(numer), int(denom)))
 
     elif token_type == 'complex':
         consume(tokens, 'complex')
-        part = token_patterns['complex'].search(token[0]).groups()
+        part = token_patterns[9][1].search(token[0]).groups()
 
         # fetch the two parts
         if part[2] and part[4]:
@@ -204,12 +205,12 @@ def parse_lexeme_datum(tokens):
         real = parse(Tokenizer().tokenize_single(real + '\n'))[0]
         imag = parse(Tokenizer().tokenize_single(imag + '\n'))[0]
 
-        if typedef.is_true(imag == number.Rational(0, 1)):
+        if is_true(imag == Rational(0, 1)):
             return trampoline.fall(real)
-        return trampoline.fall(number.Complex(real, imag))
+        return trampoline.fall(Complex(real, imag))
 
     else:
-        raise SchemeParseError(token, 'is not a lexeme datum')
+        raise SchemeError(token, 'is not a lexeme datum')
 
 def parse_rest_sexps(tokens):
     """Parse the S-expressions in the list. The list may 
@@ -242,7 +243,7 @@ def parse_list(tokens):
     return trampoline.sequence([f], trampoline.bounce(parse_rest_sexps, tokens))
 
 def parse_sexp(tokens):
-    """Parse a single S-expressions."""
+    """Parse a single S-expression."""
 
     token_type = tokens[0][1]
 
@@ -259,7 +260,7 @@ def parse_sexp(tokens):
     elif token_type == '(':
         return trampoline.bounce(parse_list, tokens)
     else:
-        raise SchemeParseError('bad expression syntax')
+        raise SchemeError('bad expression syntax')
 
 def parse(tokens):
     """The interface. Returns the list of S-expressions

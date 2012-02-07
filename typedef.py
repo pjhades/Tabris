@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+"""
+Type definitions for boolean, symbol, string, procedure
+"""
+
 from errors import *
 
 class Boolean:
@@ -20,19 +24,23 @@ def is_true(v):
 
 
 # Store symbols we have created.
-sym_table = {}
+_sym_table = {}
 
 class Symbol(str):
     """Symbols with the same spell will share the same object."""
     def __new__(cls, sym):
-        if sym not in sym_table:
+        if sym not in _sym_table:
             return str.__new__(cls, sym)
         else:
-            return sym_table[sym]
+            return _sym_table[sym]
     def __init__(self, sym):
-        sym_table[sym] = self
+        _sym_table[sym] = self
     def __eq__(self, other):
         return super().__eq__(other)
+    def __cmp__(self, other):
+        return super().__cmp__(other)
+    def __hash__(self):
+        return super().__hash__()
 
 
 class String:
@@ -49,13 +57,14 @@ class Procedure:
         self.body = body
         self.env = env
         self.is_prim = is_prim 
-        # if not list, self.params represents a list
+
+        # if not list, self.params represents a scheme list
         self.is_var_args = not isinstance(params, list)
 
     def __str__(self):
         return '<procedure> ' + \
                ('params:{0}, body:{1}, env:{2}'.format(self.params, self.body, self.env) \
-               if not self.is_prim else self.body)
+                if not self.is_prim else self.body)
 
 
 def is_boolean(v):

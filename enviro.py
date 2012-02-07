@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 
+"""
+    Environment
+"""
+
 from errors import *
-from typedef import Procedure
 
 class Env:
     def __init__(self, var_list=[], val_list=[], outer=None):
@@ -17,7 +20,7 @@ class Env:
                 e = e.outer
             else:
                 return e.bindings[var]
-        raise SchemeUnboundError(var)
+        raise SchemeError('unbound variable ' + var)
 
     def add_var(self, var, val):
         self.bindings[var] = val
@@ -30,20 +33,12 @@ class Env:
             else:
                 e.bindings[var] = val
                 return
-        raise SchemeUnboundError(var)
+        raise SchemeError('unbound variable ' + var)
 
 def extend_env(var_list, value_list, base_env):
     return Env(var_list, value_list, base_env)
 
-global_env = Env()
-
-def init_env():
-    global_env.add_var('+', Procedure('', '+', global_env, is_prim=True))
-    global_env.add_var('-', Procedure('', '-', global_env, is_prim=True))
-    global_env.add_var('*', Procedure('', '*', global_env, is_prim=True))
-    global_env.add_var('/', Procedure('', '/', global_env, is_prim=True))
-    global_env.add_var('=', Procedure('', '=', global_env, is_prim=True))
-    global_env.add_var('>', Procedure('', '>', global_env, is_prim=True))
-    global_env.add_var('<', Procedure('', '<', global_env, is_prim=True))
-    global_env.add_var('>=', Procedure('', '>=', global_env, is_prim=True))
-    global_env.add_var('<=', Procedure('', '<=', global_env, is_prim=True))
+def init_global():
+    global_env = Env()
+    return global_env
+    #TODO: add initial bindings to global env
