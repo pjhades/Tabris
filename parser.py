@@ -63,7 +63,7 @@ def get_token_type(tok):
         mobj = t[1].match(tok)
         if mobj:
             return (tok, t[0])
-    raise SchemeParseError('unknown token ' + tok)
+    raise SchemeError('unknown token ' + tok)
 
 class Tokenizer:
     def __init__(self):

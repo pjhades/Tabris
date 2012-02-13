@@ -217,8 +217,8 @@ def get_length(p):
             res += 1
             p = cdr(p)
         return res
-    except SchemeEvalError:
-        raise SchemeEvalError('expects proper list, given {0}'.format(to_str(p)))
+    except SchemeError:
+        raise SchemeError('expects proper list, given {0}'.format(to_str(p)))
 
 def append_lst(*args):
     """(append '(1 2) '(a b))"""
@@ -238,8 +238,8 @@ def append_lst(*args):
                 p = cdr(p)
             p[1] = res
             res = lst
-        except SchemeEvalError:
-            raise SchemeEvalError('expects proper list, given {0}'.format(to_str(p)))
+        except SchemeError:
+            raise SchemeError('expects proper list, given {0}'.format(to_str(p)))
 
     return res
 
@@ -260,7 +260,7 @@ def get_list_tail(p, start):
             p = cdr(p)
             now += 1
         return p
-    except SchemeEvalError:
-        raise SchemeEvalError('index {0} is too large for {1}'.format(start, to_str(orig)))
+    except SchemeError:
+        raise SchemeError('index {0} is too large for {1}'.format(start, to_str(orig)))
 
 # TODO map, filter, for-each
