@@ -7,7 +7,7 @@ import number
 import pair
 import trampoline
 
-class TokenizerTest(unittest.TestCase):
+class ParserTest(unittest.TestCase):
     def setUp(self):
         self.tokenizer = parser.Tokenizer()
 
@@ -19,8 +19,13 @@ class TokenizerTest(unittest.TestCase):
 
         cases = [("lambda", [("lambda", "symbol")]), \
                  ("12345", [("12345", "integer")]), \
+                 ("i", [("i", "symbol")]), \
                  ("-4/56", [("-4/56", "fraction")]), \
                  ("0.", [("0.", "float")]), \
+                 (".", [(".", ".")]), \
+                 ("(", [("(", "(")]), \
+                 (")", [(")", ")")]), \
+                 ("'", [("'", "'")]), \
                  ("-6.2350-0i", [("-6.2350-0i", "complex")]), \
                  ("+i", [("+i", "complex")]), \
                  ("-i", [("-i", "complex")]), \
@@ -156,7 +161,7 @@ class TokenizerTest(unittest.TestCase):
         """S-expressions that require deep recursion."""
         
         import sys
-        sys.setrecursionlimit(50)
+        sys.setrecursionlimit(30)
 
         cases = [("'"*1000 + "x", "(quote "*1000 + "x" + ")"*1000), \
                  ("(x . "*1000 + "()" + ")"*1000, "(" + "x " * 999 + "x)")]
@@ -167,13 +172,13 @@ class TokenizerTest(unittest.TestCase):
 
 def suite():
     suite = unittest.TestSuite()
-    suite.addTest(TokenizerTest('testTokenizer'))
-    suite.addTest(TokenizerTest('testTokenizeSingle'))
-    suite.addTest(TokenizerTest('testFileTokenizing'))
-    suite.addTest(TokenizerTest('testLexemeParsing'))
-    suite.addTest(TokenizerTest('testSexpParsing'))
-    suite.addTest(TokenizerTest('testStringRepr'))
-    suite.addTest(TokenizerTest('testDeepParsing'))
+    suite.addTest(ParserTest('testTokenizer'))
+    suite.addTest(ParserTest('testTokenizeSingle'))
+    suite.addTest(ParserTest('testFileTokenizing'))
+    suite.addTest(ParserTest('testLexemeParsing'))
+    suite.addTest(ParserTest('testSexpParsing'))
+    suite.addTest(ParserTest('testStringRepr'))
+    suite.addTest(ParserTest('testDeepParsing'))
     return suite
 
 if __name__ == '__main__':
