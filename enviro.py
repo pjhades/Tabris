@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-"""
-    Environment
+"""\
+Environment
 """
 
 from errors import *
@@ -35,10 +35,12 @@ class Env:
                 return
         raise SchemeError('unbound variable ' + var)
 
-def extend_env(var_list, value_list, base_env):
-    return Env(var_list, value_list, base_env)
+def extend_env(var_list, val_list, base_env):
+    return Env(var_list, val_list, base_env)
 
 def init_global():
+    from typedef import Symbol
+    from number import Rational
     global_env = Env()
     return global_env
     #TODO: add initial bindings to global env

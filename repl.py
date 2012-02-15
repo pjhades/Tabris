@@ -32,6 +32,12 @@ class Repl:
                 print(token)
             print()
 
+            print('env:')
+            print('-' * 50)
+            for var in self.env.bindings:
+                print(var, type(var), '--->', self.env.bindings[var], type(self.env.bindings[var]))
+            print()
+
             exps = parser.parse(tokens)
 
             for exp in exps:

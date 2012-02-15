@@ -32,7 +32,7 @@ def sequence(fs, thread):
     """Run thread first then apply f to the result"""
 
     if not isinstance(thread, Thread):
-        raise TypeError('not a trampoline thread')
+        raise TypeError('not a trampoline thread: ' + thread)
 
     if thread[0] == 'value':
         # If the thread is a value, apply all the functions
@@ -70,7 +70,7 @@ def sequence(fs, thread):
 def pogo_stick(thread):
     while True:
         if not isinstance(thread, Thread):
-            raise TypeError('not a trampoline thread')
+            raise TypeError('not a trampoline thread' + thread)
 
         if thread[0] == 'value':
             return thread[1]

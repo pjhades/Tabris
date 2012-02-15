@@ -2,61 +2,78 @@
 
 import unittest
 import evalu
-from typedef import Symbol
+import enviro
+from typedef import *
+from number import *
 from parser import Tokenizer, parse 
 from pair import to_str
 
-class AnalyzerTest(unittest.TestCase):
+class EvaluatorTest(unittest.TestCase):
     def setUp(self):
         self.tk = Tokenizer()
+        self.env = enviro.Env()
 
     def tearDown(self):
         self.tk = None
+        self.env = None
 
     def p(self, code):
-        """Taste sweet? >_< """
+        "Taste sweet? >_< "
         return parse(self.tk.tokenize_single(code + "\n"))[0]
 
+    def testSelfEvaluating(self):
+        exp = self.p('"foo"')
+        self.assertEqual(String('foo'), evalu.eval(exp, self.env))
+
+        exp = self.p('#f')
+        self.assertEqual(Boolean(False), evalu.eval(exp, self.env))
+
+        exp = self.p('7/6-8i')
+        self.assertEqual(Complex(Rational(7, 6), Rational(-8, 1)), \
+                         evalu.eval(exp, self.env))
+
+    def testQuote(self):
+        exp = self.p("'''x")
+        self.assertEqual('(quote (quote x))', to_str(evalu.eval(exp, self.env)))
+
+        exp = self.p("'(quote 'x quote)")
+        self.assertEqual('(quote (quote x) quote)', to_str(evalu.eval(exp, self.env)))
+
     def testDefine(self):
-        exp = self.p("(define foo bar)")
-        self.assertEqual(evalu.get_define_var(exp), typedef.Symbol('foo'))
-        self.assertEqual(evalu.get_define_val(exp), typedef.Symbol('bar'))
+        evalu.eval(self.p('(define foo 111)'), self.env)
+        exp = self.p('foo')
+        self.assertEqual(Rational(111, 1), evalu.eval(exp, self.env))
 
-        exp = self.p("(define (inc x) (+ x 1))")
-        self.assertEqual(evalu.get_define_var(exp), typedef.Symbol('inc'))
-        self.assertEqual(to_str(evalu.get_define_val(exp)), "(lambda (x) (+ x 1))")
+    def testSet(self):
+        evalu.eval(self.p('(define bar 111)'), self.env)
+        exp = self.p('bar')
+        self.assertEqual(Rational(111, 1), evalu.eval(exp, self.env))
+        evalu.eval(self.p('(set! bar 999)'), self.env)
+        exp = self.p('bar')
+        self.assertEqual(Rational(999, 1), evalu.eval(exp, self.env))
 
-    def testCond(self):
-        exp = self.p("""(cond ((x1 x2) x3)
-                              (y1 (y2 y3)
-                                  (y4 y5)))""")
-        self.assertEqual(to_str(evalu.cond_to_if(exp)), \
-                "(if (x1 x2) x3 (if y1 (begin (y2 y3) (y4 y5)) #f))")
+    def testLambda(self):
+        evalu.eval(self.p('(define foo (lambda x x))'), self.env)
+        func = evalu.eval(self.p('foo'), self.env)
+        print('params:', to_str(func.params))
+        print('body:', func.body)
+        print('is_prim:', func.is_prim)
+        print('is_var_args:', func.is_var_args)
+        for var in func.env.bindings:
+            print(var, func.env.bindings[var])
 
-        exp = self.p("""(cond (x1 x2)
-                              (y1 y2)
-                              (else z1))""")
-        self.assertEqual(to_str(evalu.cond_to_if(exp)), \
-                "(if x1 x2 (if y1 y2 z1))")
-
-    def testLet(self):
-        exp = self.p("""(let ((x1 y1)
-                              (x2 y2)
-                              (x3 y3))
-                           (foo bar)
-                           (bar baz))""")
-        self.assertEqual(to_str(evalu.let_to_call(exp)), \
-                "((lambda (x1 x2 x3) (foo bar) (bar baz)) y1 y2 y3)")
-
-        exp = self.p("""(let () 1)""")
-        self.assertEqual(to_str(evalu.let_to_call(exp)), \
-                "((lambda () 1))")
 
 def suite():
+    #TODO:
+    # add unit test here
     suite = unittest.TestSuite()
-    #suite.addTest(AnalyzerTest('testDefine'))
-    #suite.addTest(AnalyzerTest('testCond'))
-    suite.addTest(AnalyzerTest('testLet'))
+
+    # syntax transformation
+    #suite.addTest(EvaluatorTest('testSelfEvaluating'))
+    #suite.addTest(EvaluatorTest('testQuote'))
+    #suite.addTest(EvaluatorTest('testDefine'))
+    #suite.addTest(EvaluatorTest('testSet'))
+    suite.addTest(EvaluatorTest('testLambda'))
 
     return suite
 

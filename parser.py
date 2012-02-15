@@ -6,10 +6,10 @@
 """
 
 import re
-import pair
 import trampoline
 
 from number import Rational, Real, Complex
+from pair import make_list, cons, NIL
 from typedef import *
 from errors import *
 
@@ -177,7 +177,8 @@ def parse_lexeme_datum(tokens):
 
     elif token_type == 'string':
         consume(tokens, 'string')
-        return trampoline.fall(String(token[0]))
+        # strip the quotes
+        return trampoline.fall(String(token[0][1:-1]))
 
     elif token_type == 'symbol':
         consume(tokens, 'symbol')
@@ -233,13 +234,13 @@ def parse_rest_sexps(tokens):
         def f(v):
             def g(first):
                 def h(rest):
-                    return trampoline.fall(pair.cons(first, rest))
+                    return trampoline.fall(cons(first, rest))
                 return h
             return trampoline.sequence([g(v)], trampoline.bounce(parse_rest_sexps, tokens))
 
         return trampoline.sequence([f], trampoline.bounce(parse_sexp, tokens))
     else:
-        return trampoline.fall(pair.NIL)
+        return trampoline.fall(NIL)
 
 def parse_list(tokens):
     """Parse a Scheme list."""
@@ -261,7 +262,7 @@ def parse_sexp(tokens):
 
     elif token_type == "'":
         def f(v):
-            return trampoline.fall(pair.make_list('quote', v))
+            return trampoline.fall(make_list(Symbol('quote'), v))
         consume(tokens, "'")
         return trampoline.sequence([f], trampoline.bounce(parse_sexp, tokens))
 

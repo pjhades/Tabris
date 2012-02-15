@@ -17,6 +17,8 @@ class Boolean:
         return Boolean(not self.value)
     def __str__(self):
         return '#t' if self.value else '#f'
+    def __eq__(self, other):
+        return self.value == other.value
 
 def is_true(v):
     """v is true if it's not #f."""
@@ -45,27 +47,28 @@ class Symbol(str):
 
 class String:
     def __init__(self, value):
-        self.value = value[1:len(value)-1]
+        self.value = value
     def __str__(self):
         return '"' + self.value + '"'
+    def __eq__(self, other):
+        return self.value == other.value
 
 
 class Procedure:
     def __init__(self, params, body, env, is_prim=False):
-        # this should be a list
+        """\
+        if (lambda args ...), `params' is not a python list, then
+        it's a argument list, `is_var_args' is true. otherwise
+        else `params' is a python list, `is_var_args' is false.
+        """
         self.params = params
         self.body = body
         self.env = env
         self.is_prim = is_prim 
-
-        # if not list, self.params represents a scheme list
         self.is_var_args = not isinstance(params, list)
 
     def __str__(self):
-        return '<procedure> ' + \
-               ('params:{0}, body:{1}, env:{2}'.format(self.params, self.body, self.env) \
-                if not self.is_prim else self.body)
-
+        return '[procedure]'
 
 def is_boolean(v):
     return isinstance(v, Boolean)

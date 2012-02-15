@@ -7,6 +7,8 @@ import trampoline
 class Pair(list):
     def __eq__(self, v):
         return super().__eq__(v)
+    def __str__(self):
+        return to_str(self)
 
 def cons(first, second):
     return Pair([first, second])
@@ -15,10 +17,7 @@ NIL = Pair([])
 
 
 def _to_str(p):
-    """Give the neat string representation of a pair."""
-
-    #TODO: modify this, make '''x be displayed as it is
-
+    "Give the neat string representation of a pair."
     def f(first):
         def g(rest):
             if rest[0] == '(':
@@ -34,6 +33,7 @@ def _to_str(p):
         return trampoline.fall(str(p))
     if len(p) == 0:
         return trampoline.fall('()')
+
     return trampoline.sequence([f], trampoline.bounce(_to_str, car(p)))
 
 def to_str(p):
