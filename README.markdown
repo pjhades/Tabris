@@ -12,6 +12,6 @@ represents free will.
 
 Warning
 --------------
-Tabris is NOT finished yet. I put it here simply because I don't want
+Tabris is __NOT__ finished yet. I put it here simply because I don't want
 to copy my code back and forth between the lab and apartment. More code
 will be added as I read SICP more.
