@@ -2,6 +2,7 @@ About
 --------------
 Tabirs is a simple toy Scheme interpreter written in Python.
 I wrote this because:
+
  * I'm reading SICP (Structure and Interpretation of Computer Programs).
  * I'm learning Python.
  * I want to practise Python programming on some relatively large programs.
