@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-import trampoline
+from trampoline import Bounce, pogo_stick
 
 class TramplineTest(unittest.TestCase):
     def setUp(self):
@@ -12,32 +12,32 @@ class TramplineTest(unittest.TestCase):
 
     def testTrampoline(self):
         # trampolined factorial
-        def fact(n, ans):
+        def fact(n, ans, cont):
             if n < 2:
-                return trampoline.fall(ans)
+                return Bounce(cont, ans)
             else:
-                return trampoline.bounce(fact, n-1, n*ans)
+                return Bounce(fact, n-1, n*ans, cont)
 
-        ans = trampoline.pogo_stick(fact(5, 1))
+        ans = pogo_stick(Bounce(fact, 5, 1, lambda d:d))
         self.assertEqual(ans, 120)
 
-        ans = trampoline.pogo_stick(fact(1, 1))
+        ans = pogo_stick(Bounce(fact, 1, 1, lambda d:d))
         self.assertEqual(ans, 1)
 
 
         # member search
-        def memq(target, lst):
+        def memq(target, lst, cont):
             if lst == []:
-                return trampoline.fall(False)
+                return Bounce(cont, False)
             elif target == lst[0]:
-                return trampoline.fall(True)
+                return Bounce(cont, True)
             else:
-                return trampoline.bounce(memq, target, lst[1:])
+                return Bounce(memq, target, lst[1:], cont)
 
-        ans = trampoline.pogo_stick(memq(3, [1, 2, 3, 4, 5]))
+        ans = pogo_stick(Bounce(memq, 3, [1, 2, 3, 4, 5], lambda d:d))
         self.assertEqual(ans, True)
 
-        ans = trampoline.pogo_stick(memq(3, [1, 2, 4, 5, 6]))
+        ans = pogo_stick(Bounce(memq, 3, [1, 2, 4, 5, 6], lambda d:d))
         self.assertEqual(ans, False)
 
 def suite():

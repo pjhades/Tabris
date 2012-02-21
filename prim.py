@@ -92,3 +92,16 @@ def prim_ge(args):
         if is_true(now < arg):
             return Boolean(False)
     return Boolean(True)
+
+prim_ops = {
+    '+': prim_add,
+    '-': prim_sub,
+    '*': prim_mul,
+    '/': prim_div,
+    '=': prim_eq,
+    '<': prim_lt,
+    '>': prim_gt,
+    '<=': prim_le,
+    '>=': prim_gt
+}
+

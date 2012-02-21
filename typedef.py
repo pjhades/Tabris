@@ -6,7 +6,7 @@ Type definitions for boolean, symbol, string, procedure
 
 from errors import *
 
-class Boolean:
+class Boolean(object):
     def __init__(self, value):
         self.value = value
     def __mul__(self, other):
@@ -38,14 +38,14 @@ class Symbol(str):
     def __init__(self, sym):
         _sym_table[sym] = self
     def __eq__(self, other):
-        return super().__eq__(other)
+        return super(Symbol, self).__eq__(other)
     def __cmp__(self, other):
-        return super().__cmp__(other)
+        return super(Symbol, self).__cmp__(other)
     def __hash__(self):
-        return super().__hash__()
+        return super(Symbol, self).__hash__()
 
 
-class String:
+class String(object):
     def __init__(self, value):
         self.value = value
     def __str__(self):
@@ -54,7 +54,7 @@ class String:
         return self.value == other.value
 
 
-class Procedure:
+class Procedure(object):
     def __init__(self, params, body, env, is_prim=False):
         """\
         if (lambda args ...), `params' is not a python list, then

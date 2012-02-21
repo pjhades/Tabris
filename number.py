@@ -200,9 +200,9 @@ def check_operand(f):
             else:
                 return f(a, b)
         except AttributeError:
-            raise SchemeError('', 'expects numbers as arguments')
+            raise SchemeError('expects numbers as arguments')
         except KeyError:
-            raise SchemeError('', 'operation is not supported')
+            raise SchemeError('operation is not supported')
     return func
 
 
@@ -248,9 +248,9 @@ def _ne(a, b):
     return _op_table['!='][a.tag](a, b)
 
 
-class Num:
+class Num(object):
     def __init__(self):
-        raise SchemeError()
+        raise SchemeError('')
 
     def __add__(self, other):
         return _add(self, other)
@@ -301,15 +301,15 @@ class Complex(Num):
                 return 'i'
             elif is_true(self.imag == Rational(-1, 1)):
                 return '-i'
-            return '{0}i'.format(self.imag)
+            return '%si' % (self.imag)
         elif is_true(self.imag > Rational(0, 1)):
             if is_true(self.imag == Rational(1, 1)):
-                return '{0}+i'.format(self.real)
-            return '{0}+{1}i'.format(self.real, self.imag)
+                return '%s+i' % (self.real)
+            return '%s+%si' % (self.real, self.imag)
         else:
             if is_true(self.imag == Rational(-1, 1)):
-                return '{0}-i'.format(self.real, self.imag)
-            return '{0}{1}i'.format(self.real, self.imag)
+                return '%s-i' % (self.real, self.imag)
+            return '%s%si' % (elf.real, self.imag)
 
 class Real(Num):
     def __init__(self, value):
@@ -351,7 +351,7 @@ class Rational(Num):
         elif self.denom == 1:
             return str(self.numer)
         else:
-            return '{0}/{1}'.format(self.numer, self.denom)
+            return '%s/%s' % (self.numer, self.denom)
 
 
 def is_number(v):

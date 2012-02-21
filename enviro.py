@@ -4,9 +4,10 @@
 Environment
 """
 
+from typedef import Symbol, Procedure
 from errors import *
 
-class Env:
+class Env(object):
     def __init__(self, var_list=[], val_list=[], outer=None):
         self.bindings = {}
         for var, val in zip(var_list, val_list):
@@ -36,11 +37,33 @@ class Env:
         raise SchemeError('unbound variable ' + var)
 
 def extend_env(var_list, val_list, base_env):
+    # `var_list' and `val_list' are python lists
     return Env(var_list, val_list, base_env)
 
 def init_global():
-    from typedef import Symbol
-    from number import Rational
-    global_env = Env()
+    prim_vars = [
+        Symbol('+'),
+        Symbol('-'),
+        Symbol('*'),
+        Symbol('/'),
+        Symbol('='),
+        Symbol('>'),
+        Symbol('<'),
+        Symbol('>='),
+        Symbol('<=')
+    ]
+
+    prim_vals = [
+        Procedure(None, '+', None, True),
+        Procedure(None, '-', None, True),
+        Procedure(None, '*', None, True),
+        Procedure(None, '/', None, True),
+        Procedure(None, '=', None, True),
+        Procedure(None, '>', None, True),
+        Procedure(None, '<', None, True),
+        Procedure(None, '>=', None, True),
+        Procedure(None, '<=', None, True)
+    ]
+
+    global_env = Env(prim_vars, prim_vals)
     return global_env
-    #TODO: add initial bindings to global env

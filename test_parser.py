@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-import parser
-import typedef
-import number
-import pair
-import trampoline
+from parser import Tokenizer, parse
+from pair import to_str
 
 class ParserTest(unittest.TestCase):
     def setUp(self):
-        self.tokenizer = parser.Tokenizer()
+        self.tokenizer = Tokenizer()
 
     def tearDown(self):
         self.tokenizer = None
@@ -78,39 +75,39 @@ class ParserTest(unittest.TestCase):
         """Test parsing lexemes"""
 
         self.tokenizer.tokenize("aaa" + "\n")
-        obj = parser.parse(self.tokenizer.get_tokens())
+        obj = parse(self.tokenizer.get_tokens())
         self.assertEqual(len(obj), 1)
         self.assertEqual(obj[0], "aaa")
 
         self.tokenizer.tokenize("#t" + "\n")
-        obj = parser.parse(self.tokenizer.get_tokens())
+        obj = parse(self.tokenizer.get_tokens())
         self.assertEqual(len(obj), 1)
         self.assertEqual(obj[0].value, True)
 
         self.tokenizer.tokenize('"helloworld"' + "\n")
-        obj = parser.parse(self.tokenizer.get_tokens())
+        obj = parse(self.tokenizer.get_tokens())
         self.assertEqual(len(obj), 1)
         self.assertEqual(obj[0].value, "helloworld")
 
         self.tokenizer.tokenize('123' + "\n")
-        obj = parser.parse(self.tokenizer.get_tokens())
+        obj = parse(self.tokenizer.get_tokens())
         self.assertEqual(len(obj), 1)
         self.assertEqual(obj[0].numer, 123)
         self.assertEqual(obj[0].denom, 1)
 
         self.tokenizer.tokenize('-4/6' + "\n")
-        obj = parser.parse(self.tokenizer.get_tokens())
+        obj = parse(self.tokenizer.get_tokens())
         self.assertEqual(len(obj), 1)
         self.assertEqual(obj[0].numer, -2)
         self.assertEqual(obj[0].denom, 3)
 
         self.tokenizer.tokenize('.0' + "\n")
-        obj = parser.parse(self.tokenizer.get_tokens())
+        obj = parse(self.tokenizer.get_tokens())
         self.assertEqual(len(obj), 1)
         self.assertEqual(obj[0].value, 0.0)
 
         self.tokenizer.tokenize('+i' + "\n")
-        obj = parser.parse(self.tokenizer.get_tokens())
+        obj = parse(self.tokenizer.get_tokens())
         self.assertEqual(len(obj), 1)
         self.assertEqual(obj[0].real.numer, 0)
         self.assertEqual(obj[0].real.denom, 1)
@@ -118,7 +115,7 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(obj[0].imag.denom, 1)
 
         self.tokenizer.tokenize('-4/5+6/3i' + "\n")
-        obj = parser.parse(self.tokenizer.get_tokens())
+        obj = parse(self.tokenizer.get_tokens())
         self.assertEqual(len(obj), 1)
         self.assertEqual(obj[0].real.numer, -4)
         self.assertEqual(obj[0].real.denom, 5)
@@ -137,7 +134,7 @@ class ParserTest(unittest.TestCase):
                  ("(x (y . z) w)", ["x", [["y", "z"], ["w", []]]])]
 
         for case in cases:
-            sexp = parser.parse(self.tokenizer.tokenize_single(case[0] + '\n'))[0]
+            sexp = parse(self.tokenizer.tokenize_single(case[0] + '\n'))[0]
             self.assertEqual(sexp, case[1])
 
     def testStringRepr(self):
@@ -154,8 +151,8 @@ class ParserTest(unittest.TestCase):
                  ("(a . (b . (c . d)))", "(a b c . d)")]
 
         for case in cases:
-            sexp = parser.parse(self.tokenizer.tokenize_single(case[0] + '\n'))[0]
-            self.assertEqual(pair.to_str(sexp), case[1])
+            sexp = parse(self.tokenizer.tokenize_single(case[0] + '\n'))[0]
+            self.assertEqual(to_str(sexp), case[1])
 
     def testDeepParsing(self):
         """S-expressions that require deep recursion."""
@@ -167,8 +164,8 @@ class ParserTest(unittest.TestCase):
                  ("(x . "*1000 + "()" + ")"*1000, "(" + "x " * 999 + "x)")]
 
         for case in cases:
-            sexp = parser.parse(self.tokenizer.tokenize_single(case[0] + '\n'))[0]
-            self.assertEqual(pair.to_str(sexp), case[1])
+            sexp = parse(self.tokenizer.tokenize_single(case[0] + '\n'))[0]
+            self.assertEqual(to_str(sexp), case[1])
 
 def suite():
     suite = unittest.TestSuite()

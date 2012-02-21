@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 
 from errors import *
-
-import trampoline
+from trampoline import Bounce, pogo_stick
 
 class Pair(list):
     def __eq__(self, v):
-        return super().__eq__(v)
+        return super(Pair, self).__eq__(v)
     def __str__(self):
         return to_str(self)
 
@@ -15,30 +14,27 @@ def cons(first, second):
 
 NIL = Pair([])
 
-
-def _to_str(p):
+def _to_str(p, cont):
     "Give the neat string representation of a pair."
-    def f(first):
-        def g(rest):
+    def done_first(first):
+        def done_rest(rest):
             if rest[0] == '(':
                 if rest[1:-1] == '':
-                    return trampoline.fall('(' + first + ')')
+                    return Bounce(cont, '(' + first + ')')
                 else:
-                    return trampoline.fall('(' + first + ' ' + rest[1:-1] + ')')
+                    return Bounce(cont, '(' + first + ' ' + rest[1:-1] + ')')
             else:
-                return trampoline.fall('(' + first + ' . ' + rest + ')')
-        return trampoline.sequence([g], trampoline.bounce(_to_str, cdr(p)))
+                return Bounce(cont, '(' + first + ' . ' + rest + ')')
+        return Bounce(_to_str, cdr(p), done_rest)
 
     if not isinstance(p, Pair):
-        return trampoline.fall(str(p))
+        return Bounce(cont, str(p))
     if len(p) == 0:
-        return trampoline.fall('()')
-
-    return trampoline.sequence([f], trampoline.bounce(_to_str, car(p)))
+        return Bounce(cont, '()')
+    return Bounce(_to_str, car(p), done_first)
 
 def to_str(p):
-    return trampoline.pogo_stick(_to_str(p))
-
+    return pogo_stick(Bounce(_to_str, p, lambda d:d))
 
 def check_cxr_param(cxr):
     """Check if the argument cannot be cxred."""
@@ -46,14 +42,13 @@ def check_cxr_param(cxr):
     def f(func):
         def g(p):
             if not isinstance(p, Pair):
-                raise SchemeError('expect {0}able pairs, given {1}'.format(cxr, to_str(p)))
+                raise SchemeError('expect %sable pairs, given %s' % (cxr, to_str(p)))
             try:
                 return func(p)
             except Exception:
-                raise SchemeError('expect {0}able pairs, given {1}'.format(cxr, to_str(p)))
+                raise SchemeError('expect %sable pairs, given %s' % (cxr, to_str(p)))
         return g
     return f
-
 
 # c*r operations for pair manipulation
 @check_cxr_param('car')
@@ -218,7 +213,7 @@ def get_length(p):
             p = cdr(p)
         return res
     except SchemeError:
-        raise SchemeError('expects proper list, given {0}'.format(to_str(p)))
+        raise SchemeError('expects proper list, given %s' % (to_str(p)))
 
 def append_lst(*args):
     """(append '(1 2) '(a b))"""
@@ -239,7 +234,7 @@ def append_lst(*args):
             p[1] = res
             res = lst
         except SchemeError:
-            raise SchemeError('expects proper list, given {0}'.format(to_str(p)))
+            raise SchemeError('expects proper list, given %s' % (to_str(p)))
 
     return res
 
@@ -261,6 +256,6 @@ def get_list_tail(p, start):
             now += 1
         return p
     except SchemeError:
-        raise SchemeError('index {0} is too large for {1}'.format(start, to_str(orig)))
+        raise SchemeError('index %s is too large for %s' % (start, to_str(orig)))
 
 # TODO map, filter, for-each

@@ -1,40 +1,28 @@
 # -*- coding: utf-8 -*-
 
-"""
-    Analyzer that checks if the forms are valid according to 
-    Scheme's syntax rules and the evalution funtions.
-"""
-
-import trampoline
-
+from errors import *
+from pair import *
 from number import is_number
 from enviro import extend_env
-from pair import *
-from typedef import *
-from errors import *
+from prim import prim_ops
+from trampoline import pogo_stick, Bounce
+from typedef import is_boolean, is_true, is_string, is_symbol, \
+                    Symbol, Procedure, Boolean
 
 def is_tagged_list(exp, tag):
-    return is_list(exp) and car(exp) == tag
-
+    return is_list(exp) and is_symbol(car(exp)) and car(exp) == tag
 
 def is_self_evaluating(exp):
     return is_number(exp) or is_boolean(exp) or is_string(exp)
 
-def analyze_self_evaluating(exp):
-    def f(env):
-        return trampoline.fall(exp)
-    return trampoline.fall(f)
-
+def eval_self_evaluating(exp, env, cont):
+    return Bounce(cont, exp)
 
 def is_variable(exp):
     return is_symbol(exp)
 
-def analyze_variable(exp):
-    def f(env):
-        return trampoline.fall(env.get_var(exp))
-
-    return trampoline.fall(f)
-
+def eval_variable(exp, env, cont):
+    return Bounce(cont, env.get_var(exp))
 
 def is_quote(exp):
     return is_tagged_list(exp, Symbol('quote'))
@@ -42,14 +30,10 @@ def is_quote(exp):
 def get_quote_text(exp):
     return cadr(exp)
 
-def analyze_quote(exp):
-    def f(env):
-        return trampoline.fall(get_quote_text(exp))
-
+def eval_quote(exp, env, cont):
     if get_length(exp) != 2:
         raise SchemeError('bad syntax: ' + to_str(exp))
-    return trampoline.fall(f)
-
+    return Bounce(cont, get_quote_text(exp))
 
 def is_assignment(exp):
     return is_tagged_list(exp, Symbol('set!'))
@@ -60,17 +44,18 @@ def get_assignment_var(exp):
 def get_assignment_val(exp):
     return caddr(exp)
 
-def analyze_assignment(exp):
-    def f(env):
-        env.set_var(var, trampoline.pogo_stick(val(env)))
-        return trampoline.fall(Symbol('ok'))
+def eval_assignment(exp, env, cont):
+    def done_value(value):
+        env.set_var(get_assignment_var(exp), value)
+        return Bounce(cont, Symbol('ok'))
 
     if get_length(exp) != 3:
         raise SchemeError('bad syntax: ' + to_str(exp))
 
-    var, val = get_assignment_var(exp), analyze(get_assignment_val(exp))
-    return trampoline.fall(f)
-
+    val = get_assignment_val(exp)
+    # evaluate the value expression first, and set
+    # the variable to that value
+    return Bounce(_eval, val, env, done_value)
 
 def is_definition(exp):
     return is_tagged_list(exp, Symbol('define'))
@@ -87,17 +72,18 @@ def get_define_val(exp):
         return caddr(exp)
     return make_lambda(cdadr(exp), cddr(exp))
 
-def analyze_definition(exp):
-    def f(env):
-        env.add_var(var, trampoline.pogo_stick(val(env)))
-        return trampoline.fall(Symbol('ok'))
+def eval_definition(exp, env, cont):
+    def done_value(value):
+        env.add_var(get_define_var(exp), value)
+        return Bounce(cont, Symbol('ok'))
 
     if get_length(exp) < 3:
         raise SchemeError('bad syntax: ' + to_str(exp))
 
-    var, val = get_define_var(exp), analyze(get_define_val(exp))
-    return trampoline.fall(f)
-
+    val = get_define_val(exp)
+    # evaluate the value or lambda expression first, and
+    # add a new variable in the environment
+    return Bounce(_eval, val, env, done_value)
 
 def is_lambda(exp):
     return is_tagged_list(exp, Symbol('lambda'))
@@ -111,17 +97,14 @@ def get_lambda_body(exp):
 def make_lambda(params, body):
     return cons(Symbol('lambda'), cons(params, body))
 
-def analyze_lambda(exp):
-    def f(env):
-        nonlocal params
-        if is_list(params):
-            params = to_python_list(params)
-        return trampoline.fall(Procedure(params, body, env))
+def eval_lambda(exp, env, cont):
+    body = get_lambda_body(exp)
+    params = get_lambda_params(exp)
 
-    params, body = get_lambda_params(exp), \
-                   trampoline.pogo_stick(analyze_sequence(get_lambda_body(exp)))
-    return trampoline.fall(f)
+    if is_list(params):
+        params = to_python_list(params)
 
+    return Bounce(cont, Procedure(params, body, env))
 
 def is_if(exp):
     return is_tagged_list(exp, Symbol('if'))
@@ -132,7 +115,7 @@ def get_if_predicate(exp):
 def get_if_consequent(exp):
     return caddr(exp)
 
-def get_if_alternative(exp):
+def get_if_alternate(exp):
     x = cdddr(exp)
     if not is_null(x):
         return car(x)
@@ -141,19 +124,13 @@ def get_if_alternative(exp):
 def make_if(predicate, consequent, alternative):
     return make_list(Symbol('if'), predicate, consequent, alternative)
 
-def analyze_if(exp):
-    predi, conse, alter = analyze(get_if_predicate(exp)), \
-                          analyze(get_if_consequent(exp)), \
-                          analyze(get_if_alternative(exp))
-
-    def f(env):
-        if is_true(trampoline.pogo_stick(predi(env))):
-            return trampoline.pogo_stick(conse(env))
+def eval_if(exp, env, cont):
+    def take_action(pred):
+        if is_true(pred):
+            return Bounce(_eval, get_if_consequent(exp), env, cont)
         else:
-            return trampoline.pogo_stick(alter(env))
-
-    return trampoline.fall(f)
-
+            return Bounce(_eval, get_if_alternate(exp), env, cont)
+    return Bounce(_eval, get_if_predicate(exp), env, take_action)
 
 def is_begin(exp):
     return is_tagged_list(exp, Symbol('begin'))
@@ -172,16 +149,13 @@ def seq_to_exp(seq):
 def make_begin(seq):
     return cons(Symbol('begin'), seq)
 
-def analyze_sequence(exps):
-    exp_list = [analyze(x) for x in to_python_list(exps)]
-
-    def f(env):
-        for exp in exp_list[:-1]:
-            trampoline.pogo_stick(exp(env))
-        return exp_list[-1](env)
-
-    return trampoline.fall(f)
-
+def eval_sequence(exps, env, cont):
+    "evaluate the sequence, return only the last as final result"
+    def done_first(first):
+        return Bounce(eval_sequence, cdr(exps), env, cont)
+    if is_null(cdr(exps)):
+        return Bounce(_eval, car(exps), env, cont)
+    return Bounce(_eval, car(exps), env, done_first)
 
 def is_application(exp):
     return is_pair(exp)
@@ -192,34 +166,33 @@ def get_application_opr(exp):
 def get_application_opd(exp):
     return cdr(exp)
 
-def analyze_application(exp):
-    def f(env):
-        nonlocal func, args
-        proc = trampoline.pogo_stick(func(env))
-        arg_list = [trampoline.pogo_stick(arg(env)) for arg in args]
+def eval_each(opds, env, cont):
+    """\
+    evaluate each operand in the Scheme list, make
+    a new Scheme list.
+    """
+    def done_first(first):
+        def have_rest(rest):
+            return Bounce(cont, cons(first, rest))
+        return Bounce(eval_each, cdr(opds), env, have_rest)
+    
+    if is_null(opds):
+        return Bounce(cont, NIL)
+    return Bounce(_eval, car(opds), env, done_first)
 
-        if not isinstance(proc, Procedure):
-            raise SchemeError('no procedure to apply: ' + to_str(exp))
+def eval_application(exp, env, cont):
+    def done_opr(opr):
+        def done_opds(opd):
+            return Bounce(apply, opr, opd, cont)
 
-        if proc.is_prim:
-            # TODO: add prim procedures to the initial env
-            return apply_prim(proc, arg_list)
-        else:
-            # 检查是否是代表列表的单个参数，扩展环境
-            if proc.is_var_args:
-                var_list = [proc.params]
-                val_list = make_list(arg_list)
-            else:
-                var_list = proc.params
-                val_list = arg_list
+        if not isinstance(opr, Procedure):
+            raise SchemeError('not applicable: ' + to_str(exp))
+        opds = get_application_opd(exp)
+        return Bounce(eval_each, opds, env, done_opds)
 
-            new_env = extend_env(var_list, val_list, env)
-            return proc.body(new_env)
-
-    func, args = analyze(get_application_opr(exp)), \
-                 [analyze(x) for x in to_python_list(get_application_opd(exp))]
-    return trampoline.fall(f)
-
+    opr = get_application_opr(exp)
+    # evaluate the operator first
+    return Bounce(_eval, opr, env, done_opr)
 
 def is_cond(exp):
     return is_tagged_list(exp, Symbol('cond'))
@@ -234,7 +207,7 @@ def get_cond_action(clause):
     return cdr(clause)
 
 def is_cond_else(clause):
-    return get_cond_predicate(clause) == Symbol('else')
+    return is_tagged_list(clause, Symbol('else'))
 
 def cond_to_if(exp):
     return expand_clauses(get_cond_clauses(exp))
@@ -254,7 +227,6 @@ def expand_clauses(clauses):
 
     return alter
 
-
 def is_let(exp):
     return is_tagged_list(exp, Symbol('let'))
 
@@ -266,7 +238,6 @@ def get_let_body(exp):
 
 def get_binding_var_exp(bindings):
     "Return the variables and expressions in each binding."
-
     binding_list = to_python_list(bindings)
     return make_list(*[car(x) for x in binding_list]), \
            make_list(*[cadr(x) for x in binding_list])
@@ -275,40 +246,57 @@ def let_to_call(exp):
     var_list, exp_list = get_binding_var_exp(get_let_bindings(exp))
     return cons(make_lambda(var_list, get_let_body(exp)), exp_list)
 
-
-def analyze_exp(exp):
-    #TODO: unit test to be added
+def _eval(exp, env, cont):
     if is_self_evaluating(exp):
-        return trampoline.bounce(analyze_self_evaluating, exp)
+        return Bounce(eval_self_evaluating, exp, env, cont)
     elif is_quote(exp):
-        return trampoline.bounce(analyze_quote, exp)
+        return Bounce(eval_quote, exp, env, cont)
     elif is_variable(exp):
-        return trampoline.bounce(analyze_variable, exp)
+        return Bounce(eval_variable, exp, env, cont)
     elif is_assignment(exp):
-        return trampoline.bounce(analyze_assignment, exp)
+        return Bounce(eval_assignment, exp, env, cont)
     elif is_definition(exp):
-        return trampoline.bounce(analyze_definition, exp)
+        return Bounce(eval_definition, exp, env, cont)
     elif is_lambda(exp):
-        return trampoline.bounce(analyze_lambda, exp)
-    #elif is_if(exp):
-    #    return trampoline.bounce(analyze_if, exp)
+        return Bounce(eval_lambda, exp, env, cont)
+    elif is_if(exp):
+        return Bounce(eval_if, exp, env, cont)
     #elif is_begin(exp):
-    #    return trampoline.bounce(analyze_sequence, get_begin_actions(exp))
-    #elif is_cond(exp):
-    #    return trampoline.bounce(analyze_exp, cond_to_if(exp))
+    #    return trp.bounce(analyze_sequence, get_begin_actions(exp))
+    elif is_cond(exp):
+        return Bounce(eval_if, cond_to_if(exp), env, cont)
     elif is_application(exp):
-        return trampoline.bounce(analyze_application, exp)
+        return Bounce(eval_application, exp, env, cont)
     else:
         raise SchemeError('unknown expression: ' + to_str(exp))
 
-def analyze(exp):
-    return trampoline.pogo_stick(analyze_exp(exp))
+def apply_prim(prim_type, args, cont):
+    return Bounce(cont, prim_ops[prim_type](args))
 
 python_eval = eval
+python_apply = apply
 
 def eval(exp, env):
-    # TODO (define foo (lambda x x)) (foo 1 2 3) 返回的是list，不是List
-    # 测sequence的执行、函数定义、不定参数和定参数的函数定义
-    #trampoline.pogo_stick(analyze(exp)(env))
-    #return result
-    return trampoline.pogo_stick(analyze(exp)(env))
+    return pogo_stick(Bounce(_eval, exp, env, lambda d:d))
+
+def apply(proc, args, cont):
+    # `args' is a scheme list 
+    if proc.is_prim:
+        return Bounce(apply_prim, proc.body, to_python_list(args), cont)
+    else:
+        # if `proc' accepts arbitrary arguments, `proc.params' is a single
+        # variable, put it into a python list, `args' remains a scheme list
+        if proc.is_var_args:
+            params = [proc.params]
+            args = to_python_list(make_list(args))
+        else:
+            params = proc.params
+            args = to_python_list(args)
+
+        if len(proc.params) != len(args):
+            raise SchemeError('expects %d arguments, given %d: %s' % \
+                              (len(proc.params), len(args), ' '.join([str(x) for x in args])))
+
+        new_env = extend_env(params, args, proc.env)
+        body = proc.body
+        return Bounce(eval_sequence, body, new_env, cont)

@@ -11,7 +11,7 @@ from pair import to_str
 class EvaluatorTest(unittest.TestCase):
     def setUp(self):
         self.tk = Tokenizer()
-        self.env = enviro.Env()
+        self.env = enviro.init_global()
 
     def tearDown(self):
         self.tk = None
@@ -52,28 +52,33 @@ class EvaluatorTest(unittest.TestCase):
         exp = self.p('bar')
         self.assertEqual(Rational(999, 1), evalu.eval(exp, self.env))
 
-    def testLambda(self):
-        evalu.eval(self.p('(define foo (lambda x x))'), self.env)
-        func = evalu.eval(self.p('foo'), self.env)
-        print('params:', to_str(func.params))
-        print('body:', func.body)
-        print('is_prim:', func.is_prim)
-        print('is_var_args:', func.is_var_args)
-        for var in func.env.bindings:
-            print(var, func.env.bindings[var])
-
+    def testPrims(self):
+        cases = (
+            ('(+)', Rational(0, 1)),
+            ('(+ 1 2 3)', Rational(6, 1)),
+            ('(+ 4/5 1/5)', Rational(1, 1)),
+            ('(- +i +i)', Rational(0, 1)),
+            ('(*)', Rational(1, 1)),
+            ('(* 1 2 3)', Rational(6, 1)),
+            ('(* 1 1 1 0)', Rational(0, 1)),
+            ('(/ 5)', Rational(1, 5)),
+            ('(/ 1 2 3)', Rational(1, 6)),
+            ('(= 2/4 1/2)', Boolean(True)),
+            ('(> 1.3 1.299999)', Boolean(True)),
+            ('(= 0.0001 (* 0.00005 2))', Boolean(True))
+        )
+        for case in cases:
+            self.assertEqual(case[1], evalu.eval(self.p(case[0]), self.env))
 
 def suite():
-    #TODO:
-    # add unit test here
     suite = unittest.TestSuite()
 
-    # syntax transformation
-    #suite.addTest(EvaluatorTest('testSelfEvaluating'))
-    #suite.addTest(EvaluatorTest('testQuote'))
-    #suite.addTest(EvaluatorTest('testDefine'))
-    #suite.addTest(EvaluatorTest('testSet'))
-    suite.addTest(EvaluatorTest('testLambda'))
+    suite.addTest(EvaluatorTest('testSelfEvaluating'))
+    suite.addTest(EvaluatorTest('testQuote'))
+    suite.addTest(EvaluatorTest('testDefine'))
+    suite.addTest(EvaluatorTest('testSet'))
+
+    suite.addTest(EvaluatorTest('testPrims'));
 
     return suite
 
