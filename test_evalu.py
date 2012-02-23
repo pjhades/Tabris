@@ -3,8 +3,8 @@
 import unittest
 import evalu
 import enviro
-from typedef import *
-from number import *
+from basic_type import String, Boolean
+from number_type import Rational, Real, Complex
 from parser import Tokenizer, parse 
 from pair import to_str
 
@@ -66,6 +66,15 @@ class EvaluatorTest(unittest.TestCase):
             ('(= 2/4 1/2)', Boolean(True)),
             ('(> 1.3 1.299999)', Boolean(True)),
             ('(= 0.0001 (* 0.00005 2))', Boolean(True))
+        )
+        for case in cases:
+            self.assertEqual(case[1], evalu.eval(self.p(case[0]), self.env))
+
+    def testIf(self):
+        cases = (
+            ('(if #t 1 2)', Rational(1, 1)),
+            ('(if #f 1)', Boolean(False)),
+            ('(if #f 1 (if #t 2 3))', Rational(2, 1))
         )
         for case in cases:
             self.assertEqual(case[1], evalu.eval(self.p(case[0]), self.env))

@@ -2,12 +2,13 @@
 
 from errors import *
 from pair import *
-from number import is_number
+from pair_lib import *
 from enviro import extend_env
-from prim import prim_ops
+from prims import prim_ops
 from trampoline import pogo_stick, Bounce
-from typedef import is_boolean, is_true, is_string, is_symbol, \
-                    Symbol, Procedure, Boolean
+from basic_type import Boolean, Symbol, Procedure, is_true, \
+                       is_boolean, is_string, is_symbol
+from number_type import is_number
 
 def is_tagged_list(exp, tag):
     return is_list(exp) and is_symbol(car(exp)) and car(exp) == tag
@@ -261,8 +262,8 @@ def _eval(exp, env, cont):
         return Bounce(eval_lambda, exp, env, cont)
     elif is_if(exp):
         return Bounce(eval_if, exp, env, cont)
-    #elif is_begin(exp):
-    #    return trp.bounce(analyze_sequence, get_begin_actions(exp))
+    elif is_begin(exp):
+        return Bounce(eval_sequence, get_begin_actions(exp), env, cont)
     elif is_cond(exp):
         return Bounce(eval_if, cond_to_if(exp), env, cont)
     elif is_application(exp):
@@ -271,7 +272,7 @@ def _eval(exp, env, cont):
         raise SchemeError('unknown expression: ' + to_str(exp))
 
 def apply_prim(prim_type, args, cont):
-    return Bounce(cont, prim_ops[prim_type](args))
+    return Bounce(cont, prim_ops[prim_type](*args))
 
 python_eval = eval
 python_apply = apply
@@ -280,7 +281,7 @@ def eval(exp, env):
     return pogo_stick(Bounce(_eval, exp, env, lambda d:d))
 
 def apply(proc, args, cont):
-    # `args' is a scheme list 
+    """apply `proc' on scheme list `args'"""
     if proc.is_prim:
         return Bounce(apply_prim, proc.body, to_python_list(args), cont)
     else:

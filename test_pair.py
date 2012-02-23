@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from pair import *
+from pair import Pair
+from pair_lib import *
 
 class PairTest(unittest.TestCase):
     def setUp(self):

@@ -1,16 +1,13 @@
 # -*- coding: utf-8 -*-
 
-"""
-    Implementation of the tokenizer for lexical analysis and
-    the parser for syntax analysis.
-"""
+"""Tokenizer for lexical analysis and parser for syntax analysis."""
 
 import re
 
-from number import Rational, Real, Complex
 from trampoline import pogo_stick, Bounce
-from pair import make_list, cons, NIL
-from typedef import Boolean, is_true, Symbol, String
+from pair_lib import make_list, cons, NIL
+from basic_type import Boolean, Symbol, String, is_true
+from number_type import Rational, Real, Complex
 from errors import *
 
 # Delimiter characters. If we see these, we have found
@@ -135,6 +132,7 @@ class Tokenizer(object):
                     self.comment_not_end = False
 
                 elif char == '(':
+                    self.quote_not_end = False
                     self.paren_count += 1
                     self._tokens.append(char)
                 elif char == ')':
@@ -219,29 +217,17 @@ def parse_rest_sexps(tokens, cont):
     Parse the S-expressions in the list. The list may 
     be a Scheme list or a dotted partial list.
     """
-
     token_type = tokens[0][1]
     
     if token_type == '.':
         consume(tokens, '.')
         return Bounce(parse_sexp, tokens, cont)
-
     elif token_type != ')':
         def done_first(first):
             def done_rest(rest):
                 return Bounce(cont, cons(first, rest))
             return Bounce(parse_rest_sexps, tokens, done_rest)
         return Bounce(parse_sexp, tokens, done_first)
-
-    #elif token_type != ')':
-    #    def f(v):
-    #        def g(first):
-    #            def h(rest):
-    #                return trampoline.fall(cons(first, rest))
-    #            return h
-    #        return trampoline.sequence([g(v)], trampoline.bounce(parse_rest_sexps, tokens))
-    #    return trampoline.sequence([f], trampoline.bounce(parse_sexp, tokens))
-
     else:
         return Bounce(cont, NIL)
 
@@ -250,6 +236,7 @@ def parse_list(tokens, cont):
     def done_rest(rest):
         consume(tokens, ')')
         return Bounce(cont, rest)
+
     consume(tokens, '(')
     return Bounce(parse_rest_sexps, tokens, done_rest)
 
