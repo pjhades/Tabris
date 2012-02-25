@@ -90,8 +90,8 @@ def eval_define(exp, env, cont):
     # add a new variable in the environment
     return Bounce(_eval, val, env, done_value)
 
-def is_lambda(exp):
-    return is_tagged_list(exp, Symbol('lambda'))
+#def is_lambda(exp):
+#    return is_tagged_list(exp, Symbol('lambda'))
 
 def get_lambda_params(exp):
     return cadr(exp)
@@ -111,8 +111,8 @@ def eval_lambda(exp, env, cont):
 
     return Bounce(cont, Procedure(params, body, env))
 
-def is_if(exp):
-    return is_tagged_list(exp, Symbol('if'))
+#def is_if(exp):
+#    return is_tagged_list(exp, Symbol('if'))
 
 def get_if_predicate(exp):
     return cadr(exp)
@@ -137,8 +137,8 @@ def eval_if(exp, env, cont):
             return Bounce(_eval, get_if_alternate(exp), env, cont)
     return Bounce(_eval, get_if_predicate(exp), env, take_action)
 
-def is_begin(exp):
-    return is_tagged_list(exp, Symbol('begin'))
+#def is_begin(exp):
+#    return is_tagged_list(exp, Symbol('begin'))
 
 def get_begin_actions(exp):
     return cdr(exp)
@@ -202,8 +202,8 @@ def eval_application(exp, env, cont):
     # evaluate the operator first
     return Bounce(_eval, opr, env, done_opr)
 
-def is_cond(exp):
-    return is_tagged_list(exp, Symbol('cond'))
+#def is_cond(exp):
+#    return is_tagged_list(exp, Symbol('cond'))
 
 def get_cond_clauses(exp):
     return cdr(exp)
@@ -238,8 +238,8 @@ def expand_clauses(clauses):
 
     return alter
 
-def is_let(exp):
-    return is_tagged_list(exp, Symbol('let'))
+#def is_let(exp):
+#    return is_tagged_list(exp, Symbol('let'))
 
 def get_let_bindings(exp):
     return cadr(exp)
