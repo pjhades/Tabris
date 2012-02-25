@@ -145,12 +145,15 @@ def cddddr(p):
 	return p[1][1][1][1]
 
 def null_query(v):
+    """(null? p)"""
     return Boolean(is_null(v))
 
 def pair_query(v):
+    """(pair? p)"""
     return Boolean(is_pair(v))
 
 def list_query(v):
+    """(list? p)"""
     return Boolean(is_list(v))
 
 def make_list(*elems):
@@ -162,14 +165,9 @@ def make_list(*elems):
 
 def get_length(p):
     """(length '(1 2 3))"""
-    try:
-        res = 0
-        while p != NIL:
-            res += 1
-            p = cdr(p)
-        return res
-    except SchemeError:
+    if not p.islist:
         raise SchemeError('expects proper list, given %s' % (to_str(p)))
+    return p.length
 
 def append_lst(*args):
     """(append '(1 2) '(a b))"""
@@ -178,7 +176,7 @@ def append_lst(*args):
 
     import copy
     lsts = [copy.deepcopy(x) for x in args]
-
+    
     res = lsts[-1]
     for lst in reversed(lsts[:-1]):
         try:
@@ -191,6 +189,15 @@ def append_lst(*args):
             res = lst
         except SchemeError:
             raise SchemeError('expects proper list, given %s' % (to_str(p)))
+
+    if not isinstance(res, Pair):
+        return res
+
+    res.islist = lsts[-1].islist
+    if res.islist:
+        res.length = sum([x.length for x in args])
+    else:
+        res.length = 0
 
     return res
 

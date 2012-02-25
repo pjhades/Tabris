@@ -81,12 +81,10 @@ class EvaluatorTest(unittest.TestCase):
 
 def suite():
     suite = unittest.TestSuite()
-
     suite.addTest(EvaluatorTest('testSelfEvaluating'))
     suite.addTest(EvaluatorTest('testQuote'))
     suite.addTest(EvaluatorTest('testDefine'))
     suite.addTest(EvaluatorTest('testSet'))
-
     suite.addTest(EvaluatorTest('testPrims'));
 
     return suite

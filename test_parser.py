@@ -158,7 +158,7 @@ class ParserTest(unittest.TestCase):
         """S-expressions that require deep recursion."""
         
         import sys
-        sys.setrecursionlimit(30)
+        sys.setrecursionlimit(50)
 
         cases = [("'"*1000 + "x", "(quote "*1000 + "x" + ")"*1000), \
                  ("(x . "*1000 + "()" + ")"*1000, "(" + "x " * 999 + "x)")]

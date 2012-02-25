@@ -2,6 +2,7 @@
 """\
 Read-Evaluate-Print Loop
 """
+import profile
 
 import parser
 import evalu
@@ -11,11 +12,14 @@ from pair import to_str
 
 class Repl(object):
     def __init__(self, infile=''):
-        self.infile = '' if infile == '' else open(infile, 'r')
-        self.tokenizer = parser.Tokenizer()
-        self.env = enviro.init_global()
         self.ps1 = "秋裤党 >>> "
         self.ps2 = "       ... "
+        self.tokenizer = parser.Tokenizer()
+        self.env = enviro.init_global()
+        try:
+            self.infile = '' if infile == '' else open(infile, 'r')
+        except IOError:
+            raise SchemeError('cannot open source file: ' + infile)
 
     # TODO: capture C-c C-\ signals, add (exit) to exit
     def loop(self):
@@ -61,3 +65,5 @@ class Repl(object):
                 #print '            V'
                 print evalu.eval(exp, self.env)
                 #print 
+        
+        self.infile.close()

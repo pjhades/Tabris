@@ -10,8 +10,12 @@ from basic_type import Boolean, Symbol, Procedure, is_true, \
                        is_boolean, is_string, is_symbol
 from number_type import is_number
 
-def is_tagged_list(exp, tag):
-    return is_list(exp) and is_symbol(car(exp)) and car(exp) == tag
+# save the original versions
+python_eval = eval
+python_apply = apply
+
+#def is_tagged_list(exp, tag):
+#    return is_list(exp) and is_symbol(car(exp)) and car(exp) == tag
 
 def is_self_evaluating(exp):
     return is_number(exp) or is_boolean(exp) or is_string(exp)
@@ -25,8 +29,8 @@ def is_variable(exp):
 def eval_variable(exp, env, cont):
     return Bounce(cont, env.get_var(exp))
 
-def is_quote(exp):
-    return is_tagged_list(exp, Symbol('quote'))
+#def is_quote(exp):
+#    return is_tagged_list(exp, Symbol('quote'))
 
 def get_quote_text(exp):
     return cadr(exp)
@@ -36,30 +40,30 @@ def eval_quote(exp, env, cont):
         raise SchemeError('bad syntax: ' + to_str(exp))
     return Bounce(cont, get_quote_text(exp))
 
-def is_assignment(exp):
-    return is_tagged_list(exp, Symbol('set!'))
+#def is_set(exp):
+#    return is_tagged_list(exp, Symbol('set!'))
 
-def get_assignment_var(exp):
+def get_set_var(exp):
     return cadr(exp)
 
-def get_assignment_val(exp):
+def get_set_val(exp):
     return caddr(exp)
 
-def eval_assignment(exp, env, cont):
+def eval_set(exp, env, cont):
     def done_value(value):
-        env.set_var(get_assignment_var(exp), value)
+        env.set_var(get_set_var(exp), value)
         return Bounce(cont, Symbol('ok'))
 
     if get_length(exp) != 3:
         raise SchemeError('bad syntax: ' + to_str(exp))
 
-    val = get_assignment_val(exp)
+    val = get_set_val(exp)
     # evaluate the value expression first, and set
     # the variable to that value
     return Bounce(_eval, val, env, done_value)
 
-def is_definition(exp):
-    return is_tagged_list(exp, Symbol('define'))
+#def is_define(exp):
+#    return is_tagged_list(exp, Symbol('define'))
 
 def get_define_var(exp):
     x = cadr(exp)
@@ -73,7 +77,7 @@ def get_define_val(exp):
         return caddr(exp)
     return make_lambda(cdadr(exp), cddr(exp))
 
-def eval_definition(exp, env, cont):
+def eval_define(exp, env, cont):
     def done_value(value):
         env.add_var(get_define_var(exp), value)
         return Bounce(cont, Symbol('ok'))
@@ -158,6 +162,9 @@ def eval_sequence(exps, env, cont):
         return Bounce(_eval, car(exps), env, cont)
     return Bounce(_eval, car(exps), env, done_first)
 
+def eval_begin(exp, env, cont):
+    return Bounce(eval_sequence, cdr(exp), env, cont)
+
 def is_application(exp):
     return is_pair(exp)
 
@@ -168,7 +175,7 @@ def get_application_opd(exp):
     return cdr(exp)
 
 def eval_each(opds, env, cont):
-    """\
+    """
     evaluate each operand in the Scheme list, make
     a new Scheme list.
     """
@@ -207,16 +214,19 @@ def get_cond_predicate(clause):
 def get_cond_action(clause):
     return cdr(clause)
 
-def is_cond_else(clause):
-    return is_tagged_list(clause, Symbol('else'))
+#def is_cond_else(clause):
+#    return is_tagged_list(clause, Symbol('else'))
 
-def cond_to_if(exp):
-    return expand_clauses(get_cond_clauses(exp))
+#def cond_to_if(exp):
+#    return expand_clauses(get_cond_clauses(exp))
+
+def eval_cond(exp, env, cont):
+    return Bounce(eval_if, expand_clauses(get_cond_clauses(exp)), env, cont)
 
 def expand_clauses(clauses):
     cls = list(reversed(to_python_list(clauses)))
 
-    if is_cond_else(cls[0]):
+    if car(cls[0]) == Symbol('else'):
         alter = seq_to_exp(get_cond_action(cls[0]))
         start = 1
     else:
@@ -247,25 +257,47 @@ def let_to_call(exp):
     var_list, exp_list = get_binding_var_exp(get_let_bindings(exp))
     return cons(make_lambda(var_list, get_let_body(exp)), exp_list)
 
+special_form = (
+    Symbol('quote'),
+    Symbol('set!'),
+    Symbol('define'),
+    Symbol('lambda'),
+    Symbol('if'),
+    Symbol('begin'),
+    Symbol('cond'),
+)
+
+act = {
+    Symbol('quote'): eval_quote,
+    Symbol('set!'): eval_set,
+    Symbol('define'): eval_define,
+    Symbol('lambda'): eval_lambda,
+    Symbol('if'): eval_if,
+    Symbol('begin'): eval_begin,
+    Symbol('cond'): eval_cond,
+}
+
 def _eval(exp, env, cont):
     if is_self_evaluating(exp):
         return Bounce(eval_self_evaluating, exp, env, cont)
-    elif is_quote(exp):
-        return Bounce(eval_quote, exp, env, cont)
     elif is_variable(exp):
         return Bounce(eval_variable, exp, env, cont)
-    elif is_assignment(exp):
-        return Bounce(eval_assignment, exp, env, cont)
-    elif is_definition(exp):
-        return Bounce(eval_definition, exp, env, cont)
-    elif is_lambda(exp):
-        return Bounce(eval_lambda, exp, env, cont)
-    elif is_if(exp):
-        return Bounce(eval_if, exp, env, cont)
-    elif is_begin(exp):
-        return Bounce(eval_sequence, get_begin_actions(exp), env, cont)
-    elif is_cond(exp):
-        return Bounce(eval_if, cond_to_if(exp), env, cont)
+    elif car(exp) in special_form:
+        return Bounce(act[car(exp)], exp, env, cont)
+    #elif is_quote(exp):
+    #    return Bounce(eval_quote, exp, env, cont)
+    #elif is_set(exp):
+    #    return Bounce(eval_set, exp, env, cont)
+    #elif is_define(exp):
+    #    return Bounce(eval_define, exp, env, cont)
+    #elif is_lambda(exp):
+    #    return Bounce(eval_lambda, exp, env, cont)
+    #elif is_if(exp):
+    #    return Bounce(eval_if, exp, env, cont)
+    #elif is_begin(exp):
+    #    return Bounce(eval_sequence, get_begin_actions(exp), env, cont)
+    #elif is_cond(exp):
+    #    return Bounce(eval_if, cond_to_if(exp), env, cont)
     elif is_application(exp):
         return Bounce(eval_application, exp, env, cont)
     else:
@@ -273,9 +305,6 @@ def _eval(exp, env, cont):
 
 def apply_prim(prim_type, args, cont):
     return Bounce(cont, prim_ops[prim_type](*args))
-
-python_eval = eval
-python_apply = apply
 
 def eval(exp, env):
     return pogo_stick(Bounce(_eval, exp, env, lambda d:d))
