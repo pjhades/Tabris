@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
-"""\
+
+"""
 Read-Evaluate-Print Loop
 """
+
 import profile
 
 import parser

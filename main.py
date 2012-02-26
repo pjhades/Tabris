@@ -4,10 +4,6 @@
 import sys
 import repl
 
-# TODO: rewrite the file interface
-# if we have several source files a.scm, b.scm, c.scm
-# evaluate them all, like a whole project
-
 if __name__ == '__main__':
     if len(sys.argv) == 1:
         evaluator = repl.Repl()

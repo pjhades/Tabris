@@ -14,9 +14,6 @@ from number_type import is_number
 python_eval = eval
 python_apply = apply
 
-#def is_tagged_list(exp, tag):
-#    return is_list(exp) and is_symbol(car(exp)) and car(exp) == tag
-
 def is_self_evaluating(exp):
     return is_number(exp) or is_boolean(exp) or is_string(exp)
 
@@ -29,19 +26,15 @@ def is_variable(exp):
 def eval_variable(exp, env, cont):
     return Bounce(cont, env.get_var(exp))
 
-#def is_quote(exp):
-#    return is_tagged_list(exp, Symbol('quote'))
-
 def get_quote_text(exp):
     return cadr(exp)
 
 def eval_quote(exp, env, cont):
+    print 'exp is:', exp
+    print 'length is:', get_length(exp)
     if get_length(exp) != 2:
         raise SchemeError('bad syntax: ' + to_str(exp))
     return Bounce(cont, get_quote_text(exp))
-
-#def is_set(exp):
-#    return is_tagged_list(exp, Symbol('set!'))
 
 def get_set_var(exp):
     return cadr(exp)
@@ -61,9 +54,6 @@ def eval_set(exp, env, cont):
     # evaluate the value expression first, and set
     # the variable to that value
     return Bounce(_eval, val, env, done_value)
-
-#def is_define(exp):
-#    return is_tagged_list(exp, Symbol('define'))
 
 def get_define_var(exp):
     x = cadr(exp)
@@ -90,9 +80,6 @@ def eval_define(exp, env, cont):
     # add a new variable in the environment
     return Bounce(_eval, val, env, done_value)
 
-#def is_lambda(exp):
-#    return is_tagged_list(exp, Symbol('lambda'))
-
 def get_lambda_params(exp):
     return cadr(exp)
 
@@ -110,9 +97,6 @@ def eval_lambda(exp, env, cont):
         params = to_python_list(params)
 
     return Bounce(cont, Procedure(params, body, env))
-
-#def is_if(exp):
-#    return is_tagged_list(exp, Symbol('if'))
 
 def get_if_predicate(exp):
     return cadr(exp)
@@ -136,9 +120,6 @@ def eval_if(exp, env, cont):
         else:
             return Bounce(_eval, get_if_alternate(exp), env, cont)
     return Bounce(_eval, get_if_predicate(exp), env, take_action)
-
-#def is_begin(exp):
-#    return is_tagged_list(exp, Symbol('begin'))
 
 def get_begin_actions(exp):
     return cdr(exp)
@@ -202,9 +183,6 @@ def eval_application(exp, env, cont):
     # evaluate the operator first
     return Bounce(_eval, opr, env, done_opr)
 
-#def is_cond(exp):
-#    return is_tagged_list(exp, Symbol('cond'))
-
 def get_cond_clauses(exp):
     return cdr(exp)
 
@@ -213,12 +191,6 @@ def get_cond_predicate(clause):
 
 def get_cond_action(clause):
     return cdr(clause)
-
-#def is_cond_else(clause):
-#    return is_tagged_list(clause, Symbol('else'))
-
-#def cond_to_if(exp):
-#    return expand_clauses(get_cond_clauses(exp))
 
 def eval_cond(exp, env, cont):
     return Bounce(eval_if, expand_clauses(get_cond_clauses(exp)), env, cont)
@@ -238,9 +210,6 @@ def expand_clauses(clauses):
 
     return alter
 
-#def is_let(exp):
-#    return is_tagged_list(exp, Symbol('let'))
-
 def get_let_bindings(exp):
     return cadr(exp)
 
@@ -257,7 +226,7 @@ def let_to_call(exp):
     var_list, exp_list = get_binding_var_exp(get_let_bindings(exp))
     return cons(make_lambda(var_list, get_let_body(exp)), exp_list)
 
-special_form = (
+special_form = {
     Symbol('quote'),
     Symbol('set!'),
     Symbol('define'),
@@ -265,7 +234,7 @@ special_form = (
     Symbol('if'),
     Symbol('begin'),
     Symbol('cond'),
-)
+}
 
 act = {
     Symbol('quote'): eval_quote,
@@ -278,30 +247,18 @@ act = {
 }
 
 def _eval(exp, env, cont):
-    if is_self_evaluating(exp):
-        return Bounce(eval_self_evaluating, exp, env, cont)
-    elif is_variable(exp):
-        return Bounce(eval_variable, exp, env, cont)
-    elif car(exp) in special_form:
-        return Bounce(act[car(exp)], exp, env, cont)
-    #elif is_quote(exp):
-    #    return Bounce(eval_quote, exp, env, cont)
-    #elif is_set(exp):
-    #    return Bounce(eval_set, exp, env, cont)
-    #elif is_define(exp):
-    #    return Bounce(eval_define, exp, env, cont)
-    #elif is_lambda(exp):
-    #    return Bounce(eval_lambda, exp, env, cont)
-    #elif is_if(exp):
-    #    return Bounce(eval_if, exp, env, cont)
-    #elif is_begin(exp):
-    #    return Bounce(eval_sequence, get_begin_actions(exp), env, cont)
-    #elif is_cond(exp):
-    #    return Bounce(eval_if, cond_to_if(exp), env, cont)
-    elif is_application(exp):
-        return Bounce(eval_application, exp, env, cont)
+    if is_list(exp):
+        if car(exp) in special_form:
+            return Bounce(act[car(exp)], exp, env, cont)
+        elif is_pair(exp):
+            return Bounce(eval_application, exp, env, cont)
     else:
-        raise SchemeError('unknown expression: ' + to_str(exp))
+        if is_symbol(exp):
+            return Bounce(cont, env.get_var(exp))
+        elif is_number(exp) or is_boolean(exp) or is_string(exp):
+            return Bounce(cont, exp)
+        else:
+            raise SchemeError('unknown expression: ' + to_str(exp))
 
 def apply_prim(prim_type, args, cont):
     return Bounce(cont, prim_ops[prim_type](*args))

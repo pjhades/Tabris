@@ -70,6 +70,7 @@ class PairTest(unittest.TestCase):
         self.assertEqual(get_length(make_list(1, (2, 2), 3)), 3)
         self.assertEqual(get_length(make_list()), 0)
         self.assertEqual(get_length(NIL), 0)
+        self.assertEqual(get_length(make_list(make_list(1, 2, 3), make_list(4, 5))), 2)
 
         try:
             get_length(cons(1,2))

@@ -11,6 +11,7 @@ class String(object):
 def is_string(v):
     return isinstance(v, String)
 
+
 # Store symbols we have created.
 _sym_table = {}
 
@@ -55,10 +56,11 @@ def is_true(v):
 def is_boolean(v):
     return isinstance(v, Boolean)
 
+
 class Procedure(object):
     def __init__(self, params, body, env, is_prim=False):
-        """\
-        if (lambda args ...), `params' is not a python list, then
+        """
+        If (lambda args ...), `params' is not a python list, then
         it's a argument list, `is_var_args' is true. otherwise
         else `params' is a python list, `is_var_args' is false.
         """

@@ -5,10 +5,25 @@ from trampoline import Bounce, pogo_stick
 class Pair(list):
     def __init__(self, *args, **kwargs):
         super(Pair, self).__init__(*args)
-        self.islist = _islist(self)
-        self.length = _getlen(self) if self.islist else 0
+
+        if self == []:
+            self.islist = True
+            self.length =0
+            return
+
+        if isinstance(self[1], Pair) and self[1].islist:
+            self.islist = True
+        else:
+            self.islist = False
+
+        if not self.islist:
+            self.length = 0
+        else:
+            self.length = self[1].length + 1
+
     def __str__(self):
         return to_str(self)
+
 
 def _to_str(p, cont):
     """Give the neat string representation of a pair."""
@@ -29,17 +44,19 @@ def _to_str(p, cont):
         return Bounce(cont, '()')
     return Bounce(_to_str, p[0], done_first)
 
+
 def to_str(p):
     return pogo_stick(Bounce(_to_str, p, lambda d:d))
+
 
 def to_python_list(lst):
     """Convert a Scheme list back into a Python list."""
     res = []
-    NIL = Pair([])
-    while not lst == NIL:
+    while not lst == []:
         res.append(lst[0])
         lst = lst[1]
     return res
+
 
 def is_null(v):
     return v == []
@@ -49,26 +66,3 @@ def is_pair(v):
 
 def is_list(p):
     return isinstance(p, Pair) and p.islist
-
-def _getlen(p):
-    """
-    get the length of a list, called when the list
-    is created or modified
-    """
-    ret = 0 
-    while p != []:
-        ret += 1
-        p = p[1]
-    return ret 
-
-def _islist(p):
-    """
-    check if a pair is a list, called when the pair
-    is created or modified
-    """
-    while isinstance(p, Pair):
-        if p == []:
-            return True
-        p = p[1]
-    return False
-

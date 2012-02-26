@@ -235,6 +235,7 @@ def _eq(a, b):
 def _ne(a, b):
     return _op_table['!='][a.tag](a, b)
 
+
 class Num(object):
     def __init__(self):
         raise SchemeError('class Num cannot be instantiated')
@@ -258,6 +259,7 @@ class Num(object):
         return _eq(self, other)
     def __ne__(self, other):
         return _ne(self, other)
+
 
 class Complex(Num):
     def __init__(self, real, imag):
@@ -294,15 +296,18 @@ class Complex(Num):
                 return '%s-i' % (self.real, self.imag)
             return '%s%si' % (elf.real, self.imag)
 
+
 class Real(Num):
     def __init__(self, value):
         self.value = value
         self.tag = _REAL
+
     def __neg__(self):
         return Real(-self.value)
 
     def __str__(self):
         return str(self.value)
+
 
 class Rational(Num):
     def __init__(self, numer, denom):
@@ -335,6 +340,7 @@ class Rational(Num):
             return str(self.numer)
         else:
             return '%s/%s' % (self.numer, self.denom)
+
 
 def is_number(v):
     return isinstance(v, Rational) or isinstance(v, Real) or isinstance(v, Complex)

@@ -15,8 +15,6 @@ def _check_cxr_param(cxr):
     """Check if the argument cannot be cxred."""
     def f(func):
         def g(p):
-            if not isinstance(p, Pair):
-                raise SchemeError('expect %sable pairs, given %s' % (cxr, to_str(p)))
             try:
                 return func(p)
             except Exception:

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
-"""Tokenizer for lexical analysis and parser for syntax analysis."""
+"""
+Tokenizer for lexical analysis and parser for syntax analysis.
+"""
 
 import re
 
@@ -52,12 +54,14 @@ token_patterns = [
     ('symbol',   re.compile(r'^[\w!$%&*+-./:<=>?@^_~]+$'))
 ]
 
+
 def get_token_type(tok):
     for t in token_patterns:
         mobj = t[1].match(tok)
         if mobj:
             return (tok, t[0])
     raise SchemeError('unknown token ' + tok)
+
 
 class Tokenizer(object):
     def __init__(self):
@@ -77,7 +81,7 @@ class Tokenizer(object):
                self.quote_not_end or self._tokens == []
 
     def get_tokens(self):
-        """\
+        """
         Return the tokens found, get ready for the next round, 
         should only be called when need_more_code() returns False.
         """ 
@@ -144,8 +148,9 @@ class Tokenizer(object):
             else:
                 self._cur_token += char
 
+
 def consume(tokens, exp_type):
-    """\
+    """
     Pop the first token from the token list with
     the expected token type.
     """
@@ -154,6 +159,7 @@ def consume(tokens, exp_type):
     if tokens[0][1] != exp_type:
         raise SchemeError('expect %s, given %s' % (exp_type, tokens[0][0]))
     return tokens.pop(0)
+
 
 def parse_lexeme_datum(tokens, cont):
     token = tokens[0]
@@ -212,8 +218,9 @@ def parse_lexeme_datum(tokens, cont):
     else:
         raise SchemeError(token, 'is not a lexeme datum')
 
+
 def parse_rest_sexps(tokens, cont):
-    """\
+    """
     Parse the S-expressions in the list. The list may 
     be a Scheme list or a dotted partial list.
     """
@@ -231,6 +238,7 @@ def parse_rest_sexps(tokens, cont):
     else:
         return Bounce(cont, NIL)
 
+
 def parse_list(tokens, cont):
     """Parse a Scheme list."""
     def done_rest(rest):
@@ -239,6 +247,7 @@ def parse_list(tokens, cont):
 
     consume(tokens, '(')
     return Bounce(parse_rest_sexps, tokens, done_rest)
+
 
 def parse_sexp(tokens, cont):
     """Parse a single S-expression."""
@@ -256,8 +265,9 @@ def parse_sexp(tokens, cont):
     else:
         raise SchemeError('bad expression syntax')
 
+
 def parse(tokens):
-    """\
+    """
     The interface. Returns the list of S-expressions
     generated from the given token list.
     """

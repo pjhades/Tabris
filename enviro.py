@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""\
+"""
 Environment
 """
 
@@ -37,8 +37,8 @@ class Env(object):
                 return
         raise SchemeError('unbound variable ' + var)
 
+
 def extend_env(var_list, val_list, base_env):
-    # `var_list' and `val_list' are python lists
     return Env(var_list, val_list, base_env)
 
 def init_global():
