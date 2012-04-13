@@ -6,10 +6,9 @@ Tokenizer for lexical analysis and parser for syntax analysis.
 
 import re
 
-from trampoline import pogo_stick, Bounce
-from pair_lib import make_list, cons, NIL
-from basic_type import Boolean, Symbol, String, is_true
-from number_type import Rational, Real, Complex
+from trampoline import pogo_stick, bounce
+from pair import make_list, cons, NIL
+from scmtypes import Symbol
 from errors import *
 
 # Delimiter characters. If we see these, we have found
@@ -17,7 +16,7 @@ from errors import *
 DELIMS = '"\'\n\t;( )'
 
 # Token types
-token_patterns = [
+token_patterns = (
     ('string',   re.compile(r'^".*"$', flags=re.DOTALL)), \
     ('integer',  re.compile(r'^[+-]?\d+$')), \
     ('float',    re.compile(r'^[+-]?(\d+\.\d*|\.\d+)$')), \
@@ -26,24 +25,20 @@ token_patterns = [
                                 ^( ([+-]?\d+              
                                     |
                                     [+-]?(\d+\.\d*|\.\d+) 
-                                    |
-                                    [+-]?\d+/\d+)          
-
+                                   )          
                                    ([+-]                 
                                     |
                                     [+-]\d+              
                                     |
                                     [+-](\d+\.\d*|\.\d+) 
-                                    |
-                                    [+-]\d+/\d+)i$ )
+                                   )i$ )
                                  |
                                  ^ ([+-]                  
                                     |
                                     [+-]?\d+              
                                     |
                                     [+-]?(\d+\.\d*|\.\d+) 
-                                    |
-                                    [+-]?\d+/\d+)i$ 
+                                   )i$ 
                                 )
                             ''', flags=re.VERBOSE)), \
     ('boolean',  re.compile(r'^#[tf]$')), \
@@ -52,7 +47,7 @@ token_patterns = [
     ("'",        re.compile(r"^'$")), \
     ('.',        re.compile(r'^\.$')), \
     ('symbol',   re.compile(r'^[\w!$%&*+-./:<=>?@^_~]+$'))
-]
+)
 
 
 def get_token_type(tok):
@@ -168,52 +163,59 @@ def parse_lexeme_datum(tokens, cont):
     if token_type == 'boolean':
         consume(tokens, 'boolean')
         if token[0] == '#t':
-            return Bounce(cont, Boolean(True))
+            #return bounce(cont, Boolean(True))
+            return bounce(cont, True)
         else:
-            return Bounce(cont, Boolean(False))
+            #return bounce(cont, Boolean(False))
+            return bounce(cont, False)
 
     elif token_type == 'string':
         consume(tokens, 'string')
         # strip the quotes
-        return Bounce(cont, String(token[0][1:-1]))
+        #return bounce(cont, String(token[0][1:-1]))
+        return bounce(cont, token[0][1:-1])
 
     elif token_type == 'symbol':
         consume(tokens, 'symbol')
-        return Bounce(cont, Symbol(token[0]))
+        return bounce(cont, Symbol(token[0]))
 
     elif token_type == 'integer':
         consume(tokens, 'integer')
-        return Bounce(cont, Rational(int(token[0]), 1))
+        #return bounce(cont, Rational(int(token[0]), 1))
+        return bounce(cont, int(token[0]))
 
     elif token_type == 'float':
         consume(tokens, 'float')
-        return Bounce(cont, Real(float(token[0])))
+        #return bounce(cont, Real(float(token[0])))
+        return bounce(cont, float(token[0]))
 
     elif token_type == 'fraction':
         consume(tokens, 'fraction')
         numer, denom = token[0].split('/')
-        return Bounce(cont, Rational(int(numer), int(denom)))
+        #return bounce(cont, Rational(int(numer), int(denom)))
+        return bounce(cont, float(numer) / float(denom))
 
     elif token_type == 'complex':
         consume(tokens, 'complex')
-        part = token_patterns[4][1].search(token[0]).groups()
+        return bounce(cont, complex(token[0].replace('i', 'j')))
+        #part = token_patterns[4][1].search(token[0]).groups()
 
-        # fetch the two parts
-        if part[2] and part[4]:
-            real, imag = part[2], part[4]
-        else:
-            real, imag = '0', part[6]
+        ## fetch the two parts
+        #if part[2] and part[4]:
+        #    real, imag = part[2], part[4]
+        #else:
+        #    real, imag = '0', part[6]
 
-        # if imaginary is +1 or -1
-        if imag in '+-':
-            imag = '-1' if imag == '-' else '+1'
+        ## if imaginary is +1 or -1
+        #if imag in '+-':
+        #    imag = '-1' if imag == '-' else '+1'
 
-        real = parse(Tokenizer().tokenize_single(real + '\n'))[0]
-        imag = parse(Tokenizer().tokenize_single(imag + '\n'))[0]
+        #real = parse(Tokenizer().tokenize_single(real + '\n'))[0]
+        #imag = parse(Tokenizer().tokenize_single(imag + '\n'))[0]
 
-        if is_true(imag == Rational(0, 1)):
-            return Bounce(cont, real)
-        return Bounce(cont, Complex(real, imag))
+        #if is_true(imag == Rational(0, 1)):
+        #    return bounce(cont, real)
+        #return bounce(cont, Complex(real, imag))
 
     else:
         raise SchemeError(token, 'is not a lexeme datum')
@@ -228,25 +230,25 @@ def parse_rest_sexps(tokens, cont):
     
     if token_type == '.':
         consume(tokens, '.')
-        return Bounce(parse_sexp, tokens, cont)
+        return bounce(parse_sexp, tokens, cont)
     elif token_type != ')':
         def done_first(first):
             def done_rest(rest):
-                return Bounce(cont, cons(first, rest))
-            return Bounce(parse_rest_sexps, tokens, done_rest)
-        return Bounce(parse_sexp, tokens, done_first)
+                return bounce(cont, cons(first, rest))
+            return bounce(parse_rest_sexps, tokens, done_rest)
+        return bounce(parse_sexp, tokens, done_first)
     else:
-        return Bounce(cont, NIL)
+        return bounce(cont, NIL)
 
 
 def parse_list(tokens, cont):
     """Parse a Scheme list."""
     def done_rest(rest):
         consume(tokens, ')')
-        return Bounce(cont, rest)
+        return bounce(cont, rest)
 
     consume(tokens, '(')
-    return Bounce(parse_rest_sexps, tokens, done_rest)
+    return bounce(parse_rest_sexps, tokens, done_rest)
 
 
 def parse_sexp(tokens, cont):
@@ -254,14 +256,14 @@ def parse_sexp(tokens, cont):
     token_type = tokens[0][1]
 
     if token_type in ('boolean', 'integer', 'float', 'fraction', 'complex', 'string', 'symbol'):
-        return Bounce(parse_lexeme_datum, tokens, cont)
+        return bounce(parse_lexeme_datum, tokens, cont)
     elif token_type == "'":
         def make_quote(word):
-            return Bounce(cont, make_list(Symbol('quote'), word))
+            return bounce(cont, make_list(Symbol('quote'), word))
         consume(tokens, "'")
-        return Bounce(parse_sexp, tokens, make_quote)
+        return bounce(parse_sexp, tokens, make_quote)
     elif token_type == '(':
-        return Bounce(parse_list, tokens, cont)
+        return bounce(parse_list, tokens, cont)
     else:
         raise SchemeError('bad expression syntax')
 
@@ -275,4 +277,4 @@ def parse(tokens):
     while True:
         if len(tokens) == 0:
             return sexps
-        sexps.append(pogo_stick(Bounce(parse_sexp, tokens, lambda d:d)))
+        sexps.append(pogo_stick(bounce(parse_sexp, tokens, lambda d:d)))

@@ -55,21 +55,6 @@ class ParserTest(unittest.TestCase):
         for case in cases:
             self.assertEqual(self.tokenizer.tokenize_single(case[0] + '\n'), case[1])
 
-    def testFileTokenizing(self):
-        """Test tokenizing the source file."""
-
-        tokens = [("(", "("), ("once", "symbol"), ("upon", "symbol"), \
-                  ("(", "("), ("a", "symbol"), ("time", "symbol"), \
-                  ("'", "'"), ("there", "symbol"), ("(", "("), \
-                  ("+", "symbol"), ("1/2", "fraction"), ("4.5-7i", "complex"), \
-                  (")", ")"), ("1.", "float"), (")", ")"), \
-                  ("(", "("), ("was", "symbol"), ("a", "symbol"), \
-                  ('"magic\nian"', "string"), (")", ")"), (")", ")")]
-
-        with open('test/token.scm', 'r') as fin:
-            for line in fin:
-                self.tokenizer.tokenize(line)
-            self.assertEqual(self.tokenizer.get_tokens(), tokens)
 
     def testLexemeParsing(self):
         """Test parsing lexemes"""
@@ -82,45 +67,33 @@ class ParserTest(unittest.TestCase):
         self.tokenizer.tokenize("#t" + "\n")
         obj = parse(self.tokenizer.get_tokens())
         self.assertEqual(len(obj), 1)
-        self.assertEqual(obj[0].value, True)
+        self.assertEqual(obj[0], True)
 
         self.tokenizer.tokenize('"helloworld"' + "\n")
         obj = parse(self.tokenizer.get_tokens())
         self.assertEqual(len(obj), 1)
-        self.assertEqual(obj[0].value, "helloworld")
+        self.assertEqual(obj[0], "helloworld")
 
         self.tokenizer.tokenize('123' + "\n")
         obj = parse(self.tokenizer.get_tokens())
         self.assertEqual(len(obj), 1)
-        self.assertEqual(obj[0].numer, 123)
-        self.assertEqual(obj[0].denom, 1)
+        self.assertEqual(obj[0], 123)
 
         self.tokenizer.tokenize('-4/6' + "\n")
         obj = parse(self.tokenizer.get_tokens())
         self.assertEqual(len(obj), 1)
-        self.assertEqual(obj[0].numer, -2)
-        self.assertEqual(obj[0].denom, 3)
+        self.assertEqual(obj[0], -2.0/3.0)
 
         self.tokenizer.tokenize('.0' + "\n")
         obj = parse(self.tokenizer.get_tokens())
         self.assertEqual(len(obj), 1)
-        self.assertEqual(obj[0].value, 0.0)
+        self.assertEqual(obj[0], 0.0)
 
         self.tokenizer.tokenize('+i' + "\n")
         obj = parse(self.tokenizer.get_tokens())
         self.assertEqual(len(obj), 1)
-        self.assertEqual(obj[0].real.numer, 0)
-        self.assertEqual(obj[0].real.denom, 1)
-        self.assertEqual(obj[0].imag.numer, 1)
-        self.assertEqual(obj[0].imag.denom, 1)
+        self.assertEqual(obj[0], 1j)
 
-        self.tokenizer.tokenize('-4/5+6/3i' + "\n")
-        obj = parse(self.tokenizer.get_tokens())
-        self.assertEqual(len(obj), 1)
-        self.assertEqual(obj[0].real.numer, -4)
-        self.assertEqual(obj[0].real.denom, 5)
-        self.assertEqual(obj[0].imag.numer, 2)
-        self.assertEqual(obj[0].imag.denom, 1)
 
     def testSexpParsing(self):
         """Test parsing S-expressions."""
@@ -171,7 +144,6 @@ def suite():
     suite = unittest.TestSuite()
     suite.addTest(ParserTest('testTokenizer'))
     suite.addTest(ParserTest('testTokenizeSingle'))
-    suite.addTest(ParserTest('testFileTokenizing'))
     suite.addTest(ParserTest('testLexemeParsing'))
     suite.addTest(ParserTest('testSexpParsing'))
     suite.addTest(ParserTest('testStringRepr'))

@@ -2,39 +2,35 @@
 
 from errors import *
 from pair import *
-from pair_lib import *
 from enviro import extend_env
 from prims import prim_ops
-from trampoline import pogo_stick, Bounce
-from basic_type import Boolean, Symbol, Procedure, is_true, \
-                       is_boolean, is_string, is_symbol
-from number_type import is_number
+from trampoline import pogo_stick, bounce
+from scmtypes import Symbol, Procedure, string_query, symbol_query, \
+                     number_query, boolean_query
 
 # save the original versions
 python_eval = eval
 python_apply = apply
 
 def is_self_evaluating(exp):
-    return is_number(exp) or is_boolean(exp) or is_string(exp)
+    return number_query(exp) or boolean_query(exp) or string_query(exp)
 
 def eval_self_evaluating(exp, env, cont):
-    return Bounce(cont, exp)
+    return bounce(cont, exp)
 
 def is_variable(exp):
-    return is_symbol(exp)
+    return symbol_query(exp)
 
 def eval_variable(exp, env, cont):
-    return Bounce(cont, env.get_var(exp))
+    return bounce(cont, env.get_var(exp))
 
 def get_quote_text(exp):
     return cadr(exp)
 
 def eval_quote(exp, env, cont):
-    print 'exp is:', exp
-    print 'length is:', get_length(exp)
     if get_length(exp) != 2:
         raise SchemeError('bad syntax: ' + to_str(exp))
-    return Bounce(cont, get_quote_text(exp))
+    return bounce(cont, get_quote_text(exp))
 
 def get_set_var(exp):
     return cadr(exp)
@@ -45,7 +41,7 @@ def get_set_val(exp):
 def eval_set(exp, env, cont):
     def done_value(value):
         env.set_var(get_set_var(exp), value)
-        return Bounce(cont, Symbol('ok'))
+        return bounce(cont, Symbol('ok'))
 
     if get_length(exp) != 3:
         raise SchemeError('bad syntax: ' + to_str(exp))
@@ -53,24 +49,24 @@ def eval_set(exp, env, cont):
     val = get_set_val(exp)
     # evaluate the value expression first, and set
     # the variable to that value
-    return Bounce(_eval, val, env, done_value)
+    return bounce(_eval, val, env, done_value)
 
 def get_define_var(exp):
     x = cadr(exp)
-    if is_symbol(x):
+    if symbol_query(x):
         return x
     return car(x)
 
 def get_define_val(exp):
     x = cadr(exp)
-    if is_symbol(x):
+    if symbol_query(x):
         return caddr(exp)
     return make_lambda(cdadr(exp), cddr(exp))
 
 def eval_define(exp, env, cont):
     def done_value(value):
         env.add_var(get_define_var(exp), value)
-        return Bounce(cont, Symbol('ok'))
+        return bounce(cont, Symbol('ok'))
 
     if get_length(exp) < 3:
         raise SchemeError('bad syntax: ' + to_str(exp))
@@ -78,7 +74,7 @@ def eval_define(exp, env, cont):
     val = get_define_val(exp)
     # evaluate the value or lambda expression first, and
     # add a new variable in the environment
-    return Bounce(_eval, val, env, done_value)
+    return bounce(_eval, val, env, done_value)
 
 def get_lambda_params(exp):
     return cadr(exp)
@@ -96,7 +92,7 @@ def eval_lambda(exp, env, cont):
     if is_list(params):
         params = to_python_list(params)
 
-    return Bounce(cont, Procedure(params, body, env))
+    return bounce(cont, Procedure(params, body, env))
 
 def get_if_predicate(exp):
     return cadr(exp)
@@ -108,18 +104,18 @@ def get_if_alternate(exp):
     x = cdddr(exp)
     if not is_null(x):
         return car(x)
-    return Boolean(False)
+    return False
 
 def make_if(predicate, consequent, alternative):
     return make_list(Symbol('if'), predicate, consequent, alternative)
 
 def eval_if(exp, env, cont):
     def take_action(pred):
-        if is_true(pred):
-            return Bounce(_eval, get_if_consequent(exp), env, cont)
+        if pred:
+            return bounce(_eval, get_if_consequent(exp), env, cont)
         else:
-            return Bounce(_eval, get_if_alternate(exp), env, cont)
-    return Bounce(_eval, get_if_predicate(exp), env, take_action)
+            return bounce(_eval, get_if_alternate(exp), env, cont)
+    return bounce(_eval, get_if_predicate(exp), env, take_action)
 
 def get_begin_actions(exp):
     return cdr(exp)
@@ -138,13 +134,13 @@ def make_begin(seq):
 def eval_sequence(exps, env, cont):
     "evaluate the sequence, return only the last as final result"
     def done_first(first):
-        return Bounce(eval_sequence, cdr(exps), env, cont)
+        return bounce(eval_sequence, cdr(exps), env, cont)
     if is_null(cdr(exps)):
-        return Bounce(_eval, car(exps), env, cont)
-    return Bounce(_eval, car(exps), env, done_first)
+        return bounce(_eval, car(exps), env, cont)
+    return bounce(_eval, car(exps), env, done_first)
 
 def eval_begin(exp, env, cont):
-    return Bounce(eval_sequence, cdr(exp), env, cont)
+    return bounce(eval_sequence, cdr(exp), env, cont)
 
 def is_application(exp):
     return is_pair(exp)
@@ -162,26 +158,26 @@ def eval_each(opds, env, cont):
     """
     def done_first(first):
         def have_rest(rest):
-            return Bounce(cont, cons(first, rest))
-        return Bounce(eval_each, cdr(opds), env, have_rest)
+            return bounce(cont, cons(first, rest))
+        return bounce(eval_each, cdr(opds), env, have_rest)
     
     if is_null(opds):
-        return Bounce(cont, NIL)
-    return Bounce(_eval, car(opds), env, done_first)
+        return bounce(cont, NIL)
+    return bounce(_eval, car(opds), env, done_first)
 
 def eval_application(exp, env, cont):
     def done_opr(opr):
         def done_opds(opd):
-            return Bounce(apply, opr, opd, cont)
+            return bounce(apply, opr, opd, cont)
 
         if not isinstance(opr, Procedure):
             raise SchemeError('not applicable: ' + to_str(exp))
         opds = get_application_opd(exp)
-        return Bounce(eval_each, opds, env, done_opds)
+        return bounce(eval_each, opds, env, done_opds)
 
     opr = get_application_opr(exp)
     # evaluate the operator first
-    return Bounce(_eval, opr, env, done_opr)
+    return bounce(_eval, opr, env, done_opr)
 
 def get_cond_clauses(exp):
     return cdr(exp)
@@ -193,7 +189,7 @@ def get_cond_action(clause):
     return cdr(clause)
 
 def eval_cond(exp, env, cont):
-    return Bounce(eval_if, expand_clauses(get_cond_clauses(exp)), env, cont)
+    return bounce(eval_if, expand_clauses(get_cond_clauses(exp)), env, cont)
 
 def expand_clauses(clauses):
     cls = list(reversed(to_python_list(clauses)))
@@ -202,7 +198,7 @@ def expand_clauses(clauses):
         alter = seq_to_exp(get_cond_action(cls[0]))
         start = 1
     else:
-        alter = Boolean(False)
+        alter = False
         start = 0
 
     for c in cls[start:]:
@@ -249,27 +245,27 @@ act = {
 def _eval(exp, env, cont):
     if is_list(exp):
         if car(exp) in special_form:
-            return Bounce(act[car(exp)], exp, env, cont)
+            return bounce(act[car(exp)], exp, env, cont)
         elif is_pair(exp):
-            return Bounce(eval_application, exp, env, cont)
+            return bounce(eval_application, exp, env, cont)
     else:
-        if is_symbol(exp):
-            return Bounce(cont, env.get_var(exp))
-        elif is_number(exp) or is_boolean(exp) or is_string(exp):
-            return Bounce(cont, exp)
+        if symbol_query(exp):
+            return bounce(cont, env.get_var(exp))
+        elif is_self_evaluating(exp):
+            return bounce(cont, exp)
         else:
             raise SchemeError('unknown expression: ' + to_str(exp))
 
 def apply_prim(prim_type, args, cont):
-    return Bounce(cont, prim_ops[prim_type](*args))
+    return bounce(cont, prim_ops[prim_type](*args))
 
 def eval(exp, env):
-    return pogo_stick(Bounce(_eval, exp, env, lambda d:d))
+    return pogo_stick(bounce(_eval, exp, env, lambda d:d))
 
 def apply(proc, args, cont):
     """apply `proc' on scheme list `args'"""
     if proc.is_prim:
-        return Bounce(apply_prim, proc.body, to_python_list(args), cont)
+        return bounce(apply_prim, proc.body, to_python_list(args), cont)
     else:
         # if `proc' accepts arbitrary arguments, `proc.params' is a single
         # variable, put it into a python list, `args' remains a scheme list
@@ -286,4 +282,4 @@ def apply(proc, args, cont):
 
         new_env = extend_env(params, args, proc.env)
         body = proc.body
-        return Bounce(eval_sequence, body, new_env, cont)
+        return bounce(eval_sequence, body, new_env, cont)

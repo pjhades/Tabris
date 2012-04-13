@@ -4,8 +4,8 @@
 Environment
 """
 
-from prims import prim_vars, prim_vals
-from basic_type import Symbol, Procedure
+from prims import prim_mappings
+from scmtypes import Symbol, Procedure
 from errors import *
 
 class Env(object):
@@ -42,5 +42,5 @@ def extend_env(var_list, val_list, base_env):
     return Env(var_list, val_list, base_env)
 
 def init_global():
-    global_env = Env(prim_vars, prim_vals)
+    global_env = Env(prim_mappings.keys(), prim_mappings.values())
     return global_env
