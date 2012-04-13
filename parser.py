@@ -163,16 +163,12 @@ def parse_lexeme_datum(tokens, cont):
     if token_type == 'boolean':
         consume(tokens, 'boolean')
         if token[0] == '#t':
-            #return bounce(cont, Boolean(True))
             return bounce(cont, True)
         else:
-            #return bounce(cont, Boolean(False))
             return bounce(cont, False)
 
     elif token_type == 'string':
         consume(tokens, 'string')
-        # strip the quotes
-        #return bounce(cont, String(token[0][1:-1]))
         return bounce(cont, token[0][1:-1])
 
     elif token_type == 'symbol':
@@ -181,41 +177,20 @@ def parse_lexeme_datum(tokens, cont):
 
     elif token_type == 'integer':
         consume(tokens, 'integer')
-        #return bounce(cont, Rational(int(token[0]), 1))
         return bounce(cont, int(token[0]))
 
     elif token_type == 'float':
         consume(tokens, 'float')
-        #return bounce(cont, Real(float(token[0])))
         return bounce(cont, float(token[0]))
 
     elif token_type == 'fraction':
         consume(tokens, 'fraction')
         numer, denom = token[0].split('/')
-        #return bounce(cont, Rational(int(numer), int(denom)))
         return bounce(cont, float(numer) / float(denom))
 
     elif token_type == 'complex':
         consume(tokens, 'complex')
         return bounce(cont, complex(token[0].replace('i', 'j')))
-        #part = token_patterns[4][1].search(token[0]).groups()
-
-        ## fetch the two parts
-        #if part[2] and part[4]:
-        #    real, imag = part[2], part[4]
-        #else:
-        #    real, imag = '0', part[6]
-
-        ## if imaginary is +1 or -1
-        #if imag in '+-':
-        #    imag = '-1' if imag == '-' else '+1'
-
-        #real = parse(Tokenizer().tokenize_single(real + '\n'))[0]
-        #imag = parse(Tokenizer().tokenize_single(imag + '\n'))[0]
-
-        #if is_true(imag == Rational(0, 1)):
-        #    return bounce(cont, real)
-        #return bounce(cont, Complex(real, imag))
 
     else:
         raise SchemeError(token, 'is not a lexeme datum')
