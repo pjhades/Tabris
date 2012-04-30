@@ -36,18 +36,18 @@ class Procedure(object):
         return '[procedure]'
 
 
-def number_query(v):
+def func_isnumber(v):
     return isinstance(v, int) or isinstance(v, float) or isinstance(v, complex) 
 
 
-def string_query(v):
+def func_isstring(v):
     return isinstance(v, str)
 
 
-def symbol_query(v):
+def func_issymbol(v):
     return isinstance(v, Symbol)
 
 
-def boolean_query(v):
+def func_isboolean(v):
     return isinstance(v, bool)
 

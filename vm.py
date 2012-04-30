@@ -48,9 +48,9 @@ class VM(object):
         while self.reg[REG_PC] < self.codelen:
             inst = self.code[self.reg[REG_PC]]
             inst[0](self, inst)
-            print 'executing:', inst
-            self.dump()
-            raw_input()
+            #print 'executing:', inst
+            #self.dump()
+            #raw_input()
             #self.dispatch(self.code[self.reg[REG_PC]])
 
 
@@ -63,26 +63,26 @@ def main():
             (push_, REG_BP),          
             (mov_, REG_BP, REG_SP),      
             (loadr_, 1, REG_BP, -2),  
-            (movi_, 2, 1),         # if (n == 1)
-            (test_, 'eq', 1, 2),   #     goto fact-done;
+            (movi_, 2, 1),
+            (test_, 'eq', 1, 2), 
             (jt_, 'fact-done'),    
-            (subi_, 3, 1, 1),      # int a = n-1;
+            (subi_, 3, 1, 1),
             (push_, 1),
             (push_, 3),            
-            (call_, 'fact'),       # int b = fact(a);
+            (call_, 'fact'), 
             (pop_, 1),
-            (mul_, 0, 1, 0),       # b *= n;
+            (mul_, 0, 1, 0),
             (mov_, REG_SP, REG_BP),      
             (pop_, REG_BP),           
-            (ret_, 1),             # return b;
+            (ret_, 1),     
         'fact-done',
-            (movi_, 0, 1),         # return 1;
+            (movi_, 0, 1), 
             (mov_, REG_SP, REG_BP),      
             (pop_, REG_BP),           
             (ret_, 1),             
         'main',
             (pushi_, 10000),
-            (call_, 'fact'),       # fact(5);
+            (call_, 'fact'), 
     ]
 
     fib_code = [
@@ -104,8 +104,10 @@ def main():
             (mov_, 4, 0),
             (pop_, 1),
             (subi_, 3, 1, 2),
+            (push_, 4),
             (push_, 3),
             (call_, 'fib'),
+            (pop_, 4),
             (add_, 0, 4, 0),
             (mov_, REG_SP, REG_BP),
             (pop_, REG_BP),
@@ -121,7 +123,7 @@ def main():
             (pop_, REG_BP),
             (ret_, 1),
         'main',
-            (pushi_, 4),
+            (pushi_, 15),
             (call_, 'fib'),
     ]
 
@@ -136,8 +138,8 @@ if __name__ == '__main__':
     import profile
     import pstats
 
-    #profile.run('main()', 'profile.dat')
-    #p = pstats.Stats('profile.dat')
-    #p.strip_dirs().sort_stats('time', 'cum').print_stats()
-    main()
+    profile.run('main()', 'profile.dat')
+    p = pstats.Stats('profile.dat')
+    p.strip_dirs().sort_stats('time', 'cum').print_stats()
+    #main()
 

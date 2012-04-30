@@ -52,19 +52,19 @@ prim_ops = {
     'cdddar': cdddar,
     'cddddr': cddddr,
 
-    'null?': null_query,
-    'pair?': pair_query,
-    'list?': list_query,
-    'list': make_list, 
-    'length': get_length,
-    'append': append_lst,
-    'reverse': reverse_lst,
-    'list-tail': get_list_tail, 
+    'null?': func_isnull,
+    'pair?': func_ispair,
+    'list?': func_islist,
+    'list': func_list, 
+    'length': func_length,
+    'append': func_append,
+    'reverse': func_reverse,
+    'list-tail': func_listtail, 
 
-    'number?': number_query,
-    'string?': string_query,
-    'symbol?': symbol_query, 
-    'boolean?': boolean_query
+    'number?': func_isnumber,
+    'string?': func_isstring,
+    'symbol?': func_issymbol, 
+    'boolean?': func_isboolean
 }
 
 # name of primitives to be added to global environment

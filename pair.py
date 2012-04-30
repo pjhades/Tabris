@@ -59,18 +59,6 @@ def to_python_list(lst):
     return res
 
 
-def is_null(v):
-    return v == []
-
-
-def is_pair(v):
-    return isinstance(v, Pair) 
-
-
-def is_list(p):
-    return isinstance(p, Pair) and p.islist
-
-
 def cons(first, second):
     return Pair([first, second])
 
@@ -240,22 +228,22 @@ def cddddr(p):
 	return p[1][1][1][1]
 
 
-def null_query(v):
+def func_isnull(v):
     """(null? p)"""
-    return Boolean(is_null(v))
+    return isinstance(v, Pair) and v.islist and v.length == 0
 
 
-def pair_query(v):
+def func_ispair(v):
     """(pair? p)"""
-    return Boolean(is_pair(v))
+    return isinstance(v, Pair)
 
 
-def list_query(v):
+def func_islist(v):
     """(list? p)"""
-    return Boolean(is_list(v))
+    return isinstance(v, Pair) and v.islist
 
 
-def make_list(*elems):
+def func_list(*elems):
     """(list 1 2 3)"""
     res = NIL
     for elem in reversed(elems):
@@ -263,14 +251,14 @@ def make_list(*elems):
     return res
 
 
-def get_length(p):
+def func_length(p):
     """(length '(1 2 3))"""
     if not p.islist:
         raise SchemeError('expects proper list, given %s' % (to_str(p)))
     return p.length
 
 
-def append_lst(*args):
+def func_append(*args):
     """(append '(1 2) '(a b))"""
     if len(args) == 0:
         return NIL
@@ -303,16 +291,16 @@ def append_lst(*args):
     return res
 
 
-def reverse_lst(p):
+def func_reverse(p):
     """(reverse '(a b c))"""
     elems = []
     while p != NIL:
         elems.append(car(p))
         p = cdr(p)
-    return make_list(*list(reversed(elems)))
+    return func_list(*list(reversed(elems)))
 
 
-def get_list_tail(p, start):
+def func_listtail(p, start):
     """(list-tail '(a b c) 1)"""
     orig = p
     try:
