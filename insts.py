@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
-REG_PC = 32
-REG_BP = 33
-REG_SP = 34
-NUM_REGS = 35
+
+REG_PC = 0
+REG_VAL = 1
+REG_ENV = 2
+REG_FLAG = 3
 
 
 def mov_(vm, inst):

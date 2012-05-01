@@ -2,14 +2,14 @@
 
 import unittest
 import evalu
-import enviro
+import environment
 from parser import Tokenizer, parse 
 from pair import to_str
 
 class EvaluatorTest(unittest.TestCase):
     def setUp(self):
         self.tk = Tokenizer()
-        self.env = enviro.init_global()
+        self.env = environment.init_global()
 
 
     def tearDown(self):

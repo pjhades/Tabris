@@ -19,6 +19,13 @@ class Symbol(str):
         return super(Symbol, self).__hash__()
 
 
+class Closure(object):
+    def __init__(self, params, body, env):
+        self.params = params
+        self.body = body
+        self.env = env
+
+
 class Procedure(object):
     def __init__(self, params, body, env, is_prim=False):
         """

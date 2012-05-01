@@ -2,15 +2,14 @@
 
 from errors import *
 from pair import *
-from enviro import extend_env
+from environment import Frame
 from prims import prim_ops
-from trampoline import pogo_stick, bounce
+from trampoline import *
 from scmtypes import Symbol, Procedure, func_isstring, func_issymbol, \
                      func_isnumber, func_isboolean
 
 # save the original versions
 python_eval = eval
-python_apply = apply
 
 def is_self_evaluating(exp):
     return func_isnumber(exp) or func_isboolean(exp) or func_isstring(exp)
@@ -132,7 +131,7 @@ def make_begin(seq):
     return cons(Symbol('begin'), seq)
 
 def eval_sequence(exps, env, cont):
-    "evaluate the sequence, return only the last as final result"
+    """evaluate the sequence, return only the last as final result"""
     def done_first(first):
         return bounce(eval_sequence, cdr(exps), env, cont)
     if func_isnull(cdr(exps)):
@@ -213,7 +212,7 @@ def get_let_body(exp):
     return cddr(exp)
 
 def get_binding_var_exp(bindings):
-    "Return the variables and expressions in each binding."
+    """Return the variables and expressions in each binding."""
     binding_list = to_python_list(bindings)
     return func_list(*[car(x) for x in binding_list]), \
            func_list(*[cadr(x) for x in binding_list])
@@ -270,6 +269,6 @@ def apply(proc, args, cont):
             raise SchemeError('expects %d arguments, given %d: %s' % \
                               (len(proc.params), len(args), ' '.join([str(x) for x in args])))
 
-        new_env = extend_env(params, args, proc.env)
+        new_env = Frame(params, args, proc.env)
         body = proc.body
         return bounce(eval_sequence, body, new_env, cont)
