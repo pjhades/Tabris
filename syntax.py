@@ -4,10 +4,9 @@ from scmtypes import Symbol, func_isnumber, func_isboolean, \
         func_isstring, func_issymbol
 from pair import *
 
+
 def isselfeval(exp):
-    return func_isnumber(exp) or \
-           func_isboolean(exp) or \
-           func_isstring(exp)
+    return func_isnumber(exp) or func_isboolean(exp) or func_isstring(exp)
 
 
 def issymbol(exp):
@@ -32,3 +31,11 @@ def islambda(exp):
 
 def isbegin(exp):
     return func_islist(exp) and car(exp) == Symbol('begin')
+
+
+def isif(exp):
+    return func_islist(exp) and car(exp) == Symbol('if')
+
+
+def iscond(exp):
+    return func_islist(exp) and car(exp) == Symbol('cond')

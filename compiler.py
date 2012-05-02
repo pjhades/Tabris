@@ -1,11 +1,25 @@
 # -*- coding: utf-8 -*-
 
-from vm import REG_VAL, inst_loadi, inst_refvar, inst_bindvar, inst_setvar
-from pair import car, cdr, cadr, cddr, caddr, to_python_list, func_islist
-from scmtypes import func_issymbol, Closure
+from vm import REG_VAL, inst_loadi, inst_refvar, inst_bindvar, inst_setvar, \
+        inst_jf, inst_jt, inst_j
+from pair import cons, car, cdr, cadr, cddr, caddr, cadddr, cdddr, \
+        to_python_list, func_islist
+from scmtypes import func_issymbol, Closure, Symbol
 from environment import Frame
 from syntax import *
 from trampoline import *
+
+
+def _label_gen():
+    counter = 0
+    def f():
+        nonlocal counter
+        counter += 1
+        return 'label%d' % (counter - 1)
+    return f
+
+
+label = _label_gen()
 
 
 def compile_selfeval(exp, env, cont):
@@ -29,15 +43,20 @@ def compile_symbol(exp, env, cont):
     return bounce(cont, code)
 
 
-# TODO: (define (foo x) ..)
 def compile_define(exp, env, cont):
     def got_val(val_code):
         code = val_code + [
             (inst_bindvar, var),
         ]
         return bounce(cont, code)
-    var, val = cadr(exp), caddr(exp)
-    return bounce(dispatch_exp, val, env, got_val)
+    var, val = cadr(exp), cddr(exp)
+    if func_issymbol(var):
+        return bounce(dispatch_exp, car(val), env, got_val)
+    else:
+        lambda_form = func_append(
+                func_list(Symbol('lambda'), cdr(var)), val)
+        var = car(var)
+        return bounce(compile_lambda, lambda_form, env, got_val)
 
 
 def compile_set(exp, env, cont):
@@ -95,10 +114,54 @@ def compile_sequence(exp, code, env, cont):
         return bounce(dispatch_exp, car(exp), env, got_first)
 
 
+def compile_if(exp, env, cont):
+    def got_test(test_code):
+        def got_yes(yes_code):
+            def got_no(no_code):
+                nonlocal code
+                label_true, label_after = label(), label()
+                code += [
+                    (inst_jt, label_true),
+                ] + no_code + [
+                    (inst_j, label_after),
+                    label_true,
+                ] + yes_code + [
+                    label_after,
+                ]
+                return bounce(cont, code)
+            if no is None:
+                nonlocal code
+                label_after = label()
+                code += [
+                    (inst_jf, label_after),
+                ] + yes_code + [
+                    label_after,
+                ]
+                return bounce(cont, code)
+            else:
+                return bounce(dispatch_exp, no, env, got_no)
+
+        nonlocal code
+        code += test_code
+        return bounce(dispatch_exp, yes, env, got_yes)
+
+    test, yes = cadr(exp), caddr(exp)
+    if cdddr(exp) == NIL:
+        no = None
+    else:
+        no = cadddr(exp)
+    code = []
+    return bounce(dispatch_exp, test, env, got_test)
+
+
+def compile_cond(exp, env, cont):
+    #TODO:
+    pass
+
+
 def dispatch_exp(exp, env, cont):
     """Compile S-expression `exp' with compile-time
     environment `env'."""
-    #print(exp, type(exp))
     if issymbol(exp):
         return bounce(compile_symbol, exp, env, cont) 
     elif isquote(exp):
@@ -113,6 +176,8 @@ def dispatch_exp(exp, env, cont):
         return bounce(compile_lambda, exp, env, cont)
     elif isbegin(exp):
         return bounce(compile_sequence, cdr(exp), [], env, cont)
+    elif isif(exp):
+        return bounce(compile_if, exp, env, cont)
     else:
         raise SchemeError('unknown expression ' + str(exp))
 
