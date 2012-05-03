@@ -39,3 +39,7 @@ def isif(exp):
 
 def iscond(exp):
     return func_islist(exp) and car(exp) == Symbol('cond')
+
+
+def islet(exp):
+    return func_islist(exp) and car(exp) == Symbol('let')

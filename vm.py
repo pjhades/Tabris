@@ -57,6 +57,11 @@ def inst_j(vm, label):
     vm.regs[REG_PC] = vm.labels[label]
 
 
+def inst_extenv(vm):
+    """Create a new empty frame."""
+    frm = Frame(outer=vm.regs[REG_ENV])
+    vm.regs[REG_ENV] = frm
+
 
 class VM(object):
     def __init__(self):

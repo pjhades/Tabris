@@ -13,7 +13,8 @@ from compiler import tcompile
 
 class Repl(object):
     def __init__(self, infile=''):
-        self.ps1 = "秋裤党你要努力，不然会被看不起 >>> "
+        #self.ps1 = "秋裤党你要努力，不然会被看不起 >>> "
+        self.ps1 = "第三次冲击 >>> "
         self.ps2 = "       ... "
         self.tokenizer = parser.Tokenizer()
         self.env = environment.init_global()
