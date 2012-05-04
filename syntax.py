@@ -1,45 +1,48 @@
 # -*- coding: utf-8 -*-
 
-from scmtypes import Symbol, func_isnumber, func_isboolean, \
-        func_isstring, func_issymbol
-from pair import *
+from scmtypes import Symbol
+from scmlib import *
 
 
 def isselfeval(exp):
-    return func_isnumber(exp) or func_isboolean(exp) or func_isstring(exp)
+    return lib_isnumber(exp) or lib_isboolean(exp) or lib_isstring(exp)
 
 
 def issymbol(exp):
-    return func_issymbol(exp)
+    return lib_issymbol(exp)
 
 
 def isquote(exp):
-    return func_islist(exp) and car(exp) == Symbol('quote')
+    return lib_islist(exp) and car(exp) == Symbol('quote')
 
 
 def isdefine(exp):
-    return func_islist(exp) and car(exp) == Symbol('define')
+    return lib_islist(exp) and car(exp) == Symbol('define')
 
 
 def isset(exp):
-    return func_islist(exp) and car(exp) == Symbol('set!')
+    return lib_islist(exp) and car(exp) == Symbol('set!')
 
 
 def islambda(exp):
-    return func_islist(exp) and car(exp) == Symbol('lambda')
+    return lib_islist(exp) and car(exp) == Symbol('lambda')
 
 
 def isbegin(exp):
-    return func_islist(exp) and car(exp) == Symbol('begin')
+    return lib_islist(exp) and car(exp) == Symbol('begin')
 
 
 def isif(exp):
-    return func_islist(exp) and car(exp) == Symbol('if')
+    return lib_islist(exp) and car(exp) == Symbol('if')
 
 
 def iscond(exp):
-    return func_islist(exp) and car(exp) == Symbol('cond')
+    return lib_islist(exp) and car(exp) == Symbol('cond')
 
 
 def islet(exp):
-    return func_islist(exp) and car(exp) == Symbol('let')
+    return lib_islist(exp) and car(exp) == Symbol('let')
+
+
+def isletstar(exp):
+    return lib_islist(exp) and car(exp) == Symbol('let*')

@@ -2,6 +2,7 @@
 
 _sym_table = {}
 
+# TODO: this should be rewritten
 class Symbol(str):
     """Symbols with the same spell will share the same object."""
     def __new__(cls, sym):
@@ -41,20 +42,4 @@ class Procedure(object):
 
     def __str__(self):
         return '[procedure]'
-
-
-def func_isnumber(v):
-    return isinstance(v, int) or isinstance(v, float) or isinstance(v, complex) 
-
-
-def func_isstring(v):
-    return isinstance(v, str)
-
-
-def func_issymbol(v):
-    return isinstance(v, Symbol)
-
-
-def func_isboolean(v):
-    return isinstance(v, bool)
 

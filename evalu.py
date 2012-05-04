@@ -1,24 +1,23 @@
 # -*- coding: utf-8 -*-
 
 from errors import *
-from pair import *
 from environment import Frame
 from prims import prim_ops
 from trampoline import *
-from scmtypes import Symbol, Procedure, func_isstring, func_issymbol, \
-                     func_isnumber, func_isboolean
+from scmtypes import Symbol, Procedure
+from scmlib import *
 
 # save the original versions
 python_eval = eval
 
 def is_self_evaluating(exp):
-    return func_isnumber(exp) or func_isboolean(exp) or func_isstring(exp)
+    return lib_isnumber(exp) or lib_isboolean(exp) or lib_isstring(exp)
 
 def eval_self_evaluating(exp, env, cont):
     return bounce(cont, exp)
 
 def is_variable(exp):
-    return func_issymbol(exp)
+    return lib_issymbol(exp)
 
 def eval_variable(exp, env, cont):
     return bounce(cont, env.get_var(exp))
@@ -27,7 +26,7 @@ def get_quote_text(exp):
     return cadr(exp)
 
 def eval_quote(exp, env, cont):
-    if func_length(exp) != 2:
+    if lib_length(exp) != 2:
         raise SchemeError('bad syntax: ' + to_str(exp))
     return bounce(cont, get_quote_text(exp))
 
@@ -42,7 +41,7 @@ def eval_set(exp, env, cont):
         env.set_var(get_set_var(exp), value)
         return bounce(cont, Symbol('ok'))
 
-    if func_length(exp) != 3:
+    if lib_length(exp) != 3:
         raise SchemeError('bad syntax: ' + to_str(exp))
 
     val = get_set_val(exp)
@@ -52,13 +51,13 @@ def eval_set(exp, env, cont):
 
 def get_define_var(exp):
     x = cadr(exp)
-    if func_issymbol(x):
+    if lib_issymbol(x):
         return x
     return car(x)
 
 def get_define_val(exp):
     x = cadr(exp)
-    if func_issymbol(x):
+    if lib_issymbol(x):
         return caddr(exp)
     return make_lambda(cdadr(exp), cddr(exp))
 
@@ -67,7 +66,7 @@ def eval_define(exp, env, cont):
         env.add_var(get_define_var(exp), value)
         return bounce(cont, Symbol('ok'))
 
-    if func_length(exp) < 3:
+    if lib_length(exp) < 3:
         raise SchemeError('bad syntax: ' + to_str(exp))
 
     val = get_define_val(exp)
@@ -88,7 +87,7 @@ def eval_lambda(exp, env, cont):
     body = get_lambda_body(exp)
     params = get_lambda_params(exp)
 
-    if func_islist(params):
+    if lib_islist(params):
         params = to_python_list(params)
 
     return bounce(cont, Procedure(params, body, env))
@@ -101,12 +100,12 @@ def get_if_consequent(exp):
 
 def get_if_alternate(exp):
     x = cdddr(exp)
-    if not func_isnull(x):
+    if not lib_isnull(x):
         return car(x)
     return False
 
 def make_if(predicate, consequent, alternative):
-    return func_list(Symbol('if'), predicate, consequent, alternative)
+    return lib_list(Symbol('if'), predicate, consequent, alternative)
 
 def eval_if(exp, env, cont):
     def take_action(pred):
@@ -120,9 +119,9 @@ def get_begin_actions(exp):
     return cdr(exp)
 
 def seq_to_exp(seq):
-    if func_isnull(seq):
+    if lib_isnull(seq):
         return seq
-    elif func_isnull(cdr(seq)):
+    elif lib_isnull(cdr(seq)):
         return car(seq)
     else:
         return make_begin(seq)
@@ -134,7 +133,7 @@ def eval_sequence(exps, env, cont):
     """evaluate the sequence, return only the last as final result"""
     def done_first(first):
         return bounce(eval_sequence, cdr(exps), env, cont)
-    if func_isnull(cdr(exps)):
+    if lib_isnull(cdr(exps)):
         return bounce(_eval, car(exps), env, cont)
     return bounce(_eval, car(exps), env, done_first)
 
@@ -142,7 +141,7 @@ def eval_begin(exp, env, cont):
     return bounce(eval_sequence, cdr(exp), env, cont)
 
 def is_application(exp):
-    return func_ispair(exp)
+    return lib_ispair(exp)
 
 def get_application_opr(exp):
     return car(exp)
@@ -160,7 +159,7 @@ def eval_each(opds, env, cont):
             return bounce(cont, cons(first, rest))
         return bounce(eval_each, cdr(opds), env, have_rest)
     
-    if func_isnull(opds):
+    if lib_isnull(opds):
         return bounce(cont, NIL)
     return bounce(_eval, car(opds), env, done_first)
 
@@ -214,8 +213,8 @@ def get_let_body(exp):
 def get_binding_var_exp(bindings):
     """Return the variables and expressions in each binding."""
     binding_list = to_python_list(bindings)
-    return func_list(*[car(x) for x in binding_list]), \
-           func_list(*[cadr(x) for x in binding_list])
+    return lib_list(*[car(x) for x in binding_list]), \
+           lib_list(*[cadr(x) for x in binding_list])
 
 def let_to_call(exp):
     var_list, exp_list = get_binding_var_exp(get_let_bindings(exp))
@@ -232,13 +231,13 @@ act = {
 }
 
 def _eval(exp, env, cont):
-    if func_islist(exp):
+    if lib_islist(exp):
         if car(exp) in act:
             return bounce(act[car(exp)], exp, env, cont)
-        elif func_ispair(exp):
+        elif lib_ispair(exp):
             return bounce(eval_application, exp, env, cont)
     else:
-        if func_issymbol(exp):
+        if lib_issymbol(exp):
             return bounce(cont, env.get_var(exp))
         elif is_self_evaluating(exp):
             return bounce(cont, exp)
@@ -260,7 +259,7 @@ def apply(proc, args, cont):
         # variable, put it into a python list, `args' remains a scheme list
         if proc.is_var_args:
             params = [proc.params]
-            args = to_python_list(func_list(args))
+            args = to_python_list(lib_list(args))
         else:
             params = proc.params
             args = to_python_list(args)

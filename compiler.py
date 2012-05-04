@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from vm import REG_VAL, inst_loadi, inst_refvar, inst_bindvar, inst_setvar, \
-        inst_jf, inst_jt, inst_j, inst_extenv
-from pair import cons, car, cdr, caar, cadr, cadar, cdar, cddr, caddr, \
-        cadddr, cdddr, to_python_list, func_islist
-from scmtypes import func_issymbol, Closure, Symbol
+from scmtypes import Closure, Symbol
 from environment import Frame
+from scmlib import *
+from insts import *
 from syntax import *
 from trampoline import *
 
@@ -50,11 +48,11 @@ def compile_define(exp, env, cont):
         ]
         return bounce(cont, code)
     var, val = cadr(exp), cddr(exp)
-    if func_issymbol(var):
+    if lib_issymbol(var):
         return bounce(dispatch_exp, car(val), env, got_val)
     else:
-        lambda_form = func_append(
-                func_list(Symbol('lambda'), cdr(var)), val)
+        lambda_form = lib_append(
+                lib_list(Symbol('lambda'), cdr(var)), val)
         var = car(var)
         return bounce(compile_lambda, lambda_form, env, got_val)
 
@@ -72,7 +70,7 @@ def compile_set(exp, env, cont):
 
 def compile_lambda(exp, env, cont):
     def got_body(body_code):
-        newenv = Frame(params, [0]*len(params), env)
+        newenv = Frame(params, [None]*len(params), env)
         closure = Closure(params, body_code, newenv)
         code = [
             (inst_loadi, REG_VAL, closure),
@@ -81,10 +79,10 @@ def compile_lambda(exp, env, cont):
 
     params, body = cadr(exp), cddr(exp)
     varargs = False
-    if func_issymbol(params):
+    if lib_issymbol(params):
         params = [params]
         varargs = True
-    elif func_islist(params):
+    elif lib_islist(params):
         params = to_python_list(params)
     else:
         tmplist = []
@@ -108,7 +106,7 @@ def compile_sequence(exp, code, env, cont):
         code += code_last
         return bounce(cont, code)
 
-    if func_isnull(cdr(exp)):
+    if lib_isnull(cdr(exp)):
         return bounce(dispatch_exp, car(exp), env, emit_last)
     else:
         return bounce(dispatch_exp, car(exp), env, got_first)
@@ -196,14 +194,63 @@ def compile_cond(exp, env, cont):
     return bounce(compile_clauses, cdr(exp), [], label_after, env, cont)
 
 
-def compile_let_binds(binds, code, env, cont):
+def compile_let_binds(binds, code, varl, env, cont):
     """Each binding of `let' is evaluated in a separated environment."""
     def got_bind(bind_code):
         nonlocal code
+        nonlocal varl
+        # record each variable
+        varl.append(caar(binds))
+        # generate code for getting each value, and
+        # push them onto the stack
+        code += bind_code + [
+            (inst_pushr, REG_VAL),
+        ]
+        return bounce(compile_let_binds, cdr(binds), code, varl, env, cont)
+
+    if binds == []:
+        return bounce(cont, (code, varl))
+    else:
+        return bounce(dispatch_exp, cadar(binds), env, got_bind)
+
+
+def compile_let(exp, env, cont):
+    def got_binds(binds_code_varl):
+        def got_body(body_code):
+            nonlocal code
+            code += body_code + [
+                (inst_killenv,),
+            ]
+            return bounce(cont, code)
+
+        binds_code, varl = binds_code_varl
+        code = binds_code + [
+            (inst_extenv,),
+        ]
+        for var in reversed(varl):
+            code += [
+                (inst_pop, REG_VAL),
+                (inst_bindvar, var),
+            ]
+        newenv = Frame(varl, [None]*len(varl), env)
+        return bounce(compile_sequence, cddr(exp), [], newenv, got_body)
+
+    return bounce(compile_let_binds, cadr(exp), [], [], env, got_binds)
+
+
+def compile_letstar_binds(binds, code, env, cont):
+    """Each binding of `let*' is evaluated in an environment in which
+    all the previous bindings are visible."""
+    def got_bind(bind_code):
+        nonlocal code
+        # generate code for getting each value, and 
+        # bind this variable
         code += bind_code + [
             (inst_bindvar, caar(binds)),
         ]
-        return bounce(compile_let_binds, cdr(binds), code, env, cont)
+        # setup the variable in the compile-time frame 
+        env.bindvar(caar(binds), None)
+        return bounce(compile_letstar_binds, cdr(binds), code, env, cont)
 
     if binds == []:
         return bounce(cont, code)
@@ -211,14 +258,24 @@ def compile_let_binds(binds, code, env, cont):
         return bounce(dispatch_exp, cadar(binds), env, got_bind)
 
 
-def compile_let(exp, env, cont):
-    # binds = cadr(exp)
-    # body = cddr(exp)
-    code = [
-        (inst_extenv),
-    ]
-    # TODO: 编译完了绑定之后，开始编译body
-    return bounce(compile_let_binds, cadr(exp), code, env, cont)
+def compile_letstar(exp, env, cont):
+    def got_binds(binds_code):
+        def got_body(body_code):
+            nonlocal code
+            code += body_code + [
+                (inst_killenv,),
+            ]
+            return bounce(cont, code)
+
+        code = [
+             (inst_extenv,),
+        ] + binds_code
+
+        return bounce(compile_sequence, cddr(exp), [], newenv, got_body)
+
+    # create a new compile-time frame
+    newenv = Frame(outer=env)
+    return bounce(compile_letstar_binds, cadr(exp), [], newenv, got_binds)
 
 
 def dispatch_exp(exp, env, cont):
@@ -243,6 +300,8 @@ def dispatch_exp(exp, env, cont):
         return bounce(compile_cond, exp, env, cont)
     elif islet(exp):
         return bounce(compile_let, exp, env, cont)
+    elif isletstar(exp):
+        return bounce(compile_letstar, exp, env, cont)
     else:
         raise SchemeError('unknown expression ' + str(exp))
 

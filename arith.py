@@ -1,10 +1,5 @@
 # -*- coding: utf-8 -*-
 
-"""
-Arithmetic library. These functions all take as argument a
-python list containing the operands.
-"""
-
 from errors import *
 
 def _check_argc(min_argc):

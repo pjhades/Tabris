@@ -7,7 +7,7 @@ Tokenizer for lexical analysis and parser for syntax analysis.
 import re
 
 from trampoline import pogo_stick, bounce
-from pair import func_list, cons, NIL
+from scmlib import *
 from scmtypes import Symbol
 from errors import *
 
@@ -234,7 +234,7 @@ def parse_sexp(tokens, cont):
         return bounce(parse_lexeme_datum, tokens, cont)
     elif token_type == "'":
         def make_quote(word):
-            return bounce(cont, func_list(Symbol('quote'), word))
+            return bounce(cont, lib_list(Symbol('quote'), word))
         consume(tokens, "'")
         return bounce(parse_sexp, tokens, make_quote)
     elif token_type == '(':

@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from pair import *
+from pair import Pair, to_python_list
+from scmlib import *
 
 class PairTest(unittest.TestCase):
     def setUp(self):
@@ -20,9 +21,9 @@ class PairTest(unittest.TestCase):
         self.assertEqual(cons([1, 2], [3, 4]), [[1, 2], [3, 4]])
 
     def testListMaking(self):
-        self.assertEqual(func_list(1, 2), [1, [2, []]])
-        self.assertEqual(func_list(1, [2, 3]), [1, [[2, 3], []]])
-        self.assertEqual(func_list([1, 2], [3, 4]), [[1, 2], [[3, 4], []]])
+        self.assertEqual(lib_list(1, 2), [1, [2, []]])
+        self.assertEqual(lib_list(1, [2, 3]), [1, [[2, 3], []]])
+        self.assertEqual(lib_list([1, 2], [3, 4]), [[1, 2], [[3, 4], []]])
 
     def testCarCdr(self):
         p = cons(1,2)
@@ -65,62 +66,62 @@ class PairTest(unittest.TestCase):
         self.assertEqual(cddddr(p), 16)
 
     def testLength(self):
-        self.assertEqual(func_length(func_list(1, 2, 3)), 3)
-        self.assertEqual(func_length(func_list(1, (2, 2), 3)), 3)
-        self.assertEqual(func_length(func_list()), 0)
-        self.assertEqual(func_length(NIL), 0)
-        self.assertEqual(func_length(func_list(func_list(1, 2, 3), func_list(4, 5))), 2)
+        self.assertEqual(lib_length(lib_list(1, 2, 3)), 3)
+        self.assertEqual(lib_length(lib_list(1, (2, 2), 3)), 3)
+        self.assertEqual(lib_length(lib_list()), 0)
+        self.assertEqual(lib_length(NIL), 0)
+        self.assertEqual(lib_length(lib_list(lib_list(1, 2, 3), lib_list(4, 5))), 2)
 
         try:
-            func_length(cons(1,2))
+            lib_length(cons(1,2))
         except SchemeError:
             pass
 
     def testAppend(self):
-        p1 = func_list(1, 2, 3)
-        p2 = func_list(4, 5)
+        p1 = lib_list(1, 2, 3)
+        p2 = lib_list(4, 5)
         p3 = cons(6, 7)
-        p4 = func_list(1, cons(2, 3), 4)
+        p4 = lib_list(1, cons(2, 3), 4)
 
-        self.assertEqual(func_append(p1, p2), func_list(1, 2, 3, 4, 5))
-        self.assertEqual(func_append(p1, p3), cons(1, cons(2, cons(3, p3))))
-        self.assertEqual(func_append(NIL, 123), 123)
-        self.assertEqual(func_append(NIL, p4), p4)
-        self.assertEqual(func_append(p4, p2), cons(1, cons(cons(2, 3), cons(4, cons(4, cons(5, NIL))))))
-        self.assertEqual(func_append(), NIL)
+        self.assertEqual(lib_append(p1, p2), lib_list(1, 2, 3, 4, 5))
+        self.assertEqual(lib_append(p1, p3), cons(1, cons(2, cons(3, p3))))
+        self.assertEqual(lib_append(NIL, 123), 123)
+        self.assertEqual(lib_append(NIL, p4), p4)
+        self.assertEqual(lib_append(p4, p2), cons(1, cons(cons(2, 3), cons(4, cons(4, cons(5, NIL))))))
+        self.assertEqual(lib_append(), NIL)
 
         try:
-            func_append(p1, 123, p2)
+            lib_append(p1, 123, p2)
         except SchemeError:
             pass
 
     def testReverse(self):
-        p1 = func_list(1, 2, 3, 4, 5)
-        p2 = func_list(1, cons(2, 3), 4)
+        p1 = lib_list(1, 2, 3, 4, 5)
+        p2 = lib_list(1, cons(2, 3), 4)
         
-        self.assertEqual(func_reverse(p1), func_list(5, 4, 3, 2, 1))
-        self.assertEqual(func_reverse(p2), func_list(4, cons(2, 3), 1))
-        self.assertEqual(func_reverse(NIL), NIL)
+        self.assertEqual(lib_reverse(p1), lib_list(5, 4, 3, 2, 1))
+        self.assertEqual(lib_reverse(p2), lib_list(4, cons(2, 3), 1))
+        self.assertEqual(lib_reverse(NIL), NIL)
 
     def testListTail(self):
-        p1 = func_list(1, 2, 3, 4)
+        p1 = lib_list(1, 2, 3, 4)
         p2 = cons(1, 2)
         p3 = cons(1, cons(2, cons(3, 4)))
 
-        self.assertEqual(func_listtail(p1, 2), func_list(3, 4))
-        self.assertEqual(func_listtail(p1, 3), func_list(4))
-        self.assertEqual(func_listtail(p1, 4), NIL)
-        self.assertEqual(func_listtail(p2, 0), cons(1, 2))
-        self.assertEqual(func_listtail(p2, 1), 2)
-        self.assertEqual(func_listtail(p3, 2), cons(3, 4))
+        self.assertEqual(lib_listtail(p1, 2), lib_list(3, 4))
+        self.assertEqual(lib_listtail(p1, 3), lib_list(4))
+        self.assertEqual(lib_listtail(p1, 4), NIL)
+        self.assertEqual(lib_listtail(p2, 0), cons(1, 2))
+        self.assertEqual(lib_listtail(p2, 1), 2)
+        self.assertEqual(lib_listtail(p3, 2), cons(3, 4))
 
         try:
-            func_listtail(p1, 100)
+            lib_listtail(p1, 100)
         except SchemeError:
             pass
 
     def testToPythonList(self):
-        self.assertEqual(to_python_list(func_list(1,2,3)), [1,2,3])
+        self.assertEqual(to_python_list(lib_list(1,2,3)), [1,2,3])
 
 
 def suite():

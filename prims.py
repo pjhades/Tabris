@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from scmtypes import *
+from scmtypes import Procedure
+from scmlib import *
 from arith import *
-from pair import *
 
 # mapping from primitive body to the actual function
 prim_ops = {
@@ -52,19 +52,19 @@ prim_ops = {
     'cdddar': cdddar,
     'cddddr': cddddr,
 
-    'null?': func_isnull,
-    'pair?': func_ispair,
-    'list?': func_islist,
-    'list': func_list, 
-    'length': func_length,
-    'append': func_append,
-    'reverse': func_reverse,
-    'list-tail': func_listtail, 
+    'null?': lib_isnull,
+    'pair?': lib_ispair,
+    'list?': lib_islist,
+    'list': lib_list, 
+    'length': lib_length,
+    'append': lib_append,
+    'reverse': lib_reverse,
+    'list-tail': lib_listtail, 
 
-    'number?': func_isnumber,
-    'string?': func_isstring,
-    'symbol?': func_issymbol, 
-    'boolean?': func_isboolean
+    'number?': lib_isnumber,
+    'string?': lib_isstring,
+    'symbol?': lib_issymbol, 
+    'boolean?': lib_isboolean
 }
 
 # name of primitives to be added to global environment
