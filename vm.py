@@ -7,7 +7,7 @@ class VM(object):
     def __init__(self):
         self.reset()
     def reset(self):
-        self.regs = [0]*4
+        self.regs = [0]*5
         self.code = []
         self.codelen = 0
         self.stack = []

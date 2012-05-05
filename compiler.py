@@ -2,6 +2,7 @@
 
 from scmtypes import Closure, Symbol
 from environment import Frame
+from pair import to_python_list
 from scmlib import *
 from insts import *
 from syntax import *
@@ -110,6 +111,10 @@ def compile_sequence(exp, code, env, cont):
         return bounce(dispatch_exp, car(exp), env, emit_last)
     else:
         return bounce(dispatch_exp, car(exp), env, got_first)
+
+
+def compile_begin(exp, env, cont):
+    return bounce(compile_sequence, cdr(exp), [], env, cont)
 
 
 def compile_if(exp, env, cont):
@@ -278,6 +283,78 @@ def compile_letstar(exp, env, cont):
     return bounce(compile_letstar_binds, cadr(exp), [], newenv, got_binds)
 
 
+def compile_letrec_binds(binds, code, env, cont):
+    """Each binding of `letrec' is evaluated in an environment in which
+    all the bindings are visible."""
+    def got_bind(bind_code):
+        nonlocal code
+        # generate code for getting each value, and 
+        # bind this variable
+        code += bind_code + [
+            (inst_setvar, caar(binds)),
+        ]
+        return bounce(compile_letrec_binds, cdr(binds), code, env, cont)
+
+    if binds == []:
+        return bounce(cont, code)
+    else:
+        return bounce(dispatch_exp, cadar(binds), env, got_bind)
+
+
+def compile_letrec(exp, env, cont):
+    def got_binds(binds_code):
+        def got_body(body_code):
+            nonlocal code
+            code += body_code + [
+                (inst_killenv,),
+            ]
+            return bounce(cont, code)
+
+        code = [
+            (inst_extenv,),
+            (inst_loadi, REG_VAL, None),
+        ]
+        for var in varl:
+            code += [
+                (inst_bindvar, var),
+            ]
+        code += binds_code
+        return bounce(compile_sequence, cddr(exp), [], newenv, got_body)
+
+    # all binding variables are set to undefined first
+    varl = letrec_vars(cadr(exp))
+    # create a new compile-time frame
+    newenv = Frame(varl, [None]*len(varl), outer=env)
+    return bounce(compile_letrec_binds, cadr(exp), [], newenv, got_binds)
+
+
+def compile_apply_args(args, code, env, cont):
+    def got_arg(arg_code):
+        nonlocal code
+        code += arg_code + [
+            (inst_addarg,),
+        ]
+        return bounce(compile_apply_args, cdr(args), code, env, cont)
+
+    if args == []:
+        return bounce(cont, code)
+    else:
+        return bounce(dispatch_exp, car(args), env, got_arg)
+
+
+def compile_apply(exp, env, cont):
+    def got_args(args_code):
+        def got_proc(proc_code):
+            code = args_code + proc_code + [
+                (inst_call,),
+            ]
+            return bounce(cont, code)
+
+        return bounce(dispatch_exp, car(exp), env, got_proc)
+
+    return bounce(compile_apply_args, cdr(exp), [], env, got_args)
+
+
 def dispatch_exp(exp, env, cont):
     """Compile S-expression `exp' with compile-time environment `env'."""
     if issymbol(exp):
@@ -293,7 +370,7 @@ def dispatch_exp(exp, env, cont):
     elif islambda(exp):
         return bounce(compile_lambda, exp, env, cont)
     elif isbegin(exp):
-        return bounce(compile_sequence, cdr(exp), [], env, cont)
+        return bounce(compile_begin, exp, env, cont)
     elif isif(exp):
         return bounce(compile_if, exp, env, cont)
     elif iscond(exp):
@@ -302,6 +379,10 @@ def dispatch_exp(exp, env, cont):
         return bounce(compile_let, exp, env, cont)
     elif isletstar(exp):
         return bounce(compile_letstar, exp, env, cont)
+    elif isletrec(exp):
+        return bounce(compile_letrec, exp, env, cont)
+    elif isapply(exp):
+        return bounce(compile_apply, exp, env, cont)
     else:
         raise SchemeError('unknown expression ' + str(exp))
 

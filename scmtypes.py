@@ -21,10 +21,15 @@ class Symbol(str):
 
 
 class Closure(object):
-    def __init__(self, params, body, env):
+    def __init__(self, params, body, env, isprim=False):
         self.params = params
         self.body = body
         self.env = env
+        self.isprim = isprim
+    def __call__(self, *args, **kwargs):
+        return self.body(*args, **kwargs)
+    def __str__(self):
+        return '<procedure>'
 
 
 class Procedure(object):

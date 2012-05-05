@@ -4,6 +4,7 @@ REG_PC = 0
 REG_VAL = 1
 REG_ENV = 2
 REG_SP = 3
+REG_ARGS = 4
 
 
 def inst_loadi(vm, idx, val):
@@ -23,7 +24,6 @@ def inst_bindvar(vm, var):
     """Add a new binding of variable and the value in VAL."""
     val = vm.regs[REG_VAL]
     vm.regs[REG_ENV].bindvar(var, val)
-    vm.regs[REG_VAL] = Symbol('ok')
     vm.regs[REG_PC] += 1
 
 
@@ -31,7 +31,6 @@ def inst_setvar(vm, var):
     """Set a variable to the value in VAL register."""
     val = vm.regs[REG_VAL]
     vm.regs[REG_ENV].setvar(var, val)
-    vm.regs[REG_VAL] = Symbol('ok')
     vm.regs[REG_PC] += 1
 
 
@@ -89,3 +88,25 @@ def inst_pop(vm, idx):
     vm.regs[REG_SP] -= 1
     vm.regs[REG_PC] += 1
 
+
+def inst_addarg(vm):
+    """Append VAL to ARGS."""
+    vm.regs[REG_ARGS].append(vm.regs[REG_VAL])
+    vm.regs[REG_PC] += 1
+
+
+def inst_call(vm):
+    """Call closure in VAL with ARGS."""
+    closure = vm.regs[REG_VAL]
+    if closure.isprim:
+        vm.regs[REG_VAL] = closure(*vm.regs[REG_ARGS])
+        vm.regs[REG_PC] += 1
+    else:
+        # create a new frame
+        frm = Frame(closure.params, vm.regs[REG_ARGS], vm.regs[REG_ENV])
+        vm.regs[REG_ENV] = frm
+        # save PC
+        vm.regs[REG_SP] += 1
+        vm.stack[vm.regs[REG_SP]] = vm.regs[REG_PC]
+        # jump to the closure code
+        vm.regs[REG_PC] = closure.body

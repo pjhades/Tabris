@@ -5,7 +5,7 @@
 import profile
 
 import parser
-import evalu
+#import evalu
 import environment
 from errors import *
 from pair import to_str

@@ -246,7 +246,7 @@ def lib_reverse(p):
     return lib_list(*list(reversed(elems)))
 
 
-def lib_listtail(p, start):
+def lib_list_tail(p, start):
     """(list-tail '(a b c) 1)"""
     orig = p
     try:
