@@ -2,7 +2,7 @@
 
 from scmtypes import Symbol
 from environment import init_global
-from insts import REG_PC, REG_VAL, REG_ENV, REG_ARGS
+from insts import REG_PC, REG_VAL, REG_ENV, REG_ARGS, inst_closure
 
 DBG_SHOWINST = 1
 DBG_STEPDUMP = 2
@@ -20,33 +20,23 @@ class VM(object):
         self.regs[REG_ENV] = init_global()
         self.regs[REG_ARGS] = []
         self.code = []
+        self.codelen = 0
         self.stack = []
 
     def load(self, code):
         self.code += code
+        self.codelen = len(self.code)
         if self.flags & DBG_SHOWCODE:
             for c in self.code:
-                print(c)
-
-        #for i in range(len(code)):
-        #    if isinstance(code[i], tuple):
-        #        self.code.append(code[i])
-        #    else:
-        #        self.labels[code[i]] = len(self.code)
-        #if self.flags & DBG_SHOWCODE:
-        #    print('code:')
-        #    for c in self.code:
-        #        print(c)
-        #    print('labels:')
-        #    for l in self.labels:
-        #        p = self.labels[l]
-        #        if p < len(self.code):
-        #            print('%s: %d %s' % (l, self.labels[l], self.code[self.labels[l]]))
-        #        else:
-        #            print('%s: %d %s' % (l, self.labels[l], '---'))
+                if c[0] is inst_closure:
+                    print('(inst_closure)')
+                    for ins in c[2]:
+                        print('   ', ins)
+                else:
+                    print(c)
 
     def run(self):
-        while self.regs[REG_PC] != len(self.code):
+        while self.regs[REG_PC] < self.codelen:
             inst = self.code[self.regs[REG_PC]]
             if self.flags & DBG_SHOWINST:
                 print('exec:', inst)

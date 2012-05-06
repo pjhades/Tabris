@@ -49,7 +49,6 @@ class Repl(object):
                 codes = tcompile(exp, self.env)
                 self.vm.load(codes)
                 self.vm.run()
-                #print(self.vm.regs[vm.REG_ENV].binds)
                 print(self.vm.result)
         
         self.infile.close()

@@ -119,6 +119,7 @@ def inst_call(vm):
 
         # jump to the closure code
         vm.code = closure.body
+        vm.codelen = len(vm.code)
         vm.regs[REG_PC] = 0
 
 
@@ -128,6 +129,7 @@ def inst_ret(vm):
     vm.regs[REG_ENV] = record.env
     vm.regs[REG_PC] = record.retaddr
     vm.code = record.code
+    vm.codelen = len(vm.code)
 
 
 def inst_clrargs(vm):
