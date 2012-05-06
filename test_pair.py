@@ -108,15 +108,15 @@ class PairTest(unittest.TestCase):
         p2 = cons(1, 2)
         p3 = cons(1, cons(2, cons(3, 4)))
 
-        self.assertEqual(lib_listtail(p1, 2), lib_list(3, 4))
-        self.assertEqual(lib_listtail(p1, 3), lib_list(4))
-        self.assertEqual(lib_listtail(p1, 4), NIL)
-        self.assertEqual(lib_listtail(p2, 0), cons(1, 2))
-        self.assertEqual(lib_listtail(p2, 1), 2)
-        self.assertEqual(lib_listtail(p3, 2), cons(3, 4))
+        self.assertEqual(lib_list_tail(p1, 2), lib_list(3, 4))
+        self.assertEqual(lib_list_tail(p1, 3), lib_list(4))
+        self.assertEqual(lib_list_tail(p1, 4), NIL)
+        self.assertEqual(lib_list_tail(p2, 0), cons(1, 2))
+        self.assertEqual(lib_list_tail(p2, 1), 2)
+        self.assertEqual(lib_list_tail(p3, 2), cons(3, 4))
 
         try:
-            lib_listtail(p1, 100)
+            lib_list_tail(p1, 100)
         except SchemeError:
             pass
 
