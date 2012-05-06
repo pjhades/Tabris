@@ -2,7 +2,7 @@
 
 
 from prims import prim_mappings
-from scmtypes import Symbol, Procedure
+from scmtypes import Symbol
 from errors import *
 
 
@@ -10,6 +10,7 @@ class Frame(object):
     def __init__(self, varl=[], vall=[], outer=None):
         self.binds = {p[0]: p[1] for p in zip(varl, vall)}
         self.outer = outer
+
     def refvar(self, var):
         frm = self
         while frm:
@@ -18,6 +19,7 @@ class Frame(object):
             else:
                 return frm.binds[var]
         raise SchemeError('unbound variable ' + var)
+
     def setvar(self, var, val):
         frm = self
         while frm:
@@ -27,8 +29,10 @@ class Frame(object):
                 frm.binds[var] = val
                 return
         raise SchemeError('unbound variable ' + var)
+
     def bindvar(self, var, val):
         self.binds[var] = val
+
     def extend(self, varl, vall):
         for b in zip(varl, vall):
             self.binds[b[0]] = b[1]

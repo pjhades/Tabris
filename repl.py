@@ -1,23 +1,20 @@
 # -*- coding: utf-8 -*-
 
-"""Read-Evaluate-Print Loop"""
-
-import profile
-
-import parser
-#import evalu
-import environment
-from errors import *
+import vm
 from pair import to_str
+from prims import prim_mappings
+from parser import Tokenizer, parse
 from compiler import tcompile
+from environment import Frame
+from errors import *
 
 class Repl(object):
     def __init__(self, infile=''):
-        #self.ps1 = "秋裤党你要努力，不然会被看不起 >>> "
-        self.ps1 = "第三次冲击 >>> "
+        self.ps1 = "Tabris >>> "
         self.ps2 = "       ... "
-        self.tokenizer = parser.Tokenizer()
-        self.env = environment.init_global()
+        self.tker = Tokenizer()
+        self.env = Frame(prim_mappings.keys(), [None]*len(prim_mappings.keys()), None)
+        self.vm = vm.VM()
         try:
             self.infile = '' if infile == '' else open(infile, 'r')
         except IOError:
@@ -28,50 +25,31 @@ class Repl(object):
         reach_eof = False
         while not reach_eof:
             if self.infile == '':
-                self.tokenizer.tokenize(input(self.ps1) + '\n')
+                self.tker.tokenize(input(self.ps1) + '\n')
             else:
-                self.tokenizer.tokenize(self.infile.readline())
+                self.tker.tokenize(self.infile.readline())
 
-            while self.tokenizer.need_more_code():
+            while self.tker.need_more_code():
                 if self.infile == '':
-                    self.tokenizer.tokenize(input(self.ps2) + '\n')
+                    self.tker.tokenize(input(self.ps2) + '\n')
                 else:
                     line = self.infile.readline()
                     if line == '':
                         reach_eof = True
                         break
-                    self.tokenizer.tokenize(line)
+                    self.tker.tokenize(line)
 
-            tokens = self.tokenizer.get_tokens()
+            tokens = self.tker.get_tokens()
+            exps = parse(tokens)
 
-            #print('tokens:')
-            #print('-' * 50)
-            #for token in tokens:
-            #    print(token)
-            #print()
-
-            #print('env:')
-            #print('-' * 50)
-            #for var in self.env.bindings:
-            #    print(var, type(var), '--->', self.env.bindings[var], type(self.env.bindings[var]))
-            #print()
-
-            exps = parser.parse(tokens)
+            #self.vm.set_dbgflag(vm.DBG_STEPDUMP | vm.DBG_SHOWINST)
+            #self.vm.set_dbgflag(vm.DBG_SHOWCODE)
 
             for exp in exps:
-                #print('str form:')
-                #print('-' * 50)
-                #print(to_str(exp))
-                #print()
-                #print('result ---_')
-                #print('           \\')
-                #print('            V')
-
                 codes = tcompile(exp, self.env)
-                for code in codes:
-                    print(code)
-
-                #print(evalu.eval(exp, self.env))
-                #print()
+                self.vm.load(codes)
+                self.vm.run()
+                #print(self.vm.regs[vm.REG_ENV].binds)
+                print(self.vm.result)
         
         self.infile.close()

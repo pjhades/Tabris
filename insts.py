@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
+from scmtypes import ActivationRecord, Closure
+from environment import Frame
+
 REG_PC = 0
 REG_VAL = 1
 REG_ENV = 2
-REG_SP = 3
-REG_ARGS = 4
-
+REG_ARGS = 3
 
 def inst_loadi(vm, idx, val):
     """Load an immediate to register."""
@@ -34,25 +35,28 @@ def inst_setvar(vm, var):
     vm.regs[REG_PC] += 1
 
 
-def inst_jt(vm, label):
+def inst_jt(vm, offset):
     """Jump to label if VAL is true."""
     if vm.regs[REG_VAL] is not False:
-        vm.regs[REG_PC] = vm.labels[label]
+        #vm.regs[REG_PC] = vm.labels[label]
+        vm.regs[REG_PC] += offset
     else:
         vm.regs[REG_PC] += 1
 
 
-def inst_jf(vm, label):
+def inst_jf(vm, offset):
     """Jump to label if VAL is false."""
     if vm.regs[REG_VAL] is False:
-        vm.regs[REG_PC] = vm.labels[label]
+        #vm.regs[REG_PC] = vm.labels[label]
+        vm.regs[REG_PC] += offset
     else:
         vm.regs[REG_PC] += 1
 
 
-def inst_j(vm, label):
+def inst_j(vm, offset):
     """Unconditional jump."""
-    vm.regs[REG_PC] = vm.labels[label]
+    #vm.regs[REG_PC] = vm.labels[label]
+    vm.regs[REG_PC] += offset
 
 
 def inst_extenv(vm):
@@ -70,22 +74,19 @@ def inst_killenv(vm):
 
 def inst_pushr(vm, idx):
     """Push reg `idx' onto the stack."""
-    vm.regs[REG_SP] += 1
-    vm.stack[vm.regs[REG_SP]] = vm.regs[idx]
+    vm.stack.append(vm.regs[idx])
     vm.regs[REG_PC] += 1
 
 
 def inst_pushi(vm, val):
     """Push an immediate onto the stack."""
-    vm.regs[REG_SP] += 1
-    vm.stack[vm.regs[REG_SP]] = val
+    vm.stack.append(val)
     vm.regs[REG_PC] += 1
 
 
 def inst_pop(vm, idx):
     """Pop a value, save it in register `idx'."""
-    vm.regs[idx] = vm.stack[REG_SP]
-    vm.regs[REG_SP] -= 1
+    vm.regs[idx] = vm.stack.pop()
     vm.regs[REG_PC] += 1
 
 
@@ -102,11 +103,41 @@ def inst_call(vm):
         vm.regs[REG_VAL] = closure(*vm.regs[REG_ARGS])
         vm.regs[REG_PC] += 1
     else:
-        # create a new frame
-        frm = Frame(closure.params, vm.regs[REG_ARGS], vm.regs[REG_ENV])
+        # save current ENV, code and PC
+        record = ActivationRecord(vm.regs[REG_ENV], vm.code, vm.regs[REG_PC] + 1)
+        vm.stack.append(record)
+
+        # bind parameters to arguments
+        if closure.isvararg:
+            # the last parameter is bound to a list
+            args = vm.regs[REG_ARGS][:len(closure.params) - 1] + \
+                   [vm.regs[REG_ARGS][len(closure.params) - 1:]]
+            frm =Frame(closure.params, args, closure.env)
+        else:
+            frm = Frame(closure.params, vm.regs[REG_ARGS], closure.env)
         vm.regs[REG_ENV] = frm
-        # save PC
-        vm.regs[REG_SP] += 1
-        vm.stack[vm.regs[REG_SP]] = vm.regs[REG_PC]
+
         # jump to the closure code
-        vm.regs[REG_PC] = closure.body
+        vm.code = closure.body
+        vm.regs[REG_PC] = 0
+
+
+def inst_ret(vm):
+    """Return from a procedure call."""
+    record = vm.stack.pop()
+    vm.regs[REG_ENV] = record.env
+    vm.regs[REG_PC] = record.retaddr
+    vm.code = record.code
+
+
+def inst_clrargs(vm):
+    """Clear ARGS."""
+    vm.regs[REG_ARGS] = []
+    vm.regs[REG_PC] += 1
+
+
+def inst_closure(vm, params, body_code, isvararg):
+    """Create a new closure and save it in VAL."""
+    closure = Closure(params, body_code, vm.regs[REG_ENV], isvararg=isvararg)
+    vm.regs[REG_VAL] = closure
+    vm.regs[REG_PC] += 1

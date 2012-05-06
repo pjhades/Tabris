@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from scmtypes import Procedure, Closure
+from scmtypes import Closure
 from scmlib import *
 from arith import *
 

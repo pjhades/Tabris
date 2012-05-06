@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from scmtypes import Closure, Symbol
+from scmtypes import Symbol
 from environment import Frame
 from pair import to_python_list
 from scmlib import *
@@ -19,6 +19,25 @@ def _label_gen():
 
 
 label = _label_gen()
+
+
+def resolve_label(code):
+    label2addr = {}
+    tmp = []
+    # get address of all labels
+    for i in range(len(code)):
+        if isinstance(code[i], tuple):
+            tmp.append(code[i])
+        else:
+            label2addr[code[i]] = len(tmp)
+    # convert labels
+    insts = []
+    for i in range(len(tmp)):
+        if tmp[i][0] in (inst_j, inst_jt, inst_jf):
+            insts.append((tmp[i][0], label2addr[tmp[i][1]] - i))
+        else:
+            insts.append(tmp[i])
+    return insts
 
 
 def compile_selfeval(exp, env, cont):
@@ -71,18 +90,19 @@ def compile_set(exp, env, cont):
 
 def compile_lambda(exp, env, cont):
     def got_body(body_code):
-        newenv = Frame(params, [None]*len(params), env)
-        closure = Closure(params, body_code, newenv)
+        body_code += [
+            (inst_ret,),
+        ]
         code = [
-            (inst_loadi, REG_VAL, closure),
+            (inst_closure, params, body_code, isvararg),
         ]
         return bounce(cont, code)
 
     params, body = cadr(exp), cddr(exp)
-    varargs = False
+    isvararg = False
     if lib_issymbol(params):
         params = [params]
-        varargs = True
+        isvararg = True
     elif lib_islist(params):
         params = to_python_list(params)
     else:
@@ -93,8 +113,9 @@ def compile_lambda(exp, env, cont):
         tmplist.append(car(params))
         tmplist.append(cdr(params))
         params = tmplist
-        varargs = True
-    return bounce(compile_sequence, body, [], env, got_body)
+        isvararg = True
+    newenv = Frame(params, [None]*len(params), env)
+    return bounce(compile_sequence, body, [], newenv, got_body)
 
 
 def compile_sequence(exp, code, env, cont):
@@ -131,7 +152,7 @@ def compile_if(exp, env, cont):
                 ] + yes_code + [
                     label_after,
                 ]
-                return bounce(cont, code)
+                return bounce(cont, resolve_label(code))
             if no is None:
                 nonlocal code
                 label_after = label()
@@ -140,7 +161,7 @@ def compile_if(exp, env, cont):
                 ] + yes_code + [
                     label_after,
                 ]
-                return bounce(cont, code)
+                return bounce(cont, resolve_label(code))
             else:
                 return bounce(dispatch_exp, no, env, got_no)
 
@@ -168,14 +189,14 @@ def compile_clauses(clauses, code, label_after, env, cont):
                 code += action_code + [
                     label_after,
                 ]
-                return bounce(cont, code)
+                return bounce(cont, resolve_label(code))
             elif cdr(clauses) == NIL:
                 code += test_code + [
                     (inst_jf, label_after),
                 ] + action_code + [
                     label_after,
                 ]
-                return bounce(cont, code)
+                return bounce(cont, resolve_label(code))
             else:
                 label_next = label()
                 code += test_code + [
@@ -347,12 +368,17 @@ def compile_apply(exp, env, cont):
         def got_proc(proc_code):
             code = args_code + proc_code + [
                 (inst_call,),
+                (inst_pop, REG_ARGS),
             ]
             return bounce(cont, code)
 
         return bounce(dispatch_exp, car(exp), env, got_proc)
 
-    return bounce(compile_apply_args, cdr(exp), [], env, got_args)
+    code = [
+        (inst_pushr, REG_ARGS),
+        (inst_clrargs,),
+    ]
+    return bounce(compile_apply_args, cdr(exp), code, env, got_args)
 
 
 def dispatch_exp(exp, env, cont):

@@ -21,30 +21,20 @@ class Symbol(str):
 
 
 class Closure(object):
-    def __init__(self, params, body, env, isprim=False):
+    def __init__(self, params, body, env, isprim=False, isvararg=False):
         self.params = params
         self.body = body
         self.env = env
         self.isprim = isprim
+        self.isvararg = isvararg
     def __call__(self, *args, **kwargs):
         return self.body(*args, **kwargs)
     def __str__(self):
         return '<procedure>'
 
 
-class Procedure(object):
-    def __init__(self, params, body, env, is_prim=False):
-        """
-        If (lambda args ...), `params' is not a python list, then
-        it's a argument list, `is_var_args' is true. otherwise
-        else `params' is a python list, `is_var_args' is false.
-        """
-        self.params = params
-        self.body = body
+class ActivationRecord(object):
+    def __init__(self, env, code, retaddr):
         self.env = env
-        self.is_prim = is_prim 
-        self.is_var_args = not isinstance(params, list)
-
-    def __str__(self):
-        return '[procedure]'
-
+        self.code = code
+        self.retaddr = retaddr
