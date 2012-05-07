@@ -73,13 +73,11 @@ class Tokenizer(object):
     def need_more_code(self):
         """Check if current code is incomplete"""
         return self.paren_count > 0 or self.string_not_end or \
-               self.quote_not_end or self._tokens == []
+                 self.quote_not_end or self._tokens == []
 
     def get_tokens(self):
-        """
-        Return the tokens found, get ready for the next round, 
-        should only be called when need_more_code() returns False.
-        """ 
+        """Return the tokens found, get ready for the next round, 
+        should only be called when need_more_code() returns False.""" 
         tokens = self._tokens
         self._tokens = []
         self._cur_token = ''
@@ -145,10 +143,8 @@ class Tokenizer(object):
 
 
 def consume(tokens, exp_type):
-    """
-    Pop the first token from the token list with
-    the expected token type.
-    """
+    """Pop the first token from the token list with
+    the expected token type."""
     if len(tokens) == 0:
         raise SchemeError('meet empty token list')
     if tokens[0][1] != exp_type:
@@ -197,10 +193,8 @@ def parse_lexeme_datum(tokens, cont):
 
 
 def parse_rest_sexps(tokens, cont):
-    """
-    Parse the S-expressions in the list. The list may 
-    be a Scheme list or a dotted partial list.
-    """
+    """Parse the S-expressions in the list. The list may 
+    be a Scheme list or a dotted partial list."""
     token_type = tokens[0][1]
     
     if token_type == '.':
@@ -230,7 +224,8 @@ def parse_sexp(tokens, cont):
     """Parse a single S-expression."""
     token_type = tokens[0][1]
 
-    if token_type in ('boolean', 'integer', 'float', 'fraction', 'complex', 'string', 'symbol'):
+    if token_type in ('boolean', 'integer', 'float', 'fraction', 
+                      'complex', 'string', 'symbol'):
         return bounce(parse_lexeme_datum, tokens, cont)
     elif token_type == "'":
         def make_quote(word):
@@ -244,10 +239,8 @@ def parse_sexp(tokens, cont):
 
 
 def parse(tokens):
-    """
-    The interface. Returns the list of S-expressions
-    generated from the given token list.
-    """
+    """The interface. Returns the list of S-expressions
+    generated from the given token list."""
     sexps = []
     while True:
         if len(tokens) == 0:

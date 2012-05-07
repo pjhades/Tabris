@@ -4,8 +4,11 @@ from scmtypes import Symbol
 from environment import init_global
 from insts import REG_PC, REG_VAL, REG_ENV, REG_ARGS, inst_closure
 
+# show each executing instruction
 DBG_SHOWINST = 1
+# stepping, pause after each instruction
 DBG_STEPDUMP = 2
+# show instruction sequence when loading code
 DBG_SHOWCODE = 4
 
 class VM(object):

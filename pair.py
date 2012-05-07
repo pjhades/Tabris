@@ -50,11 +50,18 @@ def to_str(p):
     return pogo_stick(bounce(_to_str, p, lambda d:d))
 
 
-def to_python_list(lst):
+def to_python_list(scmlist):
     """Convert a Scheme list back into a Python list."""
     res = []
-    while not lst == []:
-        res.append(lst[0])
-        lst = lst[1]
+    while not scmlist == []:
+        res.append(scmlist[0])
+        scmlist = scmlist[1]
     return res
 
+
+def from_python_list(pylist):
+    """Produce a Scheme list from a Python list."""
+    res = Pair([])
+    for x in reversed(pylist):
+        res = Pair([x, res])
+    return Pair(res)

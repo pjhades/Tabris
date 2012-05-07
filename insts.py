@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 
+from pair import from_python_list
 from scmtypes import ActivationRecord, Closure
 from environment import Frame
 
 REG_PC = 0
 REG_VAL = 1
 REG_ENV = 2
-REG_ARGS = 3
+REG_ARGS = 3 
+
 
 def inst_loadi(vm, idx, val):
     """Load an immediate to register."""
@@ -38,7 +40,6 @@ def inst_setvar(vm, var):
 def inst_jt(vm, offset):
     """Jump to label if VAL is true."""
     if vm.regs[REG_VAL] is not False:
-        #vm.regs[REG_PC] = vm.labels[label]
         vm.regs[REG_PC] += offset
     else:
         vm.regs[REG_PC] += 1
@@ -47,7 +48,6 @@ def inst_jt(vm, offset):
 def inst_jf(vm, offset):
     """Jump to label if VAL is false."""
     if vm.regs[REG_VAL] is False:
-        #vm.regs[REG_PC] = vm.labels[label]
         vm.regs[REG_PC] += offset
     else:
         vm.regs[REG_PC] += 1
@@ -55,7 +55,6 @@ def inst_jf(vm, offset):
 
 def inst_j(vm, offset):
     """Unconditional jump."""
-    #vm.regs[REG_PC] = vm.labels[label]
     vm.regs[REG_PC] += offset
 
 
@@ -110,9 +109,9 @@ def inst_call(vm):
         # bind parameters to arguments
         if closure.isvararg:
             # the last parameter is bound to a list
-            args = vm.regs[REG_ARGS][:len(closure.params) - 1] + \
-                   [vm.regs[REG_ARGS][len(closure.params) - 1:]]
-            frm =Frame(closure.params, args, closure.env)
+            args = vm.regs[REG_ARGS][:len(closure.params) - 1]
+            args.append(from_python_list(vm.regs[REG_ARGS][len(closure.params) - 1:]))
+            frm = Frame(closure.params, args, closure.env)
         else:
             frm = Frame(closure.params, vm.regs[REG_ARGS], closure.env)
         vm.regs[REG_ENV] = frm
