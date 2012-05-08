@@ -60,8 +60,8 @@ def get_token_type(tok):
 
 class Tokenizer(object):
     def __init__(self):
-        self._tokens = []
-        self._cur_token = ''
+        self.tokens = []
+        self.cur_token = ''
 
         self.string_not_end = False
         self.quote_not_end = False
@@ -73,32 +73,30 @@ class Tokenizer(object):
     def need_more_code(self):
         """Check if current code is incomplete"""
         return self.paren_count > 0 or self.string_not_end or \
-                 self.quote_not_end or self._tokens == []
+                 self.quote_not_end or self.tokens == []
 
     def get_tokens(self):
         """Return the tokens found, get ready for the next round, 
         should only be called when need_more_code() returns False.""" 
-        tokens = self._tokens
-        self._tokens = []
-        self._cur_token = ''
+        tokens = self.tokens
+        self.tokens = []
+        self.cur_token = ''
         return [get_token_type(tok) for tok in tokens]
 
     def tokenize_single(self, code):
-        self._tokens = []
-        self._cur_token = ''
+        self.tokens = []
+        self.cur_token = ''
         self.tokenize(code)
-
         if self.need_more_code():
             raise SchemeError('bad single line expression ' + code)
-
         return self.get_tokens()
 
     def tokenize(self, code):
-        """Tokenize a given piece of code"""
+        """Tokenize a given piece of code."""
         for char in code:
             # take everything inside a string
             if self.string_not_end:
-                self._cur_token += char
+                self.cur_token += char
                 if char != '"':
                     continue
 
@@ -109,37 +107,40 @@ class Tokenizer(object):
 
             if char in DELIMS:
                 # meet a delimiter, save the token seen
-                if self._cur_token != '':
-                    self._tokens.append(self._cur_token)
-                    self._cur_token = ''
+                if self.cur_token != '':
+                    self.tokens.append(self.cur_token)
+                    self.cur_token = ''
                     self.quote_not_end = False
 
                 if char == '"':
                     if not self.string_not_end:
-                        self._cur_token += char
+                        self.cur_token += char
                     self.string_not_end = not self.string_not_end
 
-                elif char == '\'':
-                    self._tokens.append(char)
+                elif char == "'":
+                    self.tokens.append(char)
                     self.quote_not_end = True
 
                 elif char == ';': 
                     self.comment_not_end = True
+
                 elif char == '\n':
                     self.comment_not_end = False
 
                 elif char == '(':
                     self.quote_not_end = False
                     self.paren_count += 1
-                    self._tokens.append(char)
+                    self.tokens.append(char)
+
                 elif char == ')':
-                    self.paren_count -= 1
-                    if self.paren_count < 0:
-                        raise SchemeError('Unexpected ) at line ' + str(self.lineno))
-                    self._tokens.append(char)
+                    if self.paren_count - 1 < 0:
+                        raise SchemeError('unexpected ): ' + code.strip())
+                    else:
+                        self.paren_count -= 1
+                        self.tokens.append(char)
 
             else:
-                self._cur_token += char
+                self.cur_token += char
 
 
 def consume(tokens, exp_type):

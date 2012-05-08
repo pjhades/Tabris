@@ -10,10 +10,12 @@ from errors import *
 
 # TODO: capture C-c C-\ signals, add (exit) to exit
 
+PS1 = 'Tabris >>> '
+PS2 = '       ... '
+
 class Repl(object):
     def __init__(self, filename=None):
-        self.ps1 = 'Tabris >>> '
-        self.ps2 = '       ... '
+        self.ps = PS1
         self.tker = Tokenizer()
         self.env = Frame(prim_mappings.keys(), 
                          [None]*len(prim_mappings.keys()), 
@@ -30,44 +32,51 @@ class Repl(object):
     def loop_stdin(self):
         while True:
             try:
-                self.tker.tokenize(input(self.ps1) + '\n')
                 while self.tker.need_more_code():
-                    self.tker.tokenize(input(self.ps2) + '\n')
+                    self.tker.tokenize(input(self.ps) + '\n')
+                    self.ps = PS2
+            except SchemeError as e:
+                print(e)
+                self.ps = PS2
+                if self.tker.need_more_code():
+                    continue
 
+            try:
                 tokens = self.tker.get_tokens()
                 exps = parse(tokens)
-
                 for exp in exps:
                     codes = tcompile(exp, self.env)
-                    self.vm.load(codes)
-                    self.vm.run()
+                    #self.vm.load(codes)
+                    self.vm.run(codes)
                     print(self.vm.result)
             except SchemeError as e:
                 print(e)
+                #self.vm.clear_last_loaded(len(codes))
+
+            self.ps = PS1
 
     def loop_file(self):
         reach_eof = False
         while not reach_eof:
-            line = self.infile.readline()
-            self.tker.tokenize(line + '\n')
-            while self.tker.need_more_code():
-                line = self.infile.readline()
-                if line == '':
-                    reach_eof = True
-                    break
-                self.tker.tokenize(line)
-            
-            tokens = self.tker.get_tokens()
-            exps = parse(tokens)
-
-            for exp in exps:
-                codes = tcompile(exp, self.env)
-                self.vm.load(codes)
-                self.vm.run()
-                print(self.vm.result)
-
+            try:
+                while self.tker.need_more_code():
+                    line = self.infile.readline()
+                    if line == '':
+                        reach_eof = True
+                        break
+                    self.tker.tokenize(line)
+                
+                tokens = self.tker.get_tokens()
+                exps = parse(tokens)
+                for exp in exps:
+                    codes = tcompile(exp, self.env)
+                    #self.vm.load(codes)
+                    self.vm.run(codes)
+                    print(self.vm.result)
+            except SchemeError as e:
+                print(e)
+                break
         self.infile.close()
-
 
     def loop(self):
         if self.infile is None:

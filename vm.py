@@ -26,9 +26,31 @@ class VM(object):
         self.codelen = 0
         self.stack = []
 
-    def load(self, code):
-        self.code += code
-        self.codelen = len(self.code)
+    #def clear_last_loaded(self, length):
+    #    """Clear the most recently loaded code that
+    #    lead to runtime error."""
+    #    self.code = self.code[:-length]
+    #    self.codelen = len(self.code)
+    #    self.regs[REG_PC] = self.codelen
+
+    #def load(self, code):
+    #    """Append the new code to the code sequence."""
+    #    self.code += code
+    #    self.codelen = len(self.code)
+    #    if self.flags & DBG_SHOWCODE:
+    #        for c in self.code:
+    #            if c[0] is inst_closure:
+    #                print('(inst_closure)')
+    #                for ins in c[2]:
+    #                    print('   ', ins)
+    #            else:
+    #                print(c)
+
+    def run(self, code):
+        self.code = code
+        self.codelen = len(code)
+        self.regs[REG_PC] = 0
+
         if self.flags & DBG_SHOWCODE:
             for c in self.code:
                 if c[0] is inst_closure:
@@ -38,7 +60,6 @@ class VM(object):
                 else:
                     print(c)
 
-    def run(self):
         while self.regs[REG_PC] < self.codelen:
             inst = self.code[self.regs[REG_PC]]
             if self.flags & DBG_SHOWINST:
