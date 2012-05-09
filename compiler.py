@@ -2,7 +2,7 @@
 
 from scmtypes import Symbol
 from environment import Frame
-from pair import to_python_list
+from pair import to_python_list, from_python_list
 from scmlib import *
 from insts import *
 from syntax import *
@@ -343,10 +343,38 @@ def compile_letrec(exp, env, cont):
         return bounce(compile_sequence, cddr(exp), [], newenv, got_body)
 
     # all binding variables are set to undefined first
-    varl = letrec_vars(cadr(exp))
+    varl = let_vars(cadr(exp))
     # create a new compile-time frame
     newenv = Frame(varl, [None]*len(varl), outer=env)
     return bounce(compile_letrec_binds, cadr(exp), [], newenv, got_binds)
+
+
+def compile_namedlet(exp, env, cont):
+    def got_define(define_code):
+        def got_apply(apply_code):
+            code = [
+                (inst_extenv,),
+            ] + define_code + \
+                apply_code + [
+                (inst_killenv,),
+            ]
+            return bounce(cont, code)
+
+        apply_form = cons(cadr(exp),
+                          from_python_list(let_vals(caddr(exp))))
+        return bounce(compile_apply, apply_form, newenv, got_apply)
+
+    lambda_form = lib_append(
+                      lib_list(
+                          Symbol('lambda'),
+                          from_python_list(let_vars(caddr(exp)))),
+                      cdddr(exp))
+    define_form = lib_list(
+                      Symbol('define'),
+                      cadr(exp),
+                      lambda_form)
+    newenv = Frame(outer=env)
+    return bounce(compile_define, define_form, newenv, got_define)
 
 
 def compile_apply_args(args, code, env, cont):
@@ -401,6 +429,8 @@ def dispatch_exp(exp, env, cont):
         return bounce(compile_if, exp, env, cont)
     elif iscond(exp):
         return bounce(compile_cond, exp, env, cont)
+    elif isnamedlet(exp):
+        return bounce(compile_namedlet, exp, env, cont)
     elif islet(exp):
         return bounce(compile_let, exp, env, cont)
     elif isletstar(exp):

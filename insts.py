@@ -28,6 +28,7 @@ def inst_bindvar(vm, var):
     val = vm.regs[REG_VAL]
     vm.regs[REG_ENV].bindvar(var, val)
     vm.regs[REG_PC] += 1
+    vm.regs[REG_VAL] = None
 
 
 def inst_setvar(vm, var):
@@ -35,6 +36,7 @@ def inst_setvar(vm, var):
     val = vm.regs[REG_VAL]
     vm.regs[REG_ENV].setvar(var, val)
     vm.regs[REG_PC] += 1
+    vm.regs[REG_VAL] = None
 
 
 def inst_jt(vm, offset):

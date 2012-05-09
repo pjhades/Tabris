@@ -14,7 +14,6 @@ DBG_SHOWCODE = 4
 class VM(object):
     def __init__(self):
         self.reset()
-        self.flags = 0
 
     def reset(self):
         self.regs = [0] * 4
@@ -22,29 +21,10 @@ class VM(object):
         self.regs[REG_PC] = 0
         self.regs[REG_ENV] = init_global()
         self.regs[REG_ARGS] = []
+        self.flags = 0
         self.code = []
         self.codelen = 0
         self.stack = []
-
-    #def clear_last_loaded(self, length):
-    #    """Clear the most recently loaded code that
-    #    lead to runtime error."""
-    #    self.code = self.code[:-length]
-    #    self.codelen = len(self.code)
-    #    self.regs[REG_PC] = self.codelen
-
-    #def load(self, code):
-    #    """Append the new code to the code sequence."""
-    #    self.code += code
-    #    self.codelen = len(self.code)
-    #    if self.flags & DBG_SHOWCODE:
-    #        for c in self.code:
-    #            if c[0] is inst_closure:
-    #                print('(inst_closure)')
-    #                for ins in c[2]:
-    #                    print('   ', ins)
-    #            else:
-    #                print(c)
 
     def run(self, code):
         self.code = code

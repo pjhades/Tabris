@@ -46,12 +46,11 @@ class Repl(object):
                 exps = parse(tokens)
                 for exp in exps:
                     codes = tcompile(exp, self.env)
-                    #self.vm.load(codes)
                     self.vm.run(codes)
-                    print(self.vm.result)
+                    if self.vm.result is not None:
+                        print(self.vm.result)
             except SchemeError as e:
                 print(e)
-                #self.vm.clear_last_loaded(len(codes))
 
             self.ps = PS1
 
@@ -70,9 +69,9 @@ class Repl(object):
                 exps = parse(tokens)
                 for exp in exps:
                     codes = tcompile(exp, self.env)
-                    #self.vm.load(codes)
                     self.vm.run(codes)
-                    print(self.vm.result)
+                    if self.vm.result is not None:
+                        print(self.vm.result)
             except SchemeError as e:
                 print(e)
                 break

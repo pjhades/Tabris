@@ -39,12 +39,24 @@ def isletstar(exp):
 def isletrec(exp):
     return lib_islist(exp) and car(exp) == Symbol('letrec')
 
-def letrec_vars(binds):
+def isnamedlet(exp):
+    return lib_islist(exp) and car(exp) == Symbol('let') and \
+            lib_length(exp) >= 4
+
+def let_vars(binds):
     varl = []
     while binds != []:
         varl.append(caar(binds))
         binds = cdr(binds)
     return varl
 
+def let_vals(binds):
+    vall = []
+    while binds != []:
+        vall.append(cadar(binds))
+        binds = cdr(binds)
+    return vall
+
 def isapply(exp):
     return lib_islist(exp)
+
