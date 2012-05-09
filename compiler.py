@@ -178,9 +178,6 @@ def compile_if(exp, env, cont):
     return bounce(dispatch_exp, test, env, got_test)
 
 
-# TODO: (cond (<test> => <func>) ... )
-# if <test> evaluates to true, call <func> on the return
-# value of <test>
 def compile_clauses(clauses, code, label_after, env, cont):
     def got_test(test_code):
         def got_proc(proc_code):
