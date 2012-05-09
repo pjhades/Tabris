@@ -21,13 +21,10 @@ class Repl(object):
                          [None]*len(prim_mappings.keys()), 
                          None)
         self.vm = vm.VM()
-        try:
-            if filename is None:
-                self.infile = None
-            else:
-                self.infile = open(filename, 'r')
-        except IOError:
-            raise SchemeError('cannot open source file: ' + infile)
+        if filename is None:
+            self.infile = None
+        else:
+            self.infile = open(filename, 'r')
 
     def loop_stdin(self):
         while True:

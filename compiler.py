@@ -183,6 +183,36 @@ def compile_if(exp, env, cont):
 # value of <test>
 def compile_clauses(clauses, code, label_after, env, cont):
     def got_test(test_code):
+        def got_proc(proc_code):
+            nonlocal code
+            if cdr(clauses) == NIL:
+                code += test_code + [
+                    (inst_jf, label_after),
+                    (inst_pushr, REG_ARGS),
+                    (inst_clrargs,),
+                    (inst_addarg,),
+                ] + proc_code + [
+                    (inst_call,),
+                    (inst_pop, REG_ARGS),
+                    label_after,
+                ]
+                return bounce(cont, resolve_label(code))
+            else:
+                label_next = label()
+                code += test_code + [
+                    (inst_jf, label_next),
+                    (inst_pushr, REG_ARGS),
+                    (inst_clrargs,),
+                    (inst_addarg,),
+                ] + proc_code + [
+                    (inst_call,),
+                    (inst_pop, REG_ARGS),
+                    (inst_j, label_after),
+                    label_next,
+                ]
+                return bounce(compile_clauses, cdr(clauses), code,
+                          label_after, env, cont)
+
         def got_action(action_code):
             nonlocal code
             if test == Symbol('else'):
@@ -208,8 +238,12 @@ def compile_clauses(clauses, code, label_after, env, cont):
                 return bounce(compile_clauses, cdr(clauses), code, 
                               label_after, env, cont)
 
-        seq = cdar(clauses)
-        return bounce(compile_sequence, seq, [], env, got_action)
+        if cadar(clauses) == Symbol('=>'):
+            proc = caddar(clauses)
+            return bounce(dispatch_exp, proc, env, got_proc)
+        else:
+            seq = cdar(clauses)
+            return bounce(compile_sequence, seq, [], env, got_action)
 
     test = caar(clauses)
     return bounce(dispatch_exp, test, env, got_test)
