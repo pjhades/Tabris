@@ -39,6 +39,7 @@ class VM(object):
                         print('   ', ins)
                 else:
                     print(c)
+            print()
 
         while self.regs[REG_PC] < self.codelen:
             inst = self.code[self.regs[REG_PC]]

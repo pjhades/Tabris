@@ -124,6 +124,28 @@ def inst_call(vm):
         vm.regs[REG_PC] = 0
 
 
+def inst_tailcall(vm):
+    """Make a tail call to closure in VAL with ARGS."""
+    closure = vm.regs[REG_VAL]
+    if closure.isprim:
+        vm.regs[REG_VAL] = closure(*vm.regs[REG_ARGS])
+        vm.regs[REG_PC] += 1
+    else:
+        # bind parameters to arguments
+        if closure.isvararg:
+            # the last parameter is bound to a list
+            args = vm.regs[REG_ARGS][:len(closure.params) - 1]
+            args.append(from_python_list(vm.regs[REG_ARGS][len(closure.params) - 1:]))
+            frm = Frame(closure.params, args, closure.env)
+        else:
+            frm = Frame(closure.params, vm.regs[REG_ARGS], closure.env)
+        vm.regs[REG_ENV] = frm
+        # jump to the closure code
+        vm.code = closure.body
+        vm.codelen = len(vm.code)
+        vm.regs[REG_PC] = 0
+
+
 def inst_ret(vm):
     """Return from a procedure call."""
     record = vm.stack.pop()
@@ -144,3 +166,4 @@ def inst_closure(vm, params, body_code, isvararg):
     closure = Closure(params, body_code, vm.regs[REG_ENV], isvararg=isvararg)
     vm.regs[REG_VAL] = closure
     vm.regs[REG_PC] += 1
+

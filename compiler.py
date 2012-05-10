@@ -40,28 +40,28 @@ def resolve_label(code):
     return insts
 
 
-def compile_selfeval(exp, env, cont):
+def compile_selfeval(exp, env, cont, istail=False):
     code = [
         (inst_loadi, REG_VAL, exp),
     ]
     return bounce(cont, code)
 
 
-def compile_quote(exp, env, cont):
+def compile_quote(exp, env, cont, istail=False):
     code = [
         (inst_loadi, REG_VAL, cadr(exp)),
     ]
     return bounce(cont, code)
 
 
-def compile_symbol(exp, env, cont):
+def compile_symbol(exp, env, cont, istail=False):
     code = [
         (inst_refvar, exp),
     ]
     return bounce(cont, code)
 
 
-def compile_define(exp, env, cont):
+def compile_define(exp, env, cont, istail=False):
     def got_val(val_code):
         code = val_code + [
             (inst_bindvar, var),
@@ -77,7 +77,7 @@ def compile_define(exp, env, cont):
         return bounce(compile_lambda, lambda_form, env, got_val)
 
 
-def compile_set(exp, env, cont):
+def compile_set(exp, env, cont, istail=False):
     def got_val(val_code):
         code = val_code + [
             (inst_setvar, var),
@@ -88,7 +88,7 @@ def compile_set(exp, env, cont):
     return bounce(dispatch_exp, val, env, got_val)
 
 
-def compile_lambda(exp, env, cont):
+def compile_lambda(exp, env, cont, istail=False):
     def got_body(body_code):
         body_code += [
             (inst_ret,),
@@ -115,30 +115,31 @@ def compile_lambda(exp, env, cont):
         params = tmplist
         isvararg = True
     newenv = Frame(params, [None]*len(params), env)
-    return bounce(compile_sequence, body, [], newenv, got_body)
+    return bounce(compile_sequence, body, [], newenv, got_body, istail=True)
 
 
-def compile_sequence(exp, code, env, cont):
+def compile_sequence(exp, code, env, cont, istail=False):
     def got_first(code_first):
         nonlocal code
         code += code_first
-        return bounce(compile_sequence, cdr(exp), code, env, cont)
+        return bounce(compile_sequence, cdr(exp), code, env, cont, istail=istail)
+
     def emit_last(code_last):
         nonlocal code
         code += code_last
         return bounce(cont, code)
 
     if lib_isnull(cdr(exp)):
-        return bounce(dispatch_exp, car(exp), env, emit_last)
+        return bounce(dispatch_exp, car(exp), env, emit_last, istail=istail)
     else:
         return bounce(dispatch_exp, car(exp), env, got_first)
 
 
-def compile_begin(exp, env, cont):
-    return bounce(compile_sequence, cdr(exp), [], env, cont)
+def compile_begin(exp, env, cont, istail=False):
+    return bounce(compile_sequence, cdr(exp), [], env, cont, istail=istail)
 
 
-def compile_if(exp, env, cont):
+def compile_if(exp, env, cont, istail=False):
     def got_test(test_code):
         def got_yes(yes_code):
             def got_no(no_code):
@@ -153,6 +154,7 @@ def compile_if(exp, env, cont):
                     label_after,
                 ]
                 return bounce(cont, resolve_label(code))
+
             if no is None:
                 nonlocal code
                 label_after = label()
@@ -163,11 +165,11 @@ def compile_if(exp, env, cont):
                 ]
                 return bounce(cont, resolve_label(code))
             else:
-                return bounce(dispatch_exp, no, env, got_no)
+                return bounce(dispatch_exp, no, env, got_no, istail=istail)
 
         nonlocal code
         code += test_code
-        return bounce(dispatch_exp, yes, env, got_yes)
+        return bounce(dispatch_exp, yes, env, got_yes, istail=istail)
 
     test, yes = cadr(exp), caddr(exp)
     if cdddr(exp) == NIL:
@@ -178,21 +180,31 @@ def compile_if(exp, env, cont):
     return bounce(dispatch_exp, test, env, got_test)
 
 
-def compile_clauses(clauses, code, label_after, env, cont):
+def compile_clauses(clauses, code, label_after, env, cont, istail=False):
     def got_test(test_code):
         def got_proc(proc_code):
             nonlocal code
             if cdr(clauses) == NIL:
-                code += test_code + [
-                    (inst_jf, label_after),
-                    (inst_pushr, REG_ARGS),
-                    (inst_clrargs,),
-                    (inst_addarg,),
-                ] + proc_code + [
-                    (inst_call,),
-                    (inst_pop, REG_ARGS),
-                    label_after,
-                ]
+                if istail:
+                    code += test_code + [
+                        (inst_jf, label_after),
+                        (inst_clrargs,),
+                        (inst_addarg,),
+                    ] + proc_code + [
+                        (inst_tailcall,),
+                        label_after,
+                    ]
+                else:
+                    code += test_code + [
+                        (inst_jf, label_after),
+                        (inst_pushr, REG_ARGS),
+                        (inst_clrargs,),
+                        (inst_addarg,),
+                    ] + proc_code + [
+                        (inst_call,),
+                        (inst_pop, REG_ARGS),
+                        label_after,
+                    ]
                 return bounce(cont, resolve_label(code))
             else:
                 label_next = label()
@@ -208,7 +220,7 @@ def compile_clauses(clauses, code, label_after, env, cont):
                     label_next,
                 ]
                 return bounce(compile_clauses, cdr(clauses), code,
-                          label_after, env, cont)
+                              label_after, env, cont, istail=istail)
 
         def got_action(action_code):
             nonlocal code
@@ -233,25 +245,25 @@ def compile_clauses(clauses, code, label_after, env, cont):
                     label_next,
                 ]
                 return bounce(compile_clauses, cdr(clauses), code, 
-                              label_after, env, cont)
+                              label_after, env, cont, istail=istail)
 
         if cadar(clauses) == Symbol('=>'):
             proc = caddar(clauses)
-            return bounce(dispatch_exp, proc, env, got_proc)
+            return bounce(dispatch_exp, proc, env, got_proc, istail=istail)
         else:
             seq = cdar(clauses)
-            return bounce(compile_sequence, seq, [], env, got_action)
+            return bounce(compile_sequence, seq, [], env, got_action, istail=istail)
 
     test = caar(clauses)
     return bounce(dispatch_exp, test, env, got_test)
 
 
-def compile_cond(exp, env, cont):
+def compile_cond(exp, env, cont, istail=False):
     label_after = label()
-    return bounce(compile_clauses, cdr(exp), [], label_after, env, cont)
+    return bounce(compile_clauses, cdr(exp), [], label_after, env, cont, istail=istail)
 
 
-def compile_let_binds(binds, code, varl, env, cont):
+def compile_let_binds(binds, code, varl, env, cont, istail=False):
     """Each binding of `let' is evaluated in a separated environment."""
     def got_bind(bind_code):
         nonlocal code
@@ -271,7 +283,7 @@ def compile_let_binds(binds, code, varl, env, cont):
         return bounce(dispatch_exp, cadar(binds), env, got_bind)
 
 
-def compile_let(exp, env, cont):
+def compile_let(exp, env, cont, istail=False):
     def got_binds(binds_code_varl):
         def got_body(body_code):
             nonlocal code
@@ -290,12 +302,12 @@ def compile_let(exp, env, cont):
                 (inst_bindvar, var),
             ]
         newenv = Frame(varl, [None]*len(varl), env)
-        return bounce(compile_sequence, cddr(exp), [], newenv, got_body)
+        return bounce(compile_sequence, cddr(exp), [], newenv, got_body, istail=istail)
 
     return bounce(compile_let_binds, cadr(exp), [], [], env, got_binds)
 
 
-def compile_letstar_binds(binds, code, env, cont):
+def compile_letstar_binds(binds, code, env, cont, istail=False):
     """Each binding of `let*' is evaluated in an environment in which
     all the previous bindings are visible."""
     def got_bind(bind_code):
@@ -315,7 +327,7 @@ def compile_letstar_binds(binds, code, env, cont):
         return bounce(dispatch_exp, cadar(binds), env, got_bind)
 
 
-def compile_letstar(exp, env, cont):
+def compile_letstar(exp, env, cont, istail=False):
     def got_binds(binds_code):
         def got_body(body_code):
             nonlocal code
@@ -328,14 +340,14 @@ def compile_letstar(exp, env, cont):
              (inst_extenv,),
         ] + binds_code
 
-        return bounce(compile_sequence, cddr(exp), [], newenv, got_body)
+        return bounce(compile_sequence, cddr(exp), [], newenv, got_body, istail=istail)
 
     # create a new compile-time frame
     newenv = Frame(outer=env)
     return bounce(compile_letstar_binds, cadr(exp), [], newenv, got_binds)
 
 
-def compile_letrec_binds(binds, code, env, cont):
+def compile_letrec_binds(binds, code, env, cont, istail=False):
     """Each binding of `letrec' is evaluated in an environment in which
     all the bindings are visible."""
     def got_bind(bind_code):
@@ -353,7 +365,7 @@ def compile_letrec_binds(binds, code, env, cont):
         return bounce(dispatch_exp, cadar(binds), env, got_bind)
 
 
-def compile_letrec(exp, env, cont):
+def compile_letrec(exp, env, cont, istail=False):
     def got_binds(binds_code):
         def got_body(body_code):
             nonlocal code
@@ -371,7 +383,7 @@ def compile_letrec(exp, env, cont):
                 (inst_bindvar, var),
             ]
         code += binds_code
-        return bounce(compile_sequence, cddr(exp), [], newenv, got_body)
+        return bounce(compile_sequence, cddr(exp), [], newenv, got_body, istail=istail)
 
     # all binding variables are set to undefined first
     varl = let_vars(cadr(exp))
@@ -380,7 +392,7 @@ def compile_letrec(exp, env, cont):
     return bounce(compile_letrec_binds, cadr(exp), [], newenv, got_binds)
 
 
-def compile_namedlet(exp, env, cont):
+def compile_namedlet(exp, env, cont, istail=False):
     def got_define(define_code):
         def got_apply(apply_code):
             code = [
@@ -393,7 +405,7 @@ def compile_namedlet(exp, env, cont):
 
         apply_form = cons(cadr(exp),
                           from_python_list(let_vals(caddr(exp))))
-        return bounce(compile_apply, apply_form, newenv, got_apply)
+        return bounce(compile_apply, apply_form, newenv, got_apply, istail=istail)
 
     lambda_form = lib_append(
                       lib_list(
@@ -408,7 +420,7 @@ def compile_namedlet(exp, env, cont):
     return bounce(compile_define, define_form, newenv, got_define)
 
 
-def compile_apply_args(args, code, env, cont):
+def compile_apply_args(args, code, env, cont, istail=False):
     def got_arg(arg_code):
         nonlocal code
         code += arg_code + [
@@ -422,25 +434,35 @@ def compile_apply_args(args, code, env, cont):
         return bounce(dispatch_exp, car(args), env, got_arg)
 
 
-def compile_apply(exp, env, cont):
+def compile_apply(exp, env, cont, istail=False):
     def got_args(args_code):
         def got_proc(proc_code):
-            code = args_code + proc_code + [
-                (inst_call,),
-                (inst_pop, REG_ARGS),
-            ]
+            if istail:
+                code = args_code + proc_code + [
+                    (inst_tailcall,)
+                ]
+            else:
+                code = args_code + proc_code + [
+                    (inst_call,),
+                    (inst_pop, REG_ARGS),
+                ]
             return bounce(cont, code)
 
         return bounce(dispatch_exp, car(exp), env, got_proc)
 
-    code = [
-        (inst_pushr, REG_ARGS),
-        (inst_clrargs,),
-    ]
+    if istail:
+        code = [
+            (inst_clrargs,),
+        ]
+    else:
+        code = [
+            (inst_pushr, REG_ARGS),
+            (inst_clrargs,),
+        ]
     return bounce(compile_apply_args, cdr(exp), code, env, got_args)
 
 
-def dispatch_exp(exp, env, cont):
+def dispatch_exp(exp, env, cont, istail=False):
     """Compile S-expression `exp' with compile-time environment `env'."""
     if issymbol(exp):
         return bounce(compile_symbol, exp, env, cont) 
@@ -453,27 +475,27 @@ def dispatch_exp(exp, env, cont):
     elif isset(exp):
         return bounce(compile_set, exp, env, cont)
     elif islambda(exp):
-        return bounce(compile_lambda, exp, env, cont)
+        return bounce(compile_lambda, exp, env, cont, istail=istail)
     elif isbegin(exp):
-        return bounce(compile_begin, exp, env, cont)
+        return bounce(compile_begin, exp, env, cont, istail=istail)
     elif isif(exp):
-        return bounce(compile_if, exp, env, cont)
+        return bounce(compile_if, exp, env, cont, istail=istail)
     elif iscond(exp):
-        return bounce(compile_cond, exp, env, cont)
+        return bounce(compile_cond, exp, env, cont, istail=istail)
     elif isnamedlet(exp):
-        return bounce(compile_namedlet, exp, env, cont)
+        return bounce(compile_namedlet, exp, env, cont, istail=istail)
     elif islet(exp):
-        return bounce(compile_let, exp, env, cont)
+        return bounce(compile_let, exp, env, cont, istail=istail)
     elif isletstar(exp):
-        return bounce(compile_letstar, exp, env, cont)
+        return bounce(compile_letstar, exp, env, cont, istail=istail)
     elif isletrec(exp):
-        return bounce(compile_letrec, exp, env, cont)
+        return bounce(compile_letrec, exp, env, cont, istail=istail)
     elif isapply(exp):
-        return bounce(compile_apply, exp, env, cont)
+        return bounce(compile_apply, exp, env, cont, istail=istail)
     else:
         raise SchemeError('unknown expression ' + str(exp))
 
         
-def tcompile(exp, env):
+def compile(exp, env):
     return pogo_stick(bounce(dispatch_exp, exp, env, lambda d:d))
     

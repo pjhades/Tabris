@@ -4,7 +4,7 @@ import vm
 from pair import to_str
 from prims import prim_mappings
 from parser import Tokenizer, parse
-from compiler import tcompile
+from compiler import compile
 from environment import Frame
 from errors import *
 
@@ -27,6 +27,7 @@ class Repl(object):
             self.infile = open(filename, 'r')
 
     def loop_stdin(self):
+        #self.vm.set_dbgflag(vm.DBG_STEPDUMP | vm.DBG_SHOWCODE)
         while True:
             try:
                 while self.tker.need_more_code():
@@ -42,7 +43,7 @@ class Repl(object):
                 tokens = self.tker.get_tokens()
                 exps = parse(tokens)
                 for exp in exps:
-                    codes = tcompile(exp, self.env)
+                    codes = compile(exp, self.env)
                     self.vm.run(codes)
                     if self.vm.result is not None:
                         print(self.vm.result)
@@ -52,6 +53,7 @@ class Repl(object):
             self.ps = PS1
 
     def loop_file(self):
+        #self.vm.set_dbgflag(vm.DBG_STEPDUMP | vm.DBG_SHOWCODE | vm.DBG_SHOWINST)
         reach_eof = False
         while not reach_eof:
             try:
@@ -65,7 +67,7 @@ class Repl(object):
                 tokens = self.tker.get_tokens()
                 exps = parse(tokens)
                 for exp in exps:
-                    codes = tcompile(exp, self.env)
+                    codes = compile(exp, self.env)
                     self.vm.run(codes)
                     if self.vm.result is not None:
                         print(self.vm.result)
