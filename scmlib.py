@@ -205,13 +205,12 @@ def lib_length(p):
 
 
 def lib_append(*args):
-    """(append '(1 2) '(a b))"""
+    """(append '(1 2) '(a b)) or
+       (append '(1 2) 'x)"""
     if len(args) == 0:
         return NIL
-
     import copy
     lsts = [copy.deepcopy(x) for x in args]
-    
     res = lsts[-1]
     for lst in reversed(lsts[:-1]):
         try:
@@ -227,8 +226,10 @@ def lib_append(*args):
 
     if not isinstance(res, Pair):
         return res
-
-    res.islist = lsts[-1].islist
+    if lib_islist(lsts[-1]):
+        res.islist = True
+    else:
+        res.islist = False
     if res.islist:
         res.length = sum([x.length for x in args])
     else:
