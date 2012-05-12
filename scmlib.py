@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import sys
 from tsymbol import Symbol
 from tpair import Pair, to_str
 from insts import LIB_CALLCC_CLOSURE
@@ -247,11 +248,22 @@ def lib_isboolean(v):
     return isinstance(v, bool)
 
 
+#---------------------------------------------------------
+# Control flow related
+#---------------------------------------------------------
 lib_callcc = LIB_CALLCC_CLOSURE
 
 
+#---------------------------------------------------------
+# Utilities
+#---------------------------------------------------------
 def lib_display(v):
-    import sys
     print(v, end='')
     sys.stdout.flush()
     return None
+
+def lib_newline():
+    print()
+    sys.stdout.flush()
+    return None
+
