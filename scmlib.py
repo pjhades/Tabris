@@ -249,3 +249,9 @@ def lib_isboolean(v):
 
 lib_callcc = LIB_CALLCC_CLOSURE
 
+
+def lib_display(v):
+    import sys
+    print(v, end='')
+    sys.stdout.flush()
+    return None

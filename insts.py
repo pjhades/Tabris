@@ -94,22 +94,28 @@ def inst_addarg(vm):
 
 def inst_call(vm):
     """Call closure in VAL with ARGS."""
-    closure = vm.regs[vm.REG_VAL]
-    if closure.isprim:
-        vm.regs[vm.REG_VAL] = closure.primcall(vm.regs[vm.REG_ARGS])
-        vm.regs[vm.REG_PC] += 1
-    else:
-        closure.call(vm)
+    try:
+        closure = vm.regs[vm.REG_VAL]
+        if closure.isprim:
+            vm.regs[vm.REG_VAL] = closure.primcall(vm.regs[vm.REG_ARGS])
+            vm.regs[vm.REG_PC] += 1
+        else:
+            closure.call(vm)
+    except AttributeError as e:
+        raise SchemeError('bad argument')
 
 
 def inst_tailcall(vm):
     """Make a tail call to closure in VAL with ARGS."""
-    closure = vm.regs[vm.REG_VAL]
-    if closure.isprim:
-        vm.regs[vm.REG_VAL] = closure.primcall(vm.regs[vm.REG_ARGS])
-        vm.regs[vm.REG_PC] += 1
-    else:
-        closure.tailcall(vm)
+    try:
+        closure = vm.regs[vm.REG_VAL]
+        if closure.isprim:
+            vm.regs[vm.REG_VAL] = closure.primcall(vm.regs[vm.REG_ARGS])
+            vm.regs[vm.REG_PC] += 1
+        else:
+            closure.tailcall(vm)
+    except AttributeError as e:
+        raise SchemeError('bad argument')
 
 
 def inst_ret(vm):
@@ -142,9 +148,12 @@ def inst_capture(vm):
 
 def inst_restore(vm):
     """Restore the continuation in VAL."""
-    vm = vm.regs[vm.REG_VAL]
+    cont = vm.regs[vm.REG_VAL]
+    vm.stack = cont.stack
+    vm.regs[vm.REG_PC] += 1
 
 
+# call/cc is implemented directly in machine instructions
 LIB_CALLCC_CLOSURE = Closure(['f'], [
                          (inst_capture,),
                          (inst_extenv,),

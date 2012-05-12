@@ -79,5 +79,5 @@ class ActivationRecord(object):
 class Continuation(object):
     def __init__(self, vm):
         import copy
-        self.vm = copy.deepcopy(vm)
+        self.stack = copy.deepcopy(vm.stack)
 

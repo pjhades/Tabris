@@ -53,7 +53,7 @@ class Repl(object):
             self.ps = PS1
 
     def loop_file(self):
-        self.vm.set_dbgflag(vm.DBG_SHOWINST)
+        #self.vm.set_dbgflag(vm.DBG_SHOWINST | vm.DBG_STEPDUMP | vm.DBG_SHOWCODE)
         reach_eof = False
         while not reach_eof:
             try:

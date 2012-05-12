@@ -71,6 +71,8 @@ top_bindings = {
     Symbol('symbol?'): Closure(None, lib_issymbol, None, isprim=True),
     Symbol('boolean?'): Closure(None, lib_isboolean, None, isprim=True),
 
+    Symbol('display'): Closure(None, lib_display, None, isprim=True),
+
     Symbol('call/cc'): lib_callcc,
     Symbol('call-with-current-continuation'): lib_callcc,
 }
