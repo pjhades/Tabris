@@ -8,7 +8,7 @@ import re
 
 from trampoline import pogo_stick, bounce
 from scmlib import *
-from scmtypes import Symbol
+from tsymbol import Symbol
 from errors import *
 
 # Delimiter characters. If we see these, we have found

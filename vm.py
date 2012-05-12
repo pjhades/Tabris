@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from scmtypes import Symbol
-from environment import init_global
-from insts import REG_PC, REG_VAL, REG_ENV, REG_ARGS, inst_closure
+from toplevel import init_global
 
 # show each executing instruction
 DBG_SHOWINST = 1
@@ -12,15 +10,20 @@ DBG_STEPDUMP = 2
 DBG_SHOWCODE = 4
 
 class VM(object):
+    REG_PC = 0
+    REG_VAL = 1
+    REG_ENV = 2
+    REG_ARGS = 3
+
     def __init__(self):
         self.reset()
 
     def reset(self):
         self.regs = [0] * 4
-        self.regs[REG_VAL] = 0
-        self.regs[REG_PC] = 0
-        self.regs[REG_ENV] = init_global()
-        self.regs[REG_ARGS] = []
+        self.regs[VM.REG_VAL] = 0
+        self.regs[VM.REG_PC] = 0
+        self.regs[VM.REG_ENV] = init_global()
+        self.regs[VM.REG_ARGS] = []
         self.flags = 0
         self.code = []
         self.codelen = 0
@@ -29,23 +32,18 @@ class VM(object):
     def run(self, code):
         self.code = code
         self.codelen = len(code)
-        self.regs[REG_PC] = 0
+        self.regs[VM.REG_PC] = 0
 
         if self.flags & DBG_SHOWCODE:
             for c in self.code:
-                if c[0] is inst_closure:
-                    print('(inst_closure)')
-                    for ins in c[2]:
-                        print('   ', ins)
-                else:
-                    print(c)
+                print(c)
             print()
 
-        while self.regs[REG_PC] < self.codelen:
-            inst = self.code[self.regs[REG_PC]]
+        while self.regs[VM.REG_PC] < self.codelen:
+            inst = self.code[self.regs[VM.REG_PC]]
             if self.flags & DBG_SHOWINST:
                 print('exec:', inst)
-                p = self.regs[REG_PC]
+                p = self.regs[VM.REG_PC]
                 if p+1 < len(self.code):
                     print('next:', self.code[p+1])
                 else:
@@ -57,21 +55,21 @@ class VM(object):
 
     @property
     def result(self):
-        return self.regs[REG_VAL]
+        return self.regs[VM.REG_VAL]
 
     def set_dbgflag(self, flags=0):
         self.flags = flags
 
     def dump(self):
-        print('<PC>', self.regs[REG_PC], end='     ')
-        print('<VAL>', self.regs[REG_VAL], end='     ')
-        print('<ARGS>', self.regs[REG_ARGS])
+        print('<PC>', self.regs[VM.REG_PC], end='     ')
+        print('<VAL>', self.regs[VM.REG_VAL], end='     ')
+        print('<ARGS>', self.regs[VM.REG_ARGS])
         print('<ENV>')
-        if self.regs[REG_ENV].outer is None:
+        if self.regs[VM.REG_ENV].outer is None:
             print('global environment')
         else:
-            for sym in self.regs[REG_ENV].binds:
-                print(sym, '=>', self.regs[REG_ENV].binds[sym])
+            for sym in self.regs[VM.REG_ENV].binds:
+                print(sym, '=>', self.regs[VM.REG_ENV].binds[sym])
         print('<STACK>')
         print(self.stack)
         print()

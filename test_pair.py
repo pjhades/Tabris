@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from pair import Pair, to_python_list
+from tpair import Pair, to_python_list
 from scmlib import *
 
 class PairTest(unittest.TestCase):

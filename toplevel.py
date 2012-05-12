@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 
-from scmtypes import Closure
+from environment import Frame
+from control import Closure
 from scmlib import *
 from arith import *
 
+def init_global():
+    return Frame(top_bindings.keys(), top_bindings.values())
+
+
 # mapping from symbol to closure to be added to global environment
-prim_mappings = {
+top_bindings = {
     Symbol('+'): Closure(None, prim_add, None, isprim=True),
     Symbol('-'): Closure(None, prim_sub, None, isprim=True),
     Symbol('*'): Closure(None, prim_mul, None, isprim=True),
@@ -52,10 +57,10 @@ prim_mappings = {
     Symbol('cdddar'): Closure(None, cdddar, None, isprim=True),
     Symbol('cddddr'): Closure(None, cddddr, None, isprim=True),
 
+    Symbol('list'): Closure(None, lib_list, None, isprim=True),
     Symbol('null?'): Closure(None, lib_isnull, None, isprim=True),
     Symbol('pair?'): Closure(None, lib_ispair, None, isprim=True),
     Symbol('list?'): Closure(None, lib_islist, None, isprim=True),
-    Symbol('list'): Closure(None, lib_list, None, isprim=True),
     Symbol('length'): Closure(None, lib_length, None, isprim=True),
     Symbol('append'): Closure(None, lib_append, None, isprim=True),
     Symbol('reverse'): Closure(None, lib_reverse, None, isprim=True),
@@ -65,4 +70,7 @@ prim_mappings = {
     Symbol('string?'): Closure(None, lib_isstring, None, isprim=True),
     Symbol('symbol?'): Closure(None, lib_issymbol, None, isprim=True),
     Symbol('boolean?'): Closure(None, lib_isboolean, None, isprim=True),
+
+    Symbol('call/cc'): lib_callcc,
+    Symbol('call-with-current-continuation'): lib_callcc,
 }

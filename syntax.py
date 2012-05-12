@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from scmtypes import Symbol
+from tsymbol import Symbol
 from scmlib import *
 
 def isselfeval(exp):

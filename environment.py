@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
 
-
-from prims import prim_mappings
-from scmtypes import Symbol
 from errors import *
-
 
 class Frame(object):
     def __init__(self, varl=[], vall=[], outer=None):
@@ -36,7 +32,3 @@ class Frame(object):
     def extend(self, varl, vall):
         for b in zip(varl, vall):
             self.binds[b[0]] = b[1]
-
-
-def init_global():
-    return Frame(prim_mappings.keys(), prim_mappings.values())

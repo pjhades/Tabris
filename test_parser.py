@@ -2,7 +2,7 @@
 
 import unittest
 from parser import Tokenizer, parse
-from pair import to_str
+from tpair import to_str
 
 class ParserTest(unittest.TestCase):
     def setUp(self):

@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 
-from scmtypes import Symbol
-from pair import Pair, to_str
+from tsymbol import Symbol
+from tpair import Pair, to_str
+from insts import LIB_CALLCC_CLOSURE
 from errors import *
 
-
+#---------------------------------------------------------
+# List and pair operations
+#---------------------------------------------------------
 def cons(first, second):
     return Pair([first, second])
 
-
 NIL = Pair([])
-
 
 def _check_cxr_param(cxr):
     """Check if the argument cannot be cxred."""
@@ -23,151 +24,121 @@ def _check_cxr_param(cxr):
         return g
     return f
 
-
 @_check_cxr_param('car')
 def car(p):
     return p[0]
-
 
 @_check_cxr_param('cdr')
 def cdr(p):
     return p[1]
 
-
 @_check_cxr_param('caar')
 def caar(p):
     return p[0][0]
-
 
 @_check_cxr_param('cdar')
 def cdar(p):
     return p[0][1]
 
-
 @_check_cxr_param('cadr')
 def cadr(p):
     return p[1][0]
-
 
 @_check_cxr_param('cddr')
 def cddr(p):
     return p[1][1]
 
-
 @_check_cxr_param('caaar')
 def caaar(p):
     return p[0][0][0]
-
 
 @_check_cxr_param('caadr')
 def caadr(p):
     return p[1][0][0]
 
-
 @_check_cxr_param('cadar')
 def cadar(p):
     return p[0][1][0]
-
 
 @_check_cxr_param('caddr')
 def caddr(p):
     return p[1][1][0]
 
-
 @_check_cxr_param('cdaar')
 def cdaar(p):
     return p[0][0][1]
-
 
 @_check_cxr_param('cdadr')
 def cdadr(p):
     return p[1][0][1]
 
-
 @_check_cxr_param('cddar')
 def cddar(p):
     return p[0][1][1]
-
 
 @_check_cxr_param('cdddr')
 def cdddr(p):
     return p[1][1][1]
 
-
 @_check_cxr_param('caaaar')
 def caaaar(p):
 	return p[0][0][0][0]
-
 
 @_check_cxr_param('caaadr')
 def caaadr(p):
 	return p[1][0][0][0]
 
-
 @_check_cxr_param('caadar')
 def caadar(p):
 	return p[0][1][0][0]
-
 
 @_check_cxr_param('caaddr')
 def caaddr(p):
 	return p[1][1][0][0]
 
-
 @_check_cxr_param('cadaar')
 def cadaar(p):
 	return p[0][0][1][0]
-
 
 @_check_cxr_param('cadadr')
 def cadadr(p):
 	return p[1][0][1][0]
 
-
 @_check_cxr_param('caddar')
 def caddar(p):
 	return p[0][1][1][0]
-
 
 @_check_cxr_param('cadddr')
 def cadddr(p):
 	return p[1][1][1][0]
 
-
 @_check_cxr_param('cdaaar')
 def cdaaar(p):
 	return p[0][0][0][1]
-
 
 @_check_cxr_param('cdaadr')
 def cdaadr(p):
 	return p[1][0][0][1]
 
-
 @_check_cxr_param('cdadar')
 def cdadar(p):
 	return p[0][1][0][1]
-
 
 @_check_cxr_param('cdaddr')
 def cdaddr(p):
 	return p[1][1][0][1]
 
-
 @_check_cxr_param('cddaar')
 def cddaar(p):
 	return p[0][0][1][1]
-
 
 @_check_cxr_param('cddadr')
 def cddadr(p):
 	return p[1][0][1][1]
 
-
 @_check_cxr_param('cdddar')
 def cdddar(p):
 	return p[0][1][1][1]
-
 
 @_check_cxr_param('cddddr')
 def cddddr(p):
@@ -274,4 +245,7 @@ def lib_issymbol(v):
 
 def lib_isboolean(v):
     return isinstance(v, bool)
+
+
+lib_callcc = LIB_CALLCC_CLOSURE
 

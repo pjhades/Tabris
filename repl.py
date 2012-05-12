@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import vm
-from pair import to_str
-from prims import prim_mappings
+from tpair import to_str
+from toplevel import top_bindings
 from parser import Tokenizer, parse
 from compiler import compile
 from environment import Frame
@@ -17,8 +17,8 @@ class Repl(object):
     def __init__(self, filename=None):
         self.ps = PS1
         self.tker = Tokenizer()
-        self.env = Frame(prim_mappings.keys(), 
-                         [None]*len(prim_mappings.keys()), 
+        self.env = Frame(top_bindings.keys(), 
+                         [None]*len(top_bindings.keys()), 
                          None)
         self.vm = vm.VM()
         if filename is None:
@@ -53,7 +53,7 @@ class Repl(object):
             self.ps = PS1
 
     def loop_file(self):
-        #self.vm.set_dbgflag(vm.DBG_STEPDUMP | vm.DBG_SHOWCODE | vm.DBG_SHOWINST)
+        self.vm.set_dbgflag(vm.DBG_SHOWINST)
         reach_eof = False
         while not reach_eof:
             try:

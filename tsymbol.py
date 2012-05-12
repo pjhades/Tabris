@@ -20,21 +20,3 @@ class Symbol(str):
         return super(Symbol, self).__hash__()
 
 
-class Closure(object):
-    def __init__(self, params, body, env, isprim=False, isvararg=False):
-        self.params = params
-        self.body = body
-        self.env = env
-        self.isprim = isprim
-        self.isvararg = isvararg
-    def __call__(self, *args, **kwargs):
-        return self.body(*args, **kwargs)
-    def __str__(self):
-        return '<procedure>'
-
-
-class ActivationRecord(object):
-    def __init__(self, env, code, retaddr):
-        self.env = env
-        self.code = code
-        self.retaddr = retaddr

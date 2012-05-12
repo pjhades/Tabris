@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from scmtypes import Symbol
+from tsymbol import Symbol
 from environment import Frame
-from pair import to_python_list, from_python_list
+from tpair import to_python_list, from_python_list
+from vm import VM
 from scmlib import *
 from insts import *
 from syntax import *
@@ -42,14 +43,14 @@ def resolve_label(code):
 
 def compile_selfeval(exp, env, cont, istail=False):
     code = [
-        (inst_loadi, REG_VAL, exp),
+        (inst_loadi, VM.REG_VAL, exp),
     ]
     return bounce(cont, code)
 
 
 def compile_quote(exp, env, cont, istail=False):
     code = [
-        (inst_loadi, REG_VAL, cadr(exp)),
+        (inst_loadi, VM.REG_VAL, cadr(exp)),
     ]
     return bounce(cont, code)
 
@@ -197,12 +198,12 @@ def compile_clauses(clauses, code, label_after, env, cont, istail=False):
                 else:
                     code += test_code + [
                         (inst_jf, label_after),
-                        (inst_pushr, REG_ARGS),
+                        (inst_pushr, VM.REG_ARGS),
                         (inst_clrargs,),
                         (inst_addarg,),
                     ] + proc_code + [
                         (inst_call,),
-                        (inst_pop, REG_ARGS),
+                        (inst_pop, VM.REG_ARGS),
                         label_after,
                     ]
                 return bounce(cont, resolve_label(code))
@@ -210,12 +211,12 @@ def compile_clauses(clauses, code, label_after, env, cont, istail=False):
                 label_next = label()
                 code += test_code + [
                     (inst_jf, label_next),
-                    (inst_pushr, REG_ARGS),
+                    (inst_pushr, VM.REG_ARGS),
                     (inst_clrargs,),
                     (inst_addarg,),
                 ] + proc_code + [
                     (inst_call,),
-                    (inst_pop, REG_ARGS),
+                    (inst_pop, VM.REG_ARGS),
                     (inst_j, label_after),
                     label_next,
                 ]
@@ -273,7 +274,7 @@ def compile_let_binds(binds, code, varl, env, cont, istail=False):
         # generate code for getting each value, and
         # push them onto the stack
         code += bind_code + [
-            (inst_pushr, REG_VAL),
+            (inst_pushr, VM.REG_VAL),
         ]
         return bounce(compile_let_binds, cdr(binds), code, varl, env, cont)
 
@@ -298,7 +299,7 @@ def compile_let(exp, env, cont, istail=False):
         ]
         for var in reversed(varl):
             code += [
-                (inst_pop, REG_VAL),
+                (inst_pop, VM.REG_VAL),
                 (inst_bindvar, var),
             ]
         newenv = Frame(varl, [None]*len(varl), env)
@@ -376,7 +377,7 @@ def compile_letrec(exp, env, cont, istail=False):
 
         code = [
             (inst_extenv,),
-            (inst_loadi, REG_VAL, None),
+            (inst_loadi, VM.REG_VAL, None),
         ]
         for var in varl:
             code += [
@@ -444,7 +445,7 @@ def compile_apply(exp, env, cont, istail=False):
             else:
                 code = args_code + proc_code + [
                     (inst_call,),
-                    (inst_pop, REG_ARGS),
+                    (inst_pop, VM.REG_ARGS),
                 ]
             return bounce(cont, code)
 
@@ -456,7 +457,7 @@ def compile_apply(exp, env, cont, istail=False):
         ]
     else:
         code = [
-            (inst_pushr, REG_ARGS),
+            (inst_pushr, VM.REG_ARGS),
             (inst_clrargs,),
         ]
     return bounce(compile_apply_args, cdr(exp), code, env, got_args)
@@ -465,15 +466,15 @@ def compile_apply(exp, env, cont, istail=False):
 def dispatch_exp(exp, env, cont, istail=False):
     """Compile S-expression `exp' with compile-time environment `env'."""
     if issymbol(exp):
-        return bounce(compile_symbol, exp, env, cont) 
+        return bounce(compile_symbol, exp, env, cont, istail=istail) 
     elif isquote(exp):
-        return bounce(compile_quote, exp, env, cont)
+        return bounce(compile_quote, exp, env, cont, istail=istail)
     elif isselfeval(exp):
-        return bounce(compile_selfeval, exp, env, cont)
+        return bounce(compile_selfeval, exp, env, cont, istail=istail)
     elif isdefine(exp):
-        return bounce(compile_define, exp, env, cont)
+        return bounce(compile_define, exp, env, cont, istail=istail)
     elif isset(exp):
-        return bounce(compile_set, exp, env, cont)
+        return bounce(compile_set, exp, env, cont, istail=istail)
     elif islambda(exp):
         return bounce(compile_lambda, exp, env, cont, istail=istail)
     elif isbegin(exp):
