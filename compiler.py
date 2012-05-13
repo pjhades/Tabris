@@ -4,6 +4,7 @@ from tsymbol import Symbol
 from environment import Frame
 from tpair import to_python_list, from_python_list
 from vm import VM
+
 from scmlib import *
 from insts import *
 from syntax import *
@@ -253,7 +254,8 @@ def compile_clauses(clauses, code, label_after, env, cont, istail=False):
             return bounce(dispatch_exp, proc, env, got_proc, istail=istail)
         else:
             seq = cdar(clauses)
-            return bounce(compile_sequence, seq, [], env, got_action, istail=istail)
+            return bounce(compile_sequence, seq, [], 
+                          env, got_action, istail=istail)
 
     test = caar(clauses)
     return bounce(dispatch_exp, test, env, got_test)
@@ -261,7 +263,8 @@ def compile_clauses(clauses, code, label_after, env, cont, istail=False):
 
 def compile_cond(exp, env, cont, istail=False):
     label_after = label()
-    return bounce(compile_clauses, cdr(exp), [], label_after, env, cont, istail=istail)
+    return bounce(compile_clauses, cdr(exp), [], 
+                  label_after, env, cont, istail=istail)
 
 
 def compile_let_binds(binds, code, varl, env, cont, istail=False):
@@ -463,39 +466,27 @@ def compile_apply(exp, env, cont, istail=False):
     return bounce(compile_apply_args, cdr(exp), code, env, got_args)
 
 
+compiler_dispatch = {
+    'if': compile_if,
+    'let': compile_let,
+    'let*': compile_letstar,
+    'set!': compile_set,
+    'cond': compile_cond,
+    'apply': compile_apply,
+    'quote': compile_quote,
+    'begin': compile_begin,
+    'symbol': compile_symbol,
+    'define': compile_define,
+    'lambda': compile_lambda,
+    'letrec': compile_letrec,
+    'namedlet': compile_namedlet,
+    'selfeval': compile_selfeval,
+}
+
 def dispatch_exp(exp, env, cont, istail=False):
     """Compile S-expression `exp' with compile-time environment `env'."""
-    if issymbol(exp):
-        return bounce(compile_symbol, exp, env, cont, istail=istail) 
-    elif isquote(exp):
-        return bounce(compile_quote, exp, env, cont, istail=istail)
-    elif isselfeval(exp):
-        return bounce(compile_selfeval, exp, env, cont, istail=istail)
-    elif isdefine(exp):
-        return bounce(compile_define, exp, env, cont, istail=istail)
-    elif isset(exp):
-        return bounce(compile_set, exp, env, cont, istail=istail)
-    elif islambda(exp):
-        return bounce(compile_lambda, exp, env, cont, istail=istail)
-    elif isbegin(exp):
-        return bounce(compile_begin, exp, env, cont, istail=istail)
-    elif isif(exp):
-        return bounce(compile_if, exp, env, cont, istail=istail)
-    elif iscond(exp):
-        return bounce(compile_cond, exp, env, cont, istail=istail)
-    elif isnamedlet(exp):
-        return bounce(compile_namedlet, exp, env, cont, istail=istail)
-    elif islet(exp):
-        return bounce(compile_let, exp, env, cont, istail=istail)
-    elif isletstar(exp):
-        return bounce(compile_letstar, exp, env, cont, istail=istail)
-    elif isletrec(exp):
-        return bounce(compile_letrec, exp, env, cont, istail=istail)
-    elif isapply(exp):
-        return bounce(compile_apply, exp, env, cont, istail=istail)
-    else:
-        raise SchemeError('unknown expression ' + str(exp))
-
+    return bounce(compiler_dispatch[get_sexp_type(exp)], 
+                  exp, env, cont, istail=istail)
         
 def compile(exp, env):
     return pogo_stick(bounce(dispatch_exp, exp, env, lambda d:d))
