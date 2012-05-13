@@ -29,6 +29,3 @@ class Frame(object):
     def bindvar(self, var, val):
         self.binds[var] = val
 
-    def extend(self, varl, vall):
-        for b in zip(varl, vall):
-            self.binds[b[0]] = b[1]

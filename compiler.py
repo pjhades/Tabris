@@ -306,7 +306,8 @@ def compile_let(exp, env, cont, istail=False):
                 (inst_bindvar, var),
             ]
         newenv = Frame(varl, [None]*len(varl), env)
-        return bounce(compile_sequence, cddr(exp), [], newenv, got_body, istail=istail)
+        return bounce(compile_sequence, cddr(exp), [], newenv, 
+                      got_body, istail=istail)
 
     return bounce(compile_let_binds, cadr(exp), [], [], env, got_binds)
 
@@ -343,8 +344,8 @@ def compile_letstar(exp, env, cont, istail=False):
         code = [
              (inst_extenv,),
         ] + binds_code
-
-        return bounce(compile_sequence, cddr(exp), [], newenv, got_body, istail=istail)
+        return bounce(compile_sequence, cddr(exp), [], newenv, 
+                      got_body, istail=istail)
 
     # create a new compile-time frame
     newenv = Frame(outer=env)
@@ -407,8 +408,7 @@ def compile_namedlet(exp, env, cont, istail=False):
             ]
             return bounce(cont, code)
 
-        apply_form = cons(cadr(exp),
-                          from_python_list(let_vals(caddr(exp))))
+        apply_form = cons(cadr(exp), from_python_list(let_vals(caddr(exp))))
         return bounce(compile_apply, apply_form, newenv, got_apply, istail=istail)
 
     lambda_form = lib_append(

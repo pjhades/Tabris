@@ -8,6 +8,10 @@ from arith import *
 def init_global():
     return Frame(top_bindings.keys(), top_bindings.values())
 
+def init_compiletime_env():
+    return Frame(top_bindings.keys(), 
+                 [None]*len(top_bindings),
+                 None)
 
 # mapping from symbol to closure to be added to global environment
 top_bindings = {

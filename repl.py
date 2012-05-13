@@ -2,7 +2,7 @@
 
 import vm
 from tpair import to_str
-from toplevel import top_bindings
+from toplevel import top_bindings, init_compiletime_env
 from parser import Tokenizer, parse
 from compiler import compile
 from environment import Frame
@@ -17,9 +17,7 @@ class Repl(object):
     def __init__(self, filename=None):
         self.ps = PS1
         self.tker = Tokenizer()
-        self.env = Frame(top_bindings.keys(), 
-                         [None]*len(top_bindings.keys()), 
-                         None)
+        self.env = init_compiletime_env()
         self.vm = vm.VM()
         if filename is None:
             self.infile = None
