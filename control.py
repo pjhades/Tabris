@@ -12,15 +12,15 @@ class Closure(object):
         self.isprim = isprim
         self.isvararg = isvararg
 
-    def __str__(self):
-        return '<procedure>'
-
     def primcall(self, args):
         """Call a primitive procedure."""
         try:
             return self.body(*args)
         except TypeError:
             raise SchemeError('bad arguments')
+
+    def __str__(self):
+        return '<procedure>'
 
 
 class ActivationRecord(object):
@@ -34,4 +34,3 @@ class Continuation(object):
     def __init__(self, vm):
         import copy
         self.stack = copy.deepcopy(vm.stack)
-
