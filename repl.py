@@ -29,7 +29,7 @@ class Repl(object):
         while True:
             try:
                 while self.tker.need_more_code():
-                    self.tker.tokenize(input(self.ps) + '\n')
+                    self.tker.tokenize_piece(input(self.ps) + '\n')
                     self.ps = PS2
             except SchemeError as e:
                 print(e)
@@ -60,7 +60,7 @@ class Repl(object):
                     if line == '':
                         reach_eof = True
                         break
-                    self.tker.tokenize(line)
+                    self.tker.tokenize_piece(line)
                 
                 tokens = self.tker.get_tokens()
                 exps = parse(tokens)
@@ -79,4 +79,15 @@ class Repl(object):
             self.loop_stdin()
         else:
             self.loop_file()
+
+    def runcode(self, code):
+        try:
+            exps = parse(self.tker.tokenize(code))
+            for exp in exps:
+                codes = compile(exp, self.env)
+                self.vm.run(codes)
+                if self.vm.result is not None:
+                    print(self.vm.result)
+        except SchemeError as e:
+            print(e)
 

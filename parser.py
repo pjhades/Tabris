@@ -83,15 +83,15 @@ class Tokenizer(object):
         self.cur_token = ''
         return [get_token_type(tok) for tok in tokens]
 
-    def tokenize_single(self, code):
+    def tokenize(self, code):
         self.tokens = []
         self.cur_token = ''
-        self.tokenize(code)
+        self.tokenize_piece(code)
         if self.need_more_code():
             raise SchemeError('bad single line expression ' + code)
         return self.get_tokens()
 
-    def tokenize(self, code):
+    def tokenize_piece(self, code):
         """Tokenize a given piece of code."""
         for char in code:
             # take everything inside a string

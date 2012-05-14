@@ -39,12 +39,11 @@ class ParserTest(unittest.TestCase):
                  ("#t", [("#t", "boolean")])]
 
         for case in cases:
-            self.tokenizer.tokenize(case[0] + '\n')
+            self.tokenizer.tokenize_piece(case[0] + '\n')
             self.assertEqual(self.tokenizer.get_tokens(), case[1])
 
     def testTokenizeSingle(self):
         """Test the single-line tokenizer."""
-
         cases = [("lambda", [("lambda", "symbol")]), \
                  ("-4/56", [("-4/56", "fraction")]), \
                  ("0.", [("0.", "float")]), \
@@ -53,43 +52,43 @@ class ParserTest(unittest.TestCase):
                  ("\"this is a string\"", [("\"this is a string\"", "string")])]
 
         for case in cases:
-            self.assertEqual(self.tokenizer.tokenize_single(case[0] + '\n'), case[1])
+            self.assertEqual(self.tokenizer.tokenize(case[0] + '\n'), case[1])
 
 
     def testLexemeParsing(self):
         """Test parsing lexemes"""
 
-        self.tokenizer.tokenize("aaa" + "\n")
+        self.tokenizer.tokenize_piece("aaa" + "\n")
         obj = parse(self.tokenizer.get_tokens())
         self.assertEqual(len(obj), 1)
         self.assertEqual(obj[0], "aaa")
 
-        self.tokenizer.tokenize("#t" + "\n")
+        self.tokenizer.tokenize_piece("#t" + "\n")
         obj = parse(self.tokenizer.get_tokens())
         self.assertEqual(len(obj), 1)
         self.assertEqual(obj[0], True)
 
-        self.tokenizer.tokenize('"helloworld"' + "\n")
+        self.tokenizer.tokenize_piece('"helloworld"' + "\n")
         obj = parse(self.tokenizer.get_tokens())
         self.assertEqual(len(obj), 1)
         self.assertEqual(obj[0], "helloworld")
 
-        self.tokenizer.tokenize('123' + "\n")
+        self.tokenizer.tokenize_piece('123' + "\n")
         obj = parse(self.tokenizer.get_tokens())
         self.assertEqual(len(obj), 1)
         self.assertEqual(obj[0], 123)
 
-        self.tokenizer.tokenize('-4/6' + "\n")
+        self.tokenizer.tokenize_piece('-4/6' + "\n")
         obj = parse(self.tokenizer.get_tokens())
         self.assertEqual(len(obj), 1)
         self.assertEqual(obj[0], -2.0/3.0)
 
-        self.tokenizer.tokenize('.0' + "\n")
+        self.tokenizer.tokenize_piece('.0' + "\n")
         obj = parse(self.tokenizer.get_tokens())
         self.assertEqual(len(obj), 1)
         self.assertEqual(obj[0], 0.0)
 
-        self.tokenizer.tokenize('+i' + "\n")
+        self.tokenizer.tokenize_piece('+i' + "\n")
         obj = parse(self.tokenizer.get_tokens())
         self.assertEqual(len(obj), 1)
         self.assertEqual(obj[0], 1j)
@@ -107,7 +106,7 @@ class ParserTest(unittest.TestCase):
                  ("(x (y . z) w)", ["x", [["y", "z"], ["w", []]]])]
 
         for case in cases:
-            sexp = parse(self.tokenizer.tokenize_single(case[0] + '\n'))[0]
+            sexp = parse(self.tokenizer.tokenize(case[0] + '\n'))[0]
             self.assertEqual(sexp, case[1])
 
     def testStringRepr(self):
@@ -124,7 +123,7 @@ class ParserTest(unittest.TestCase):
                  ("(a . (b . (c . d)))", "(a b c . d)")]
 
         for case in cases:
-            sexp = parse(self.tokenizer.tokenize_single(case[0] + '\n'))[0]
+            sexp = parse(self.tokenizer.tokenize(case[0] + '\n'))[0]
             self.assertEqual(to_str(sexp), case[1])
 
     def testDeepParsing(self):
@@ -137,7 +136,7 @@ class ParserTest(unittest.TestCase):
                  ("(x . "*1000 + "()" + ")"*1000, "(" + "x " * 999 + "x)")]
 
         for case in cases:
-            sexp = parse(self.tokenizer.tokenize_single(case[0] + '\n'))[0]
+            sexp = parse(self.tokenizer.tokenize(case[0] + '\n'))[0]
             self.assertEqual(to_str(sexp), case[1])
 
 def suite():
