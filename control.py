@@ -22,52 +22,6 @@ class Closure(object):
         except TypeError:
             raise SchemeError('bad arguments')
 
-    def call(self, vm):
-        """Normal closure call."""
-        # save current ENV, code and PC
-        record = ActivationRecord(vm.regs[vm.REG_ENV], vm.code, vm.regs[vm.REG_PC] + 1)
-        vm.stack.append(record)
-
-        # bind parameters to arguments
-        if self.isvararg:
-            # the last parameter is bound to a list
-            args = vm.regs[vm.REG_ARGS][:len(self.params) - 1]
-            args.append(from_python_list(vm.regs[vm.REG_ARGS][len(self.params) - 1:]))
-            if len(self.params) != len(args):
-                raise SchemeError('bad arguments')
-            frm = Frame(self.params, args, self.env)
-        else:
-            if len(self.params) != len(vm.regs[vm.REG_ARGS]):
-                raise SchemeError('bad arguments')
-            frm = Frame(self.params, vm.regs[vm.REG_ARGS], self.env)
-        vm.regs[vm.REG_ENV] = frm
-
-        # jump to the closure code
-        vm.code = self.body
-        vm.codelen = len(vm.code)
-        vm.regs[vm.REG_PC] = 0
-
-    def tailcall(self, vm):
-        """Make a tail call, create no activation record."""
-        # bind parameters to arguments
-        if self.isvararg:
-            # the last parameter is bound to a list
-            args = vm.regs[vm.REG_ARGS][:len(self.params) - 1]
-            args.append(from_python_list(vm.regs[vm.REG_ARGS][len(self.params) - 1:]))
-            if len(self.params) != len(args):
-                raise SchemeError('bad arguments')
-            frm = Frame(self.params, args, self.env)
-        else:
-            if len(self.params) != len(vm.regs[vm.REG_ARGS]):
-                raise SchemeError('bad arguments')
-            frm = Frame(self.params, vm.regs[vm.REG_ARGS], self.env)
-        vm.regs[vm.REG_ENV] = frm
-
-        # jump to the closure code
-        vm.code = self.body
-        vm.codelen = len(vm.code)
-        vm.regs[vm.REG_PC] = 0
-
 
 class ActivationRecord(object):
     def __init__(self, env, code, retaddr):

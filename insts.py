@@ -100,7 +100,28 @@ def inst_call(vm):
             vm.regs[vm.REG_VAL] = closure.primcall(vm.regs[vm.REG_ARGS])
             vm.regs[vm.REG_PC] += 1
         else:
-            closure.call(vm)
+            # save current ENV, code and PC
+            record = ActivationRecord(vm.regs[vm.REG_ENV], vm.code, vm.regs[vm.REG_PC] + 1)
+            vm.stack.append(record)
+
+            # bind parameters to arguments
+            if closure.isvararg:
+                # the last parameter is bound to a list
+                args = vm.regs[vm.REG_ARGS][:len(closure.params) - 1]
+                args.append(from_python_list(vm.regs[vm.REG_ARGS][len(closure.params) - 1:]))
+                if len(closure.params) != len(args):
+                    raise SchemeError('bad arguments')
+                frm = Frame(closure.params, args, closure.env)
+            else:
+                if len(closure.params) != len(vm.regs[vm.REG_ARGS]):
+                    raise SchemeError('bad arguments')
+                frm = Frame(closure.params, vm.regs[vm.REG_ARGS], closure.env)
+            vm.regs[vm.REG_ENV] = frm
+
+            # jump to the closure code
+            vm.code = closure.body
+            vm.codelen = len(vm.code)
+            vm.regs[vm.REG_PC] = 0
     except AttributeError as e:
         raise SchemeError('bad argument')
 
@@ -113,7 +134,24 @@ def inst_tailcall(vm):
             vm.regs[vm.REG_VAL] = closure.primcall(vm.regs[vm.REG_ARGS])
             vm.regs[vm.REG_PC] += 1
         else:
-            closure.tailcall(vm)
+            # bind parameters to arguments
+            if closure.isvararg:
+                # the last parameter is bound to a list
+                args = vm.regs[vm.REG_ARGS][:len(closure.params) - 1]
+                args.append(from_python_list(vm.regs[vm.REG_ARGS][len(closure.params) - 1:]))
+                if len(closure.params) != len(args):
+                    raise SchemeError('bad arguments')
+                frm = Frame(closure.params, args, closure.env)
+            else:
+                if len(closure.params) != len(vm.regs[vm.REG_ARGS]):
+                    raise SchemeError('bad arguments')
+                frm = Frame(closure.params, vm.regs[vm.REG_ARGS], closure.env)
+            vm.regs[vm.REG_ENV] = frm
+
+            # jump to the closure code
+            vm.code = closure.body
+            vm.codelen = len(vm.code)
+            vm.regs[vm.REG_PC] = 0
     except AttributeError as e:
         raise SchemeError('bad argument')
 
