@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from tpair import from_python_list
-from control import ActivationRecord, Closure, Continuation
+from control import ActivationRecord, Continuation
+from closure import Closure
 from environment import Frame
 from errors import *
 
@@ -191,7 +192,6 @@ def inst_restore(vm):
     vm.regs[vm.REG_PC] += 1
 
 
-# call/cc is implemented directly in machine instructions
 LIB_CALLCC_CLOSURE = Closure(['f'], [
                          (inst_capture,),
                          (inst_extenv,),

@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from environment import Frame
-from control import Closure
+from closure import Closure
 from scmlib import *
-from arith import *
+from prim import *
 
 def init_global():
     return Frame(top_bindings.keys(), top_bindings.values())
@@ -24,6 +24,9 @@ top_bindings = {
     Symbol('<'): Closure(None, prim_lt, None, isprim=True),
     Symbol('>='): Closure(None, prim_ge, None, isprim=True),
     Symbol('<='): Closure(None, prim_le, None, isprim=True),
+    Symbol('and'): Closure(None, prim_and, None, isprim=True),
+    Symbol('or'): Closure(None, prim_or, None, isprim=True),
+    Symbol('not'): Closure(None, prim_not, None, isprim=True),
 
     Symbol('cons'): Closure(None, cons, None, isprim=True),
 

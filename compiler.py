@@ -2,10 +2,10 @@
 
 from tsymbol import Symbol
 from environment import Frame
-from tpair import to_python_list, from_python_list
+from tpair import to_python_list, from_python_list, to_str
 from vm import VM
-
 from scmlib import *
+from errors import *
 from insts import *
 from syntax import *
 from trampoline import *
@@ -73,8 +73,7 @@ def compile_define(exp, env, cont, istail=False):
     if lib_issymbol(var):
         return bounce(dispatch_exp, car(val), env, got_val)
     else:
-        lambda_form = lib_append(
-                lib_list(Symbol('lambda'), cdr(var)), val)
+        lambda_form = lib_append(lib_list(Symbol('lambda'), cdr(var)), val)
         var = car(var)
         return bounce(compile_lambda, lambda_form, env, got_val)
 
@@ -99,7 +98,6 @@ def compile_lambda(exp, env, cont, istail=False):
             (inst_closure, params, body_code, isvararg),
         ]
         return bounce(cont, code)
-
     params, body = cadr(exp), cddr(exp)
     isvararg = False
     if lib_issymbol(params):
@@ -408,29 +406,26 @@ def compile_namedlet(exp, env, cont, istail=False):
             ]
             return bounce(cont, code)
 
-        apply_form = cons(cadr(exp), from_python_list(let_vals(caddr(exp))))
-        return bounce(compile_apply, apply_form, newenv, got_apply, istail=istail)
+        apply_form = cons(proc_name, from_python_list(varl))
+        return bounce(compile_call, apply_form, newenv, got_apply, istail=istail)
 
-    lambda_form = lib_append(
-                      lib_list(
-                          Symbol('lambda'),
-                          from_python_list(let_vars(caddr(exp)))),
-                      cdddr(exp))
-    define_form = lib_list(
-                      Symbol('define'),
-                      cadr(exp),
-                      lambda_form)
+    proc_name = cadr(exp)
+    varl = let_vars(caddr(exp))
+
+    lambda_form = lib_append(lib_list(Symbol('lambda'), from_python_list(varl)), cdddr(exp))
+    define_form = lib_list(Symbol('define'), proc_name, lambda_form)
+
     newenv = Frame(outer=env)
     return bounce(compile_define, define_form, newenv, got_define)
 
 
-def compile_apply_args(args, code, env, cont, istail=False):
+def compile_call_args(args, code, env, cont, istail=False):
     def got_arg(arg_code):
         nonlocal code
         code += arg_code + [
             (inst_addarg,),
         ]
-        return bounce(compile_apply_args, cdr(args), code, env, cont)
+        return bounce(compile_call_args, cdr(args), code, env, cont)
 
     if args == []:
         return bounce(cont, code)
@@ -438,7 +433,7 @@ def compile_apply_args(args, code, env, cont, istail=False):
         return bounce(dispatch_exp, car(args), env, got_arg)
 
 
-def compile_apply(exp, env, cont, istail=False):
+def compile_call(exp, env, cont, istail=False):
     def got_args(args_code):
         def got_proc(proc_code):
             if istail:
@@ -463,7 +458,7 @@ def compile_apply(exp, env, cont, istail=False):
             (inst_pushr, VM.REG_ARGS),
             (inst_clrargs,),
         ]
-    return bounce(compile_apply_args, cdr(exp), code, env, got_args)
+    return bounce(compile_call_args, cdr(exp), code, env, got_args)
 
 
 compiler_dispatch = {
@@ -472,7 +467,7 @@ compiler_dispatch = {
     'let*': compile_letstar,
     'set!': compile_set,
     'cond': compile_cond,
-    'apply': compile_apply,
+    'apply': compile_call,
     'quote': compile_quote,
     'begin': compile_begin,
     'symbol': compile_symbol,
@@ -482,6 +477,7 @@ compiler_dispatch = {
     'namedlet': compile_namedlet,
     'selfeval': compile_selfeval,
 }
+
 
 def dispatch_exp(exp, env, cont, istail=False):
     """Compile S-expression `exp' with compile-time environment `env'."""

@@ -7,9 +7,6 @@ from trampoline import *
 from scmtypes import Symbol, Procedure
 from scmlib import *
 
-# save the original versions
-python_eval = eval
-
 def is_self_evaluating(exp):
     return lib_isnumber(exp) or lib_isboolean(exp) or lib_isstring(exp)
 
@@ -47,7 +44,7 @@ def eval_set(exp, env, cont):
     val = get_set_val(exp)
     # evaluate the value expression first, and set
     # the variable to that value
-    return bounce(_eval, val, env, done_value)
+    return bounce(dispatch_exp, val, env, done_value)
 
 def get_define_var(exp):
     x = cadr(exp)
@@ -72,7 +69,7 @@ def eval_define(exp, env, cont):
     val = get_define_val(exp)
     # evaluate the value or lambda expression first, and
     # add a new variable in the environment
-    return bounce(_eval, val, env, done_value)
+    return bounce(dispatch_exp, val, env, done_value)
 
 def get_lambda_params(exp):
     return cadr(exp)
@@ -110,10 +107,10 @@ def make_if(predicate, consequent, alternative):
 def eval_if(exp, env, cont):
     def take_action(pred):
         if pred:
-            return bounce(_eval, get_if_consequent(exp), env, cont)
+            return bounce(dispatch_exp, get_if_consequent(exp), env, cont)
         else:
-            return bounce(_eval, get_if_alternate(exp), env, cont)
-    return bounce(_eval, get_if_predicate(exp), env, take_action)
+            return bounce(dispatch_exp, get_if_alternate(exp), env, cont)
+    return bounce(dispatch_exp, get_if_predicate(exp), env, take_action)
 
 def get_begin_actions(exp):
     return cdr(exp)
@@ -134,8 +131,8 @@ def eval_sequence(exps, env, cont):
     def done_first(first):
         return bounce(eval_sequence, cdr(exps), env, cont)
     if lib_isnull(cdr(exps)):
-        return bounce(_eval, car(exps), env, cont)
-    return bounce(_eval, car(exps), env, done_first)
+        return bounce(dispatch_exp, car(exps), env, cont)
+    return bounce(dispatch_exp, car(exps), env, done_first)
 
 def eval_begin(exp, env, cont):
     return bounce(eval_sequence, cdr(exp), env, cont)
@@ -161,7 +158,7 @@ def eval_each(opds, env, cont):
     
     if lib_isnull(opds):
         return bounce(cont, NIL)
-    return bounce(_eval, car(opds), env, done_first)
+    return bounce(dispatch_exp, car(opds), env, done_first)
 
 def eval_application(exp, env, cont):
     def done_opr(opr):
@@ -175,7 +172,7 @@ def eval_application(exp, env, cont):
 
     opr = get_application_opr(exp)
     # evaluate the operator first
-    return bounce(_eval, opr, env, done_opr)
+    return bounce(dispatch_exp, opr, env, done_opr)
 
 def get_cond_clauses(exp):
     return cdr(exp)
@@ -230,7 +227,7 @@ act = {
     Symbol('cond'): eval_cond,
 }
 
-def _eval(exp, env, cont):
+def dispatch_exp(exp, env, cont):
     if lib_islist(exp):
         if car(exp) in act:
             return bounce(act[car(exp)], exp, env, cont)
@@ -248,7 +245,7 @@ def apply_prim(prim_type, args, cont):
     return bounce(cont, prim_ops[prim_type](*args))
 
 def eval(exp, env):
-    return pogo_stick(bounce(_eval, exp, env, lambda d:d))
+    return pogo_stick(bounce(dispatch_exp, exp, env, lambda d:d))
 
 def apply(proc, args, cont):
     """apply `proc' on scheme list `args'"""

@@ -3,12 +3,41 @@
 import sys
 from tsymbol import Symbol
 from tpair import Pair, to_str
+from closure import Closure
 from insts import LIB_CALLCC_CLOSURE
 from errors import *
 
-#---------------------------------------------------------
+# Base types
+def lib_isnumber(val):
+    """(number? val)"""
+    return isinstance(val, int) or isinstance(val, float) or isinstance(val, complex) 
+
+def lib_isstring(val):
+    """(string? val)"""
+    return isinstance(val, str)
+
+def lib_issymbol(val):
+    """(symbol? val)"""
+    return isinstance(val, Symbol)
+
+def lib_isboolean(val):
+    """(boolean? val)"""
+    return isinstance(val, bool)
+
+def lib_isnull(val):
+    """(null? val)"""
+    return isinstance(val, Pair) and val.islist and val.length == 0
+
+def lib_ispair(val):
+    """(pair? val)"""
+    return isinstance(val, Pair)
+
+def lib_isprocedure(val):
+    """(procedure? val)"""
+    return isinstance(val, Closure)
+
+
 # List and pair operations
-#---------------------------------------------------------
 def cons(first, second):
     return Pair([first, second])
 
@@ -146,14 +175,6 @@ def cddddr(p):
 	return p[1][1][1][1]
 
 
-def lib_isnull(v):
-    """(null? p)"""
-    return isinstance(v, Pair) and v.islist and v.length == 0
-
-
-def lib_ispair(v):
-    """(pair? p)"""
-    return isinstance(v, Pair)
 
 
 def lib_islist(v):
@@ -232,31 +253,12 @@ def lib_list_tail(p, start):
         raise SchemeError('index %s is too large for %s' % (start, to_str(orig)))
 
 
-def lib_isnumber(v):
-    return isinstance(v, int) or isinstance(v, float) or isinstance(v, complex) 
 
-
-def lib_isstring(v):
-    return isinstance(v, str)
-
-
-def lib_issymbol(v):
-    return isinstance(v, Symbol)
-
-
-def lib_isboolean(v):
-    return isinstance(v, bool)
-
-
-#---------------------------------------------------------
 # Control flow related
-#---------------------------------------------------------
 lib_callcc = LIB_CALLCC_CLOSURE
 
 
-#---------------------------------------------------------
 # Utilities
-#---------------------------------------------------------
 def lib_display(v):
     print(v, end='')
     sys.stdout.flush()

@@ -1,11 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""
-Tokenizer for lexical analysis and parser for syntax analysis.
-"""
-
 import re
-
 from trampoline import pogo_stick, bounce
 from scmlib import *
 from tsymbol import Symbol
