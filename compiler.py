@@ -406,11 +406,12 @@ def compile_namedlet(exp, env, cont, istail=False):
             ]
             return bounce(cont, code)
 
-        apply_form = cons(proc_name, from_python_list(varl))
+        apply_form = cons(proc_name, from_python_list(vall))
         return bounce(compile_call, apply_form, newenv, got_apply, istail=istail)
 
     proc_name = cadr(exp)
     varl = let_vars(caddr(exp))
+    vall = let_vals(caddr(exp))
 
     lambda_form = lib_append(lib_list(Symbol('lambda'), from_python_list(varl)), cdddr(exp))
     define_form = lib_list(Symbol('define'), proc_name, lambda_form)

@@ -3,14 +3,24 @@
 from tsymbol import Symbol
 from scmlib import *
 
+forms = (
+    'if', 
+    'let', 
+    'let*', 
+    'set!', 
+    'cond', 
+    'quote',
+    'begin', 
+    'define', 
+    'lambda', 
+    'letrec',
+)
+
 def isselfeval(exp):
     return lib_isnumber(exp) or lib_isboolean(exp) or lib_isstring(exp)
 
 def issymbol(exp):
     return lib_issymbol(exp)
-
-forms = ('if', 'let', 'let*', 'set!', 'cond', 'quote',
-         'begin', 'define', 'lambda', 'letrec',)
 
 def get_sexp_type(exp):
     if lib_issymbol(exp):
