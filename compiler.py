@@ -11,7 +11,7 @@ from syntax import *
 from trampoline import *
 
 
-def _label_gen():
+def label_generator():
     counter = 0
     def f():
         nonlocal counter
@@ -20,7 +20,7 @@ def _label_gen():
     return f
 
 
-label = _label_gen()
+label = label_generator()
 
 
 def resolve_label(code):
@@ -481,7 +481,8 @@ compiler_dispatch = {
 
 
 def dispatch_exp(exp, env, cont, istail=False):
-    """Compile S-expression `exp' with compile-time environment `env'."""
+    """Compile S-expression `exp' with compile-time environment `env'.
+    """
     return bounce(compiler_dispatch[get_sexp_type(exp)], 
                   exp, env, cont, istail=istail)
         
