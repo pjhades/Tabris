@@ -4,7 +4,7 @@ import vm
 from tpair import to_str
 from toplevel import top_bindings, init_compiletime_env
 from parser import Tokenizer, Parser
-from compiler import compile
+from compiler import Compiler
 from environment import Frame
 from errors import *
 
@@ -18,6 +18,7 @@ class Repl(object):
         self.ps = PS1
         self.toker = Tokenizer()
         self.parser = Parser()
+        self.compiler = Compiler()
         self.vm = vm.VM()
         self.env = init_compiletime_env()
         if filename is None:
@@ -26,7 +27,7 @@ class Repl(object):
             self.infile = open(filename, 'r')
 
     def loop_stdin(self):
-        self.vm.set_dbgflag(vm.DBG_STEPDUMP | vm.DBG_SHOWCODE)
+        #self.vm.set_dbgflag(vm.DBG_STEPDUMP | vm.DBG_SHOWCODE)
         while True:
             try:
                 while self.toker.need_more_code():
@@ -42,7 +43,7 @@ class Repl(object):
                 tokens = self.toker.get_tokens()
                 exps = self.parser.parse(tokens)
                 for exp in exps:
-                    codes = compile(exp, self.env)
+                    codes = self.compiler.compile(exp, self.env)
                     self.vm.run(codes)
                     if self.vm.result is not None:
                         print(self.vm.result)
@@ -66,7 +67,7 @@ class Repl(object):
                 tokens = self.toker.get_tokens()
                 exps = self.parser.parse(tokens)
                 for exp in exps:
-                    codes = compile(exp, self.env)
+                    codes = self.compiler.compile(exp, self.env)
                     self.vm.run(codes)
                     if self.vm.result is not None:
                         print(self.vm.result)
@@ -85,7 +86,7 @@ class Repl(object):
         try:
             exps = self.parser.parse(self.toker.tokenize(code))
             for exp in exps:
-                codes = compile(exp, self.env)
+                codes = self.compiler.compile(exp, self.env)
                 self.vm.run(codes)
                 if self.vm.result is not None:
                     print(self.vm.result)

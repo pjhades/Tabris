@@ -13,6 +13,7 @@ class bounce(object):
 
 def pogo_stick(thread):
     while isinstance(thread, bounce):
+    #while isinstance(thread, tuple):
         thread = thread()
         #thread = thread[0](*thread[1], **thread[2])
     return thread
