@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from tsymbol import Symbol
+from tsymbol import tsym
 from environment import Frame
-from tpair import to_python_list, from_python_list, to_str
+from tpair import to_python_list, from_python_list, to_str, NIL
 from vm import VM
 from scmlib import *
 from errors import *
@@ -93,7 +93,7 @@ class Compiler(object):
         var, val = cadr(exp), cddr(exp)
         if lib_issymbol(var):
             return bounce(self.dispatch_exp, car(val), env, got_val)
-        lambda_form = lib_append(lib_list(Symbol('lambda'), cdr(var)), val)
+        lambda_form = lib_append(lib_list(tsym('lambda'), cdr(var)), val)
         var = car(var)
         return bounce(self.compile_lambda, lambda_form, env, got_val)
     
@@ -221,7 +221,7 @@ class Compiler(object):
         def got_test(test_code):
             nonlocal compiled_test_code
             compiled_test_code = test_code
-            if cadar(clauses) == Symbol('=>'):
+            if cadar(clauses) is tsym('=>'):
                 # current clause is in arrow form (foo => proc)
                 proc = caddar(clauses)
                 return bounce(self.dispatch_exp, proc, env, got_proc, 
@@ -273,7 +273,7 @@ class Compiler(object):
     
         def got_action(action_code):
             nonlocal code
-            if test == Symbol('else'):
+            if test is tsym('else'):
                 code += action_code + [
                     label_after,
                 ]
@@ -464,9 +464,9 @@ class Compiler(object):
         varl = let_vars(caddr(exp))
         vall = let_vals(caddr(exp))
     
-        lambda_form = lib_append(lib_list( Symbol('lambda'), from_python_list(varl)), 
+        lambda_form = lib_append(lib_list(tsym('lambda'), from_python_list(varl)), 
                                  cdddr(exp))
-        define_form = lib_list(Symbol('define'), proc_name, lambda_form)
+        define_form = lib_list(tsym('define'), proc_name, lambda_form)
     
         newenv = Frame(outer=env)
         compiled_define_code = None

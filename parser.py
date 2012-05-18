@@ -3,38 +3,51 @@
 import re
 from trampoline import pogo_stick, bounce
 from scmlib import *
-from tsymbol import Symbol
+from tsymbol import tsym
 from errors import *
 
 # Delimiter characters. If we see these, we have found
 # a token and need to add it to the token list.
 DELIMS = '"\'\n\t;( )'
 
-# Token types
+
+TOKEN_TYPE_STRING = 0
+TOKEN_TYPE_INTEGER = 1
+TOKEN_TYPE_FLOAT = 2
+TOKEN_TYPE_FRACTION = 3
+TOKEN_TYPE_COMPLEX = 4
+TOKEN_TYPE_BOOLEAN = 5
+TOKEN_TYPE_LPAREN = 6
+TOKEN_TYPE_RPAREN = 7
+TOKEN_TYPE_SINGLE_QUOTE = 8
+TOKEN_TYPE_DOT = 9
+TOKEN_TYPE_SYMBOL = 10
+
+
 token_patterns = (
-    ('string',   re.compile(r'^".*"$', flags=re.DOTALL)), \
-    ('integer',  re.compile(r'^[+-]?\d+$')), \
-    ('float',    re.compile(r'^[+-]?(\d+\.\d*|\.\d+)$')), \
-    ('fraction', re.compile(r'^[+-]?\d+/\d+$')), \
-    ('complex',  re.compile(r'''(^(([+-]?\d+|[+-]?(\d+\.\d*|\.\d+))          
-                                   ([+-]|[+-]\d+|[+-](\d+\.\d*|\.\d+))i$)
-                                 |
-                                 ^([+-]|[+-]?\d+|[+-]?(\d+\.\d*|\.\d+))i$ 
-                                )
-                            ''', flags=re.VERBOSE)), \
-    ('boolean',  re.compile(r'^#[tf]$')), \
-    ('(',        re.compile(r'^\($')), \
-    (')',        re.compile(r'^\)$')), \
-    ("'",        re.compile(r"^'$")), \
-    ('.',        re.compile(r'^\.$')), \
-    ('symbol',   re.compile(r'^[\w!$%&*+-./:<=>?@^_~]+$'))
+    (TOKEN_TYPE_STRING,   re.compile(r'^".*"$', flags=re.DOTALL)), \
+    (TOKEN_TYPE_INTEGER,  re.compile(r'^[+-]?\d+$')), \
+    (TOKEN_TYPE_FLOAT,    re.compile(r'^[+-]?(\d+\.\d*|\.\d+)$')), \
+    (TOKEN_TYPE_FRACTION, re.compile(r'^[+-]?\d+/\d+$')), \
+    (TOKEN_TYPE_COMPLEX,  re.compile(r'''(^(([+-]?\d+|[+-]?(\d+\.\d*|\.\d+))          
+                                            ([+-]|[+-]\d+|[+-](\d+\.\d*|\.\d+))i$)
+                                           |
+                                          ^([+-]|[+-]?\d+|[+-]?(\d+\.\d*|\.\d+))i$ 
+                                          )
+                                      ''', flags=re.VERBOSE)), \
+    (TOKEN_TYPE_BOOLEAN,       re.compile(r'^#[tf]$')), \
+    (TOKEN_TYPE_LPAREN,        re.compile(r'^\($')), \
+    (TOKEN_TYPE_RPAREN,        re.compile(r'^\)$')), \
+    (TOKEN_TYPE_SINGLE_QUOTE,  re.compile(r"^'$")), \
+    (TOKEN_TYPE_DOT,           re.compile(r'^\.$')), \
+    (TOKEN_TYPE_SYMBOL,        re.compile(r'^[\w!$%&*+-./:<=>?@^_~]+$'))
 )
 
 
 def get_token_type(tok):
     for t in token_patterns:
         mobj = t[1].match(tok)
-        if mobj:
+        if mobj is not None:
             return (tok, t[0])
     raise SchemeError('unknown token ' + tok)
 
@@ -135,30 +148,36 @@ class Parser(object):
     def parse_lexeme_datum(self, tokens, cont):
         token = tokens[0]
         token_type = token[1]
-        if token_type == 'boolean':
-            self.consume(tokens, 'boolean')
+        if token_type == TOKEN_TYPE_BOOLEAN:
+            self.consume(tokens, TOKEN_TYPE_BOOLEAN)
             if token[0] == '#t':
                 return bounce(cont, True)
             else:
                 return bounce(cont, False)
-        elif token_type == 'string':
-            self.consume(tokens, 'string')
+
+        elif token_type == TOKEN_TYPE_STRING:
+            self.consume(tokens, TOKEN_TYPE_STRING)
             return bounce(cont, token[0][1:-1])
-        elif token_type == 'symbol':
-            self.consume(tokens, 'symbol')
-            return bounce(cont, Symbol(token[0]))
-        elif token_type == 'integer':
-            self.consume(tokens, 'integer')
+
+        elif token_type == TOKEN_TYPE_SYMBOL:
+            self.consume(tokens, TOKEN_TYPE_SYMBOL)
+            return bounce(cont, tsym(token[0]))
+
+        elif token_type == TOKEN_TYPE_INTEGER:
+            self.consume(tokens, TOKEN_TYPE_INTEGER)
             return bounce(cont, int(token[0]))
-        elif token_type == 'float':
-            self.consume(tokens, 'float')
+
+        elif token_type == TOKEN_TYPE_FLOAT:
+            self.consume(tokens, TOKEN_TYPE_FLOAT)
             return bounce(cont, float(token[0]))
-        elif token_type == 'fraction':
-            self.consume(tokens, 'fraction')
+
+        elif token_type == TOKEN_TYPE_FRACTION:
+            self.consume(tokens, TOKEN_TYPE_FRACTION)
             numer, denom = token[0].split('/')
             return bounce(cont, float(numer) / float(denom))
-        elif token_type == 'complex':
-            self.consume(tokens, 'complex')
+
+        elif token_type == TOKEN_TYPE_COMPLEX:
+            self.consume(tokens, TOKEN_TYPE_COMPLEX)
             return bounce(cont, complex(token[0].replace('i', 'j')))
     
         else:
@@ -169,15 +188,22 @@ class Parser(object):
         be a Scheme list or a dotted partial list.
         """
         token_type = tokens[0][1]
-        if token_type == '.':
-            self.consume(tokens, '.')
+        if token_type == TOKEN_TYPE_DOT:
+            self.consume(tokens, TOKEN_TYPE_DOT)
             return bounce(self.parse_sexp, tokens, cont)
-        elif token_type != ')':
+
+        elif token_type != TOKEN_TYPE_RPAREN:
             def done_first(first):
-                def done_rest(rest):
-                    return bounce(cont, cons(first, rest))
+                nonlocal saved_first_exp
+                saved_first_exp = first
                 return bounce(self.parse_rest_sexps, tokens, done_rest)
+
+            def done_rest(rest):
+                return bounce(cont, cons(saved_first_exp, rest))
+
+            saved_first_exp = None
             return bounce(self.parse_sexp, tokens, done_first)
+
         else:
             return bounce(cont, NIL)
     
@@ -185,26 +211,35 @@ class Parser(object):
         """Parse a Scheme list.
         """
         def done_rest(rest):
-            self.consume(tokens, ')')
+            self.consume(tokens, TOKEN_TYPE_RPAREN)
             return bounce(cont, rest)
 
-        self.consume(tokens, '(')
+        self.consume(tokens, TOKEN_TYPE_LPAREN)
         return bounce(self.parse_rest_sexps, tokens, done_rest)
     
     def parse_sexp(self, tokens, cont):
         """Parse a single S-expression.
         """
         token_type = tokens[0][1]
-        if token_type in ('boolean', 'integer', 'float', 'fraction', 
-                          'complex', 'string', 'symbol'):
+        if token_type in (TOKEN_TYPE_BOOLEAN, 
+                          TOKEN_TYPE_INTEGER, 
+                          TOKEN_TYPE_FLOAT, 
+                          TOKEN_TYPE_FRACTION, 
+                          TOKEN_TYPE_COMPLEX, 
+                          TOKEN_TYPE_STRING, 
+                          TOKEN_TYPE_SYMBOL,):
             return bounce(self.parse_lexeme_datum, tokens, cont)
-        elif token_type == "'":
+
+        elif token_type == TOKEN_TYPE_SINGLE_QUOTE:
             def make_quote(word):
-                return bounce(cont, lib_list(Symbol('quote'), word))
-            self.consume(tokens, "'")
+                return bounce(cont, lib_list(tsym('quote'), word))
+
+            self.consume(tokens, TOKEN_TYPE_SINGLE_QUOTE)
             return bounce(self.parse_sexp, tokens, make_quote)
-        elif token_type == '(':
+
+        elif token_type == TOKEN_TYPE_LPAREN:
             return bounce(self.parse_list, tokens, cont)
+
         else:
             raise SchemeError('bad expression syntax')
     

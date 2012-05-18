@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from tsymbol import Symbol
 from scmlib import *
 
 forms = (
@@ -23,6 +22,8 @@ def issymbol(exp):
     return lib_issymbol(exp)
 
 def get_sexp_type(exp):
+    """Get a unique type string of each S-expression type.
+    """
     if lib_issymbol(exp):
         return 'symbol'
     elif lib_isnumber(exp) or lib_isboolean(exp) or lib_isstring(exp):

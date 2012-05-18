@@ -27,7 +27,7 @@ class Repl(object):
             self.infile = open(filename, 'r')
 
     def loop_stdin(self):
-        #self.vm.set_dbgflag(vm.DBG_STEPDUMP | vm.DBG_SHOWCODE)
+        #self.vm.set_dbgflag(vm.DBG_STEPDUMP | vm.DBG_SHOWCODE | vm.DBG_SHOWINST)
         while True:
             try:
                 while self.toker.need_more_code():

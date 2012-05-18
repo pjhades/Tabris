@@ -30,13 +30,21 @@ class PairTest(unittest.TestCase):
         self.assertEqual(car(p), 1)
         self.assertEqual(cdr(p), 2)
 
-        p = cons([1,2], [3,4])
+        p = cons(
+                cons([1,2]), 
+                cons([3,4]))
         self.assertEqual(caar(p), 1)
         self.assertEqual(cadr(p), 3)
         self.assertEqual(cdar(p), 2)
         self.assertEqual(cddr(p), 4)
 
-        p = cons([[1,2],[3,4]], [[5,6],[7,8]])
+        p = cons(
+                cons(
+                    cons([1,2]),
+                    cons([3,4])), 
+                cons(
+                    cons([5,6]),
+                    cons([7,8])))
         self.assertEqual(caaar(p), 1)
         self.assertEqual(caadr(p), 5)
         self.assertEqual(cadar(p), 3)
@@ -46,8 +54,21 @@ class PairTest(unittest.TestCase):
         self.assertEqual(cddar(p), 4)
         self.assertEqual(cdddr(p), 8)
 
-        p = cons([[[1,2],[3,4]], [[5,6],[7,8]]], \
-                 [[[9,10],[11,12]], [[13,14],[15,16]]])
+        p = cons(
+                cons(
+                    cons(
+                        cons([1,2]),
+                        cons([3,4])), 
+                    cons(
+                        cons([5,6]),
+                        cons([7,8]))), \
+                cons(
+                    cons(
+                        cons([9,10]),
+                        cons([11,12])), 
+                    cons(
+                        cons([13,14]),
+                        cons([15,16]))))
         self.assertEqual(caaaar(p), 1)
         self.assertEqual(caaadr(p), 9)
         self.assertEqual(caadar(p), 5)

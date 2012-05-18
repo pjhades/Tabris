@@ -2,7 +2,7 @@
 
 import sys
 from tsymbol import Symbol
-from tpair import Pair, to_str
+from tpair import Pair, to_str, NIL
 from closure import Closure
 from insts import LIB_CALLCC_CLOSURE
 from errors import *
@@ -40,8 +40,6 @@ def lib_isprocedure(val):
 # List and pair operations
 def cons(first, second):
     return Pair([first, second])
-
-NIL = Pair([])
 
 def _check_cxr_param(cxr):
     """Check if the argument cannot be cxred."""
