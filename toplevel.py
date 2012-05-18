@@ -84,4 +84,7 @@ top_bindings = {
     tsym('display'): Closure(None, lib_display, None, isprim=True),
     tsym('newline'): Closure(None, lib_newline, None, isprim=True),
 
+    tsym('eqv?'): Closure(None, lib_iseqv, None, isprim=True),
+    tsym('eq?'): Closure(None, lib_iseqv, None, isprim=True),
+    tsym('equal?'): Closure(None, lib_isequal, None, isprim=True),
 }

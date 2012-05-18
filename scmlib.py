@@ -5,36 +5,87 @@ from tsymbol import Symbol
 from tpair import Pair, to_str, NIL
 from closure import Closure
 from insts import LIB_CALLCC_CLOSURE
+from trampoline import *
 from errors import *
 
 # Base types
 def lib_isnumber(val):
-    """(number? val)"""
+    """(number? val)
+    """
     return isinstance(val, int) or isinstance(val, float) or isinstance(val, complex) 
 
 def lib_isstring(val):
-    """(string? val)"""
+    """(string? val)
+    """
     return isinstance(val, str)
 
 def lib_issymbol(val):
-    """(symbol? val)"""
+    """(symbol? val)
+    """
     return isinstance(val, Symbol)
 
 def lib_isboolean(val):
-    """(boolean? val)"""
+    """(boolean? val)
+    """
     return isinstance(val, bool)
 
 def lib_isnull(val):
-    """(null? val)"""
+    """(null? val)
+    """
     return isinstance(val, Pair) and val.islist and val.length == 0
 
 def lib_ispair(val):
-    """(pair? val)"""
+    """(pair? val)
+    """
     return isinstance(val, Pair)
 
 def lib_isprocedure(val):
-    """(procedure? val)"""
+    """(procedure? val)
+    """
     return isinstance(val, Closure)
+
+
+# Equivalence predicates
+def lib_iseqv(*args):
+    if len(args) < 2:
+        raise SchemeError('eqv? expects at least 2 arguments')
+    prev = args[0]
+    for now in args[1:]:
+        if lib_isboolean(prev) and lib_isboolean(now) or \
+                lib_issymbol(prev) and lib_issymbol(now) or \
+                lib_isnumber(prev) and lib_isnumber(now) or \
+                lib_isstring(prev) and lib_isstring(now) or \
+                lib_isnull(prev) and lib_isnull(now):
+            if prev != now:
+                return False
+        else:
+            if not prev is now:
+                return False
+        prev = now 
+    return True
+
+def _lib_isequal(v1, v2, cont):
+    def compared_first(result):
+        if result is False:
+            return False
+        return bounce(_lib_isequal, cdr(v1), cdr(v2), cont)
+
+    if not isinstance(v1, Pair) and not isinstance(v2, Pair) or \
+            lib_isnull(v1) and lib_isnull(v2):
+        # both are not pair or both are '()
+        return bounce(cont, lib_iseqv(v1, v2))
+    elif isinstance(v1, Pair) and isinstance(v2, Pair):
+        # both are pairs
+        return bounce(_lib_isequal, car(v1), car(v2), compared_first)
+    else:
+        return bounce(cont, False)
+
+def lib_isequal(*args):
+    """(equal? x1 x2)
+    """
+    if len(args) != 2:
+        raise SchemeError('equal? expects 2 arguments')
+    return pogo_stick(bounce(_lib_isequal, args[0], args[1], lambda d:d))
 
 
 # List and pair operations
@@ -42,7 +93,8 @@ def cons(first, second):
     return Pair([first, second])
 
 def _check_cxr_param(cxr):
-    """Check if the argument cannot be cxred."""
+    """Check if the argument cannot be cxred.
+    """
     def f(func):
         def g(p):
             try:
@@ -173,15 +225,15 @@ def cddddr(p):
 	return p[1][1][1][1]
 
 
-
-
 def lib_islist(v):
-    """(list? p)"""
+    """(list? p)
+    """
     return isinstance(v, Pair) and v.islist
 
 
 def lib_list(*elems):
-    """(list 1 2 3)"""
+    """(list 1 2 3)
+    """
     res = NIL
     for elem in reversed(elems):
         res = cons(elem, res)
@@ -189,15 +241,18 @@ def lib_list(*elems):
 
 
 def lib_length(p):
-    """(length '(1 2 3))"""
+    """(length '(1 2 3))
+    """
     if not p.islist:
         raise SchemeError('expects proper list, given %s' % (to_str(p)))
     return p.length
 
 
 def lib_append(*args):
-    """(append '(1 2) '(a b)) or
-       (append '(1 2) 'x)"""
+    """(append '(1 2) '(a b)) 
+    or
+       (append '(1 2) 'x)
+    """
     if len(args) == 0:
         return NIL
     import copy
@@ -230,7 +285,8 @@ def lib_append(*args):
 
 
 def lib_reverse(p):
-    """(reverse '(a b c))"""
+    """(reverse '(a b c))
+    """
     elems = []
     while p != NIL:
         elems.append(car(p))
@@ -239,7 +295,8 @@ def lib_reverse(p):
 
 
 def lib_list_tail(p, start):
-    """(list-tail '(a b c) 1)"""
+    """(list-tail '(a b c) 1)
+    """
     orig = p
     try:
         now = 0
@@ -249,7 +306,6 @@ def lib_list_tail(p, start):
         return p
     except SchemeError:
         raise SchemeError('index %s is too large for %s' % (start, to_str(orig)))
-
 
 
 # Control flow related
