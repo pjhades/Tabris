@@ -22,4 +22,4 @@
         (newline)
         (calc-hanoi (cdr seq)))))
 
-(calc-hanoi (range 1 100 1))
+(calc-hanoi (range 1 10 1))

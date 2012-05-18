@@ -19,6 +19,7 @@ top_bindings = {
     tsym('-'): Closure(None, prim_sub, None, isprim=True),
     tsym('*'): Closure(None, prim_mul, None, isprim=True),
     tsym('/'): Closure(None, prim_div, None, isprim=True),
+    tsym('remainder'): Closure(None, prim_mod, None, isprim=True),
     tsym('='): Closure(None, prim_eq, None, isprim=True),
     tsym('>'): Closure(None, prim_gt, None, isprim=True),
     tsym('<'): Closure(None, prim_lt, None, isprim=True),
@@ -27,6 +28,13 @@ top_bindings = {
     tsym('and'): Closure(None, prim_and, None, isprim=True),
     tsym('or'): Closure(None, prim_or, None, isprim=True),
     tsym('not'): Closure(None, prim_not, None, isprim=True),
+    tsym('max'): Closure(None, prim_max, None, isprim=True),
+    tsym('min'): Closure(None, prim_min, None, isprim=True),
+    tsym('abs'): Closure(None, prim_abs, None, isprim=True),
+    tsym('gcd'): Closure(None, prim_gcd, None, isprim=True),
+    tsym('lcm'): Closure(None, prim_lcm, None, isprim=True),
+    tsym('floor'): Closure(None, prim_floor, None, isprim=True),
+    tsym('ceiling'): Closure(None, prim_ceiling, None, isprim=True),
 
     tsym('cons'): Closure(None, cons, None, isprim=True),
 

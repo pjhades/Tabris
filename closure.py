@@ -16,6 +16,8 @@ class Closure(object):
             return self.body(*args)
         except TypeError:
             raise SchemeError('bad arguments')
+        except ZeroDivisionError:
+            raise SchemeError('divided by zero')
 
     def __str__(self):
         return '<procedure>'
