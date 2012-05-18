@@ -257,8 +257,8 @@ lib_callcc = LIB_CALLCC_CLOSURE
 
 
 # Utilities
-def lib_display(v):
-    print(v, end='')
+def lib_display(*args):
+    print(*args, end='')
     sys.stdout.flush()
     return None
 
