@@ -2,7 +2,7 @@
 
 from tsymbol import tsym
 from environment import Frame
-from tpair import to_python_list, from_python_list, to_str, NIL
+from tpair import to_python_list, from_python_list, to_str
 from vm import VM
 from scmlib import *
 from errors import *
@@ -159,7 +159,7 @@ class Compiler(object):
     
         if lib_isnull(cdr(exp)):
             return bounce(self.dispatch_exp, car(exp), env, emit_last, 
-                          istail=istail)
+                      istail=istail)
         return bounce(self.dispatch_exp, car(exp), env, got_first)
     
     def compile_begin(self, exp, env, cont, istail=False):
@@ -203,7 +203,7 @@ class Compiler(object):
     
         compiled_yes_code = None
         test_exp, yes_exp = cadr(exp), caddr(exp)
-        if cdddr(exp) == NIL:
+        if lib_isnull(cdddr(exp)):
             no_exp = None
         else:
             no_exp = cadddr(exp)
@@ -233,7 +233,7 @@ class Compiler(object):
     
         def got_proc(proc_code):
             nonlocal code
-            if cdr(clauses) == NIL:
+            if lib_isnull(cdr(clauses)):
                 if istail:
                     code += compiled_test_code + [
                         (inst_jf, label_after),
@@ -278,7 +278,7 @@ class Compiler(object):
                     label_after,
                 ]
                 return bounce(cont, resolve_label(code))
-            elif cdr(clauses) == NIL:
+            elif lib_isnull(cdr(clauses)):
                 code += compiled_test_code + [
                     (inst_jf, label_after),
                 ] + action_code + [

@@ -109,67 +109,67 @@ def inst_addarg(vm):
 def inst_call(vm):
     """Call closure in VAL with ARGS.
     """
-    try:
-        closure = vm.regs[vm.REG_VAL]
-        if closure.isprim:
-            vm.regs[vm.REG_VAL] = closure.primcall(vm.regs[vm.REG_ARGS])
-            vm.regs[vm.REG_PC] += 1
+    closure = vm.regs[vm.REG_VAL]
+    if not isinstance(closure, Closure):
+        raise SchemeError('not a callable procedure')
+
+    if closure.isprim:
+        vm.regs[vm.REG_VAL] = closure.primcall(vm.regs[vm.REG_ARGS])
+        vm.regs[vm.REG_PC] += 1
+    else:
+        # save current ENV, code and PC
+        record = ActivationRecord(vm.regs[vm.REG_ENV], vm.code, vm.regs[vm.REG_PC] + 1)
+        vm.stack.append(record)
+
+        # bind parameters to arguments
+        if closure.isvararg:
+            # the last parameter is bound to a list
+            args = vm.regs[vm.REG_ARGS][:len(closure.params) - 1]
+            args.append(from_python_list(vm.regs[vm.REG_ARGS][len(closure.params) - 1:]))
+            if len(closure.params) != len(args):
+                raise SchemeError('bad arguments')
+            frm = Frame(closure.params, args, closure.env)
         else:
-            # save current ENV, code and PC
-            record = ActivationRecord(vm.regs[vm.REG_ENV], vm.code, vm.regs[vm.REG_PC] + 1)
-            vm.stack.append(record)
+            if len(closure.params) != len(vm.regs[vm.REG_ARGS]):
+                raise SchemeError('bad arguments')
+            frm = Frame(closure.params, vm.regs[vm.REG_ARGS], closure.env)
+        vm.regs[vm.REG_ENV] = frm
 
-            # bind parameters to arguments
-            if closure.isvararg:
-                # the last parameter is bound to a list
-                args = vm.regs[vm.REG_ARGS][:len(closure.params) - 1]
-                args.append(from_python_list(vm.regs[vm.REG_ARGS][len(closure.params) - 1:]))
-                if len(closure.params) != len(args):
-                    raise SchemeError('bad arguments')
-                frm = Frame(closure.params, args, closure.env)
-            else:
-                if len(closure.params) != len(vm.regs[vm.REG_ARGS]):
-                    raise SchemeError('bad arguments')
-                frm = Frame(closure.params, vm.regs[vm.REG_ARGS], closure.env)
-            vm.regs[vm.REG_ENV] = frm
-
-            # jump to the closure code
-            vm.code = closure.body
-            vm.codelen = len(vm.code)
-            vm.regs[vm.REG_PC] = 0
-    except AttributeError as e:
-        raise SchemeError('bad argument')
+        # jump to the closure code
+        vm.code = closure.body
+        vm.codelen = len(vm.code)
+        vm.regs[vm.REG_PC] = 0
 
 
 def inst_tailcall(vm):
     """Make a tail call to closure in VAL with ARGS.
     """
-    try:
-        closure = vm.regs[vm.REG_VAL]
-        if closure.isprim:
-            vm.regs[vm.REG_VAL] = closure.primcall(vm.regs[vm.REG_ARGS])
-            vm.regs[vm.REG_PC] += 1
-        else:
-            # bind parameters to arguments
-            if closure.isvararg:
-                # the last parameter is bound to a list
-                args = vm.regs[vm.REG_ARGS][:len(closure.params) - 1]
-                args.append(from_python_list(vm.regs[vm.REG_ARGS][len(closure.params) - 1:]))
-                if len(closure.params) != len(args):
-                    raise SchemeError('bad arguments')
-                frm = Frame(closure.params, args, closure.env)
-            else:
-                if len(closure.params) != len(vm.regs[vm.REG_ARGS]):
-                    raise SchemeError('bad arguments')
-                frm = Frame(closure.params, vm.regs[vm.REG_ARGS], closure.env)
-            vm.regs[vm.REG_ENV] = frm
+    closure = vm.regs[vm.REG_VAL]
+    if not isinstance(closure, Closure):
+        raise SchemeError('not a callable procedure')
 
-            # jump to the closure code
-            vm.code = closure.body
-            vm.codelen = len(vm.code)
-            vm.regs[vm.REG_PC] = 0
-    except AttributeError as e:
-        raise SchemeError('bad argument')
+    if closure.isprim:
+        vm.regs[vm.REG_VAL] = closure.primcall(vm.regs[vm.REG_ARGS])
+        vm.regs[vm.REG_PC] += 1
+    else:
+        # bind parameters to arguments
+        if closure.isvararg:
+            # the last parameter is bound to a list
+            args = vm.regs[vm.REG_ARGS][:len(closure.params) - 1]
+            args.append(from_python_list(vm.regs[vm.REG_ARGS][len(closure.params) - 1:]))
+            if len(closure.params) != len(args):
+                raise SchemeError('bad arguments')
+            frm = Frame(closure.params, args, closure.env)
+        else:
+            if len(closure.params) != len(vm.regs[vm.REG_ARGS]):
+                raise SchemeError('bad arguments')
+            frm = Frame(closure.params, vm.regs[vm.REG_ARGS], closure.env)
+        vm.regs[vm.REG_ENV] = frm
+
+        # jump to the closure code
+        vm.code = closure.body
+        vm.codelen = len(vm.code)
+        vm.regs[vm.REG_PC] = 0
 
 
 def inst_ret(vm):
