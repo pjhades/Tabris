@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from tsymbol import Symbol
 from tpair import from_python_list
 from control import ActivationRecord, Continuation
 from closure import Closure
@@ -16,6 +17,8 @@ def inst_loadi(vm, idx, val):
 def inst_refvar(vm, var):
     """Reference a variable.
     """
+    if not isinstance(var, Symbol):
+        raise SchemeError('not a symbol: ' + str(var))
     val = vm.regs[vm.REG_ENV].refvar(var)
     vm.regs[vm.REG_VAL] = val
     vm.regs[vm.REG_PC] += 1
@@ -24,6 +27,8 @@ def inst_refvar(vm, var):
 def inst_bindvar(vm, var):
     """Add a new binding of variable and the value in VAL.
     """
+    if not isinstance(var, Symbol):
+        raise SchemeError('not a symbol: ' + str(var))
     val = vm.regs[vm.REG_VAL]
     vm.regs[vm.REG_ENV].bindvar(var, val)
     vm.regs[vm.REG_PC] += 1
@@ -33,6 +38,8 @@ def inst_bindvar(vm, var):
 def inst_setvar(vm, var):
     """Set a variable to the value in VAL register.
     """
+    if not isinstance(var, Symbol):
+        raise SchemeError('not a symbol: ' + str(var))
     val = vm.regs[vm.REG_VAL]
     vm.regs[vm.REG_ENV].setvar(var, val)
     vm.regs[vm.REG_PC] += 1
