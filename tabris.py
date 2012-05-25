@@ -12,8 +12,8 @@ if __name__ == '__main__':
     import profile
     import pstats
 
-    profile.run('evaluator.loop()', 'profile.dat')
-    p = pstats.Stats('profile.dat')
-    p.strip_dirs().sort_stats('time', 'cum').print_stats()
+    #profile.run('evaluator.loop()', 'profile.dat')
+    #p = pstats.Stats('profile.dat')
+    #p.strip_dirs().sort_stats('time', 'cum').print_stats()
 
-    #evaluator.loop()
+    evaluator.loop()

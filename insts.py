@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from tsymbol import Symbol
+from tsymbol import Symbol, tsym
 from tpair import from_python_list
 from control import ActivationRecord, Continuation
 from closure import Closure
@@ -219,19 +219,19 @@ def inst_restore(vm):
     vm.regs[vm.REG_PC] += 1
 
 
-LIB_CALLCC_CLOSURE = Closure(['f'], [
+LIB_CALLCC_CLOSURE = Closure([tsym('f')], [
                          (inst_capture,),
                          (inst_extenv,),
-                         (inst_bindvar, 'cc'),
+                         (inst_bindvar, tsym('cc')),
                          (inst_clrargs,),
-                         (inst_closure, ['value'], [
-                             (inst_refvar, 'cc'),
+                         (inst_closure, [tsym('value')], [
+                             (inst_refvar, tsym('cc')),
                              (inst_restore,),
-                             (inst_refvar, 'value'),
+                             (inst_refvar, tsym('value')),
                              (inst_ret,)
                              ], False),
                          (inst_addarg,),
-                         (inst_refvar, 'f'),
+                         (inst_refvar, tsym('f')),
                          (inst_tailcall,),
                          (inst_killenv,),
                          (inst_ret,)], None)
