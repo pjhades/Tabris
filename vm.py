@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from toplevel import init_global
+from toplevel import init_runtime_env
 
 # show each executing instruction
 DBG_SHOWINST = 1
@@ -19,11 +19,14 @@ class VM(object):
         self.reset()
 
     def reset(self):
+        # registers
         self.regs = [0] * 4
         self.regs[VM.REG_VAL] = 0
         self.regs[VM.REG_PC] = 0
-        self.regs[VM.REG_ENV] = init_global()
+        self.regs[VM.REG_ENV] = init_runtime_env()
         self.regs[VM.REG_ARGS] = []
+
+        self.toplevel = self.regs[VM.REG_ENV].binds
         self.flags = 0
         self.code = []
         self.codelen = 0
@@ -68,8 +71,7 @@ class VM(object):
         if self.regs[VM.REG_ENV].outer is None:
             print('global environment')
         else:
-            for sym in self.regs[VM.REG_ENV].binds:
-                print(sym, '=>', self.regs[VM.REG_ENV].binds[sym])
+            print(self.regs[VM.REG_ENV].binds)
         print('<STACK>')
         print(self.stack)
         print()

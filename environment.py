@@ -3,29 +3,55 @@
 from errors import *
 
 class Frame(object):
-    def __init__(self, varl=[], vall=[], outer=None):
-        self.binds = {p[0]: p[1] for p in zip(varl, vall)}
+    #def __init__(self, varl=[], vall=[], outer=None):
+    #    self.binds = {p[0]: p[1] for p in zip(varl, vall)}
+    #    self.outer = outer
+
+    def __init__(self, binds, outer=None):
+        self.binds = binds
         self.outer = outer
 
-    def refvar(self, var):
+    def get_lexaddr(self, var):
+        """Return the lexical address of symbol `var'.
+        If it's found in the global bindings, return
+        its index in it. Otherwise return the number
+        of frames to go back and the index.
+        """
         frm = self
+        back = 0
         while frm is not None:
             if var not in frm.binds:
                 frm = frm.outer
+                back += 1
             else:
-                return frm.binds[var]
-        raise SchemeError('unbound variable ' + str(var))
+                if frm.outer is None:
+                    return frm.binds.index(var)
+                return (back, frm.binds.index(var))
+        raise SchemeError('unbound variable: ' + str(var))
 
-    def setvar(self, var, val):
+    def refvar(self, lexaddr):
+        """Reference a non-toplevel name.
+        """
+        back, idx = lexaddr
         frm = self
-        while frm is not None:
-            if var not in frm.binds:
-                frm = frm.outer
-            else:
-                frm.binds[var] = val
-                return
-        raise SchemeError('unbound variable ' + str(var))
+        while back > 0:
+            frm = frm.outer
+            back -= 1
+        return frm.binds[idx]
 
-    def bindvar(self, var, val):
-        self.binds[var] = val
+    def setvar(self, lexaddr, val):
+        """Set a non-toplevel name.
+        """
+        back, idx = lexaddr
+        frm = self
+        while back > 0:
+            frm = frm.outer
+            back -= 1
+        frm.binds[idx] = val
+
+    def bindvar(self, lexaddr, val):
+        if lexaddr == len(self.binds):
+            self.binds.append(val)
+        else:
+            self.binds[lexaddr] = val
 

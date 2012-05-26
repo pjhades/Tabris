@@ -14,36 +14,43 @@ def inst_loadi(vm, idx, val):
     vm.regs[vm.REG_PC] += 1
 
 
-def inst_refvar(vm, var):
+def inst_refvar(vm, lexaddr):
     """Reference a variable.
     """
-    if not isinstance(var, Symbol):
-        raise SchemeError('not a symbol: ' + str(var))
-    val = vm.regs[vm.REG_ENV].refvar(var)
+    #if not isinstance(var, Symbol):
+    #    raise SchemeError('not a symbol: ' + str(var))
+    if not isinstance(lexaddr, tuple):
+        val = vm.toplevel[lexaddr]
+    else:
+        val = vm.regs[vm.REG_ENV].refvar(lexaddr)
     vm.regs[vm.REG_VAL] = val
     vm.regs[vm.REG_PC] += 1
 
 
-def inst_bindvar(vm, var):
-    """Add a new binding of variable and the value in VAL.
-    """
-    if not isinstance(var, Symbol):
-        raise SchemeError('not a symbol: ' + str(var))
-    val = vm.regs[vm.REG_VAL]
-    vm.regs[vm.REG_ENV].bindvar(var, val)
-    vm.regs[vm.REG_PC] += 1
-    vm.regs[vm.REG_VAL] = None
-
-
-def inst_setvar(vm, var):
+def inst_setvar(vm, lexaddr):
     """Set a variable to the value in VAL register.
     """
-    if not isinstance(var, Symbol):
-        raise SchemeError('not a symbol: ' + str(var))
-    val = vm.regs[vm.REG_VAL]
-    vm.regs[vm.REG_ENV].setvar(var, val)
-    vm.regs[vm.REG_PC] += 1
+    #if not isinstance(var, Symbol):
+    #    raise SchemeError('not a symbol: ' + str(var))
+    if not isinstance(lexaddr, tuple):
+        vm.toplevel[lexaddr] = vm.regs[vm.REG_VAL]
+    else:
+        vm.regs[vm.REG_ENV].setvar(lexaddr, vm.regs[vm.REG_VAL])
     vm.regs[vm.REG_VAL] = None
+    vm.regs[vm.REG_PC] += 1
+
+
+def inst_bindvar(vm, lexaddr):
+    """Add a new binding for variable and the value in VAL.
+    """
+    #if not isinstance(var, Symbol):
+    #    raise SchemeError('not a symbol: ' + str(var))
+    #val = vm.regs[vm.REG_VAL]
+    if isinstance(lexaddr, tuple):
+        lexaddr = lexaddr[1]
+    vm.regs[vm.REG_ENV].bindvar(lexaddr, vm.regs[vm.REG_VAL])
+    vm.regs[vm.REG_VAL] = None
+    vm.regs[vm.REG_PC] += 1
 
 
 def inst_jt(vm, offset):
@@ -73,7 +80,7 @@ def inst_j(vm, offset):
 def inst_extenv(vm):
     """Create a new empty frame.
     """
-    frm = Frame(outer=vm.regs[vm.REG_ENV])
+    frm = Frame([], outer=vm.regs[vm.REG_ENV])
     vm.regs[vm.REG_ENV] = frm
     vm.regs[vm.REG_PC] += 1
 
@@ -134,12 +141,16 @@ def inst_call(vm):
             args = vm.regs[vm.REG_ARGS][:len(closure.params) - 1]
             args.append(from_python_list(vm.regs[vm.REG_ARGS][len(closure.params) - 1:]))
             if len(closure.params) != len(args):
+                print('call, vararg')
                 raise SchemeError('bad arguments')
-            frm = Frame(closure.params, args, closure.env)
+            frm = Frame(args, closure.env)
         else:
             if len(closure.params) != len(vm.regs[vm.REG_ARGS]):
+                print('call, not vararg')
+                print('closure.params:', closure.params)
+                print('ARGS_REG:', vm.regs[vm.REG_ARGS])
                 raise SchemeError('bad arguments')
-            frm = Frame(closure.params, vm.regs[vm.REG_ARGS], closure.env)
+            frm = Frame(vm.regs[vm.REG_ARGS], closure.env)
         vm.regs[vm.REG_ENV] = frm
 
         # jump to the closure code
@@ -165,12 +176,14 @@ def inst_tailcall(vm):
             args = vm.regs[vm.REG_ARGS][:len(closure.params) - 1]
             args.append(from_python_list(vm.regs[vm.REG_ARGS][len(closure.params) - 1:]))
             if len(closure.params) != len(args):
+                print('tailcall, vararg')
                 raise SchemeError('bad arguments')
-            frm = Frame(closure.params, args, closure.env)
+            frm = Frame(args, closure.env)
         else:
             if len(closure.params) != len(vm.regs[vm.REG_ARGS]):
+                print('tailcall, not vararg')
                 raise SchemeError('bad arguments')
-            frm = Frame(closure.params, vm.regs[vm.REG_ARGS], closure.env)
+            frm = Frame(vm.regs[vm.REG_ARGS], closure.env)
         vm.regs[vm.REG_ENV] = frm
 
         # jump to the closure code
@@ -219,19 +232,25 @@ def inst_restore(vm):
     vm.regs[vm.REG_PC] += 1
 
 
+# implementation of call/cc, equivalent to the code:
+# (define (call/cc func)
+#     (let ((cc (capture)))
+#         (func (lambda (value)
+#                   (restore cc)
+#                   value))))
 LIB_CALLCC_CLOSURE = Closure([tsym('f')], [
                          (inst_capture,),
                          (inst_extenv,),
-                         (inst_bindvar, tsym('cc')),
+                         (inst_bindvar, (0, 0)),
                          (inst_clrargs,),
                          (inst_closure, [tsym('value')], [
-                             (inst_refvar, tsym('cc')),
+                             (inst_refvar, (1, 0)),
                              (inst_restore,),
-                             (inst_refvar, tsym('value')),
+                             (inst_refvar, (0, 0)),
                              (inst_ret,)
                              ], False),
                          (inst_addarg,),
-                         (inst_refvar, tsym('f')),
+                         (inst_refvar, (1, 0)),
                          (inst_tailcall,),
                          (inst_killenv,),
                          (inst_ret,)], None)

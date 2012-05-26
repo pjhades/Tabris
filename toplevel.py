@@ -6,27 +6,24 @@ from tsymbol import tsym
 from scmlib import *
 from prim import *
 
-def init_global():
-    return Frame(top_bindings.keys(), top_bindings.values())
-
 def init_compiletime_env():
-    return Frame(top_bindings.keys(), 
-                 [None]*len(top_bindings),
-                 None)
+    return Frame(list(top_bindings.keys()))
+
+def init_runtime_env():
+    return Frame(list(top_bindings.values()))
 
 top_bindings = {
     tsym('+'): Closure(None, prim_add, None, isprim=True),
     tsym('-'): Closure(None, prim_sub, None, isprim=True),
     tsym('*'): Closure(None, prim_mul, None, isprim=True),
     tsym('/'): Closure(None, prim_div, None, isprim=True),
-    tsym('remainder'): Closure(None, prim_mod, None, isprim=True),
     tsym('='): Closure(None, prim_eq, None, isprim=True),
     tsym('>'): Closure(None, prim_gt, None, isprim=True),
     tsym('<'): Closure(None, prim_lt, None, isprim=True),
     tsym('>='): Closure(None, prim_ge, None, isprim=True),
     tsym('<='): Closure(None, prim_le, None, isprim=True),
-    tsym('and'): Closure(None, prim_and, None, isprim=True),
     tsym('or'): Closure(None, prim_or, None, isprim=True),
+    tsym('and'): Closure(None, prim_and, None, isprim=True),
     tsym('not'): Closure(None, prim_not, None, isprim=True),
     tsym('max'): Closure(None, prim_max, None, isprim=True),
     tsym('min'): Closure(None, prim_min, None, isprim=True),
@@ -35,6 +32,7 @@ top_bindings = {
     tsym('lcm'): Closure(None, prim_lcm, None, isprim=True),
     tsym('floor'): Closure(None, prim_floor, None, isprim=True),
     tsym('ceiling'): Closure(None, prim_ceiling, None, isprim=True),
+    tsym('remainder'): Closure(None, prim_mod, None, isprim=True),
 
     tsym('cons'): Closure(None, cons, None, isprim=True),
 
