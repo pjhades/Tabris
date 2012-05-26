@@ -30,7 +30,7 @@ def get_sexp_type(exp):
         return 'selfeval'
     else:
         first = str(car(exp))
-        if first == 'let' and lib_length(exp) >= 4:
+        if first == 'let' and lib_issymbol(cadr(exp)):
             return 'namedlet'
         elif first in forms:
             return str(car(exp))
