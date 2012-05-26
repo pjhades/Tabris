@@ -178,21 +178,6 @@ class Compiler(object):
         newenv = Frame(list(params), env)
         defs = define_dumb(body, newenv)
 
-        #if varl != []:
-        #    def_code = [
-        #        (inst_loadi, VM.REG_VAL, None),
-        #    ]
-        #else:
-        #    def_code = []
-
-        #for var in varl:
-        #    if var not in newenv.binds:
-        #        newenv.binds.append(var)
-        #    def_code += [
-        #        (inst_bindvar, newenv.get_lexaddr(var)),
-        #    ]
-
-        #return bounce(self.compile_sequence, body, [], newenv, got_body, istail=True)
         return bounce(self.compile_sequence, body, defs, newenv, got_body, istail=True)
     
     def compile_sequence(self, exp, code, env, cont, istail=False):
@@ -220,23 +205,6 @@ class Compiler(object):
 
     def compile_begin(self, exp, env, cont, istail=False):
         defs = define_dumb(cdr(exp), env)
-
-        #if varl != []:
-        #    code = [
-        #        (inst_loadi, VM.REG_VAL, None),
-        #    ]
-        #else:
-        #    code = []
-
-        #for var in varl:
-        #    if var not in env.binds:
-        #        env.binds.append(var)
-        #    code += [
-        #        (inst_bindvar, env.get_lexaddr(var)),
-        #    ]
-
-        #return bounce(self.compile_sequence, cdr(exp), code, env, cont, 
-        #              istail=istail)
         return bounce(self.compile_sequence, cdr(exp), defs, env, cont, 
                       istail=istail)
     
@@ -300,12 +268,11 @@ class Compiler(object):
                 proc = caddar(clauses)
                 return bounce(self.dispatch_exp, proc, env, got_proc, 
                               istail=istail)
+
             # normal cond clause ((foo x) (bar))
             seq = cdar(clauses)
             defs = define_dumb(seq, env)
 
-            #return bounce(self.compile_sequence, seq, [], env, got_action, 
-            #              istail=istail)
             return bounce(self.compile_sequence, seq, defs, env, got_action, 
                           istail=istail)
     
@@ -446,8 +413,7 @@ class Compiler(object):
         """
         def got_bind(bind_code):
             nonlocal code
-            # generate code for getting each value, and 
-            # bind this variable
+            # generate code for getting each value, and bind this variable
             var = caar(binds)
             if var not in env.binds:
                 env.binds.append(var)
@@ -491,8 +457,7 @@ class Compiler(object):
         """
         def got_bind(bind_code):
             nonlocal code
-            # generate code for getting each value, and 
-            # bind this variable
+            # generate code for getting each value, and bind this variable
             var = caar(binds)
             code += bind_code + [
                 (inst_setvar, env.get_lexaddr(var)),
@@ -559,12 +524,15 @@ class Compiler(object):
         varl = let_vars(caddr(exp))
         vall = let_vals(caddr(exp))
     
-        lambda_form = lib_append(lib_list(tsym('lambda'), from_python_list(varl)), 
-                                 cdddr(exp))
+        lambda_form = lib_append(
+                        lib_list(
+                            tsym('lambda'), from_python_list(varl)), 
+                        cdddr(exp))
         define_form = lib_list(tsym('define'), proc_name, lambda_form)
     
         newenv = Frame([proc_name], outer=env)
         compiled_define_code = None
+
         return bounce(self.compile_define, define_form, newenv, got_define)
     
     def compile_call_args(self, args, code, env, cont, istail=False):
