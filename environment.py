@@ -3,10 +3,6 @@
 from errors import *
 
 class Frame(object):
-    #def __init__(self, varl=[], vall=[], outer=None):
-    #    self.binds = {p[0]: p[1] for p in zip(varl, vall)}
-    #    self.outer = outer
-
     def __init__(self, binds, outer=None):
         self.binds = binds
         self.outer = outer

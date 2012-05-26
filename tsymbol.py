@@ -8,7 +8,7 @@ class Symbol(object):
         return self.sym
 
     def __repr__(self):
-        return self.__str__()
+        return self.sym
 
     def __cmp__(self, other):
         return self is other

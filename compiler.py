@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
+from vm import VM
 from tsymbol import tsym
 from environment import Frame
 from tpair import to_python_list, from_python_list, to_str
-from vm import VM
 from scmlib import *
 from errors import *
 from insts import *
@@ -22,6 +22,7 @@ def label_generator():
 
 
 label = label_generator()
+
 
 def resolve_label(code):
     """Resolve all the labels in the instructions. Labels
@@ -44,6 +45,36 @@ def resolve_label(code):
         else:
             insts.append(tmp[i])
     return insts
+
+
+def define_dumb(exp, env):
+    """Bind the names in `varl' in `env' to None,
+    indicating that those are unassigned. Later
+    definition forms will set them to actual values.
+    Return the code to bind names at runtime.
+    """
+    # this is for the toplevel definitions, convert
+    # the python list of expressions into a Scheme list
+    # to work with scanout_defs()
+    if not isinstance(exp, Pair):
+        exp = lib_list(*exp)
+
+    varl = scanout_defs(exp)
+    if varl != []:
+        code = [
+            (inst_loadi, VM.REG_VAL, None),
+        ]
+    else:
+        code = []
+
+    for var in varl:
+        if var not in env.binds:
+            env.binds.append(var)
+        code += [
+            (inst_bindvar, env.get_lexaddr(var)),
+        ]
+
+    return code
 
 
 class Compiler(object):
@@ -85,6 +116,8 @@ class Compiler(object):
     
     def compile_define(self, exp, env, cont, istail=False):
         def got_val(val_code):
+            if var not in env.binds:
+                env.binds.append(var)
             code = val_code + [
                 (inst_bindvar, env.get_lexaddr(var)),
             ]
@@ -92,14 +125,10 @@ class Compiler(object):
     
         var, val = cadr(exp), cddr(exp)
         if lib_issymbol(var):
-            if var not in env.binds:
-                env.binds.append(var)
             return bounce(self.dispatch_exp, car(val), env, got_val)
 
         lambda_form = lib_append(lib_list(tsym('lambda'), cdr(var)), val)
         var = car(var)
-        if var not in env.binds:
-            env.binds.append(var)
         return bounce(self.compile_lambda, lambda_form, env, got_val)
     
     def compile_set(self, exp, env, cont, istail=False):
@@ -117,6 +146,7 @@ class Compiler(object):
             body_code += [
                 (inst_ret,),
             ]
+
             code = [
                 (inst_closure, params, body_code, isvararg),
             ]
@@ -143,9 +173,27 @@ class Compiler(object):
             params = tmplist
             isvararg = True
 
-        # the new frame in which we compile the body
+        # list() is needed, or `params' will be modified
+        # if the lambda body creates new bindings
         newenv = Frame(list(params), env)
-        return bounce(self.compile_sequence, body, [], newenv, got_body, istail=True)
+        defs = define_dumb(body, newenv)
+
+        #if varl != []:
+        #    def_code = [
+        #        (inst_loadi, VM.REG_VAL, None),
+        #    ]
+        #else:
+        #    def_code = []
+
+        #for var in varl:
+        #    if var not in newenv.binds:
+        #        newenv.binds.append(var)
+        #    def_code += [
+        #        (inst_bindvar, newenv.get_lexaddr(var)),
+        #    ]
+
+        #return bounce(self.compile_sequence, body, [], newenv, got_body, istail=True)
+        return bounce(self.compile_sequence, body, defs, newenv, got_body, istail=True)
     
     def compile_sequence(self, exp, code, env, cont, istail=False):
         """Compile a sequence like ((...) (...) ...). Compile
@@ -170,31 +218,26 @@ class Compiler(object):
 
         return bounce(self.dispatch_exp, car(exp), env, got_first)
 
-    # TODO: run this before entering:
-    # lambda body
-    # begin
-    # cond action
-    # let body
-    # let* body
-    # letrec body
-    # named let body
-    def scan_out_defs(self, exp):
-        """Scan out the definitions, return the list of 
-        names that will be bound through such definitions.
-        """
-        current = exp
-        varl = []
-        while current != []:
-            s = car(current)
-            if get_sexp_type(s) == 'define':
-                if lib_issymbol(cadr(s)):
-                    varl.append(cadr(s))
-                else:
-                    varl.append(caadr(s))
-        return varl
-
     def compile_begin(self, exp, env, cont, istail=False):
-        return bounce(self.compile_sequence, cdr(exp), [], env, cont, 
+        defs = define_dumb(cdr(exp), env)
+
+        #if varl != []:
+        #    code = [
+        #        (inst_loadi, VM.REG_VAL, None),
+        #    ]
+        #else:
+        #    code = []
+
+        #for var in varl:
+        #    if var not in env.binds:
+        #        env.binds.append(var)
+        #    code += [
+        #        (inst_bindvar, env.get_lexaddr(var)),
+        #    ]
+
+        #return bounce(self.compile_sequence, cdr(exp), code, env, cont, 
+        #              istail=istail)
+        return bounce(self.compile_sequence, cdr(exp), defs, env, cont, 
                       istail=istail)
     
     def compile_if(self, exp, env, cont, istail=False):
@@ -259,7 +302,11 @@ class Compiler(object):
                               istail=istail)
             # normal cond clause ((foo x) (bar))
             seq = cdar(clauses)
-            return bounce(self.compile_sequence, seq, [], env, got_action, 
+            defs = define_dumb(seq, env)
+
+            #return bounce(self.compile_sequence, seq, [], env, got_action, 
+            #              istail=istail)
+            return bounce(self.compile_sequence, seq, defs, env, got_action, 
                           istail=istail)
     
         def got_proc(proc_code):
@@ -330,7 +377,8 @@ class Compiler(object):
         compiled_test_code = None
         test = caar(clauses)
         if test is tsym('else'):
-            return bounce(self.compile_sequence, cdar(clauses), [], env, got_action, 
+            defs = define_dumb(cdar(clauses), env)
+            return bounce(self.compile_sequence, cdar(clauses), defs, env, got_action, 
                           istail=istail)
         return bounce(self.dispatch_exp, test, env, got_test)
     
@@ -375,8 +423,10 @@ class Compiler(object):
                     (inst_pop, VM.REG_VAL),
                     (inst_bindvar, newenv.get_lexaddr(var)),
                 ]
+
+            defs = define_dumb(cddr(exp), newenv)
                 
-            return bounce(self.compile_sequence, cddr(exp), [], newenv, got_body, 
+            return bounce(self.compile_sequence, cddr(exp), defs, newenv, got_body, 
                           istail=istail)
     
         def got_body(body_code):
@@ -417,7 +467,10 @@ class Compiler(object):
             code += [
                  (inst_extenv,),
             ] + binds_code
-            return bounce(self.compile_sequence, cddr(exp), [], newenv, got_body, 
+
+            defs = define_dumb(cddr(exp), newenv)
+
+            return bounce(self.compile_sequence, cddr(exp), defs, newenv, got_body, 
                           istail=istail)
     
         def got_body(body_code):
@@ -458,12 +511,15 @@ class Compiler(object):
                 (inst_extenv,),
                 (inst_loadi, VM.REG_VAL, None),
             ]
-            for var in varl:
+            for var in names:
                 code += [
                     (inst_bindvar, newenv.get_lexaddr(var)),
                 ]
             code += binds_code
-            return bounce(self.compile_sequence, cddr(exp), [], newenv, got_body, 
+
+            defs = define_dumb(cddr(exp), newenv)
+
+            return bounce(self.compile_sequence, cddr(exp), defs, newenv, got_body, 
                           istail=istail)
     
         def got_body(body_code):
@@ -475,8 +531,8 @@ class Compiler(object):
     
         code = []
         # all binding variables are set to undefined first
-        varl = let_vars(cadr(exp))
-        newenv = Frame(varl, outer=env)
+        names = let_vars(cadr(exp))
+        newenv = Frame(names, outer=env)
         return bounce(self.compile_letrec_binds, cadr(exp), [], newenv, got_binds)
     
     def compile_namedlet(self, exp, env, cont, istail=False):
@@ -507,7 +563,7 @@ class Compiler(object):
                                  cdddr(exp))
         define_form = lib_list(tsym('define'), proc_name, lambda_form)
     
-        newenv = Frame([], outer=env)
+        newenv = Frame([proc_name], outer=env)
         compiled_define_code = None
         return bounce(self.compile_define, define_form, newenv, got_define)
     
@@ -561,7 +617,8 @@ class Compiler(object):
                       exp, env, cont, istail=istail)
             
     def compile(self, exp, env):
-        """Compile S-expression `exp' with compile-time environment `env'.
+        """Compile S-expression `exp' with 
+        compile-time environment `env'.
         """
         return pogo_stick(bounce(self.dispatch_exp, exp, env, lambda d:d))
         

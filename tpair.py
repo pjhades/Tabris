@@ -25,7 +25,12 @@ class Pair(list):
     def __str__(self):
         return to_str(self)
 
+    def __repr__(self):
+        return to_str(self)
+
+
 NIL = Pair([])
+
 
 def _to_str(p, cont):
     """Give the neat string representation of a pair."""

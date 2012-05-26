@@ -16,7 +16,7 @@
 
 (define (calc-hanoi seq)
   (if (null? seq)
-      (newline)
+      'done
       (begin
         (display "Hanoi " (car seq) "is: " (Hanoi (car seq)))
         (newline)

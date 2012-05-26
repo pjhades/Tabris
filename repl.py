@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import vm
-from tpair import to_str
+from tpair import to_str, from_python_list
 from toplevel import top_bindings, init_compiletime_env
 from parser import Tokenizer, Parser
-from compiler import Compiler
+from compiler import Compiler, define_dumb
 from environment import Frame
 from errors import *
 
@@ -55,6 +55,7 @@ class Repl(object):
     def loop_file(self):
         #self.vm.set_dbgflag(vm.DBG_SHOWINST | vm.DBG_STEPDUMP | vm.DBG_SHOWCODE)
         reach_eof = False
+        exps = []
         while not reach_eof:
             try:
                 while self.toker.need_more_code():
@@ -65,15 +66,21 @@ class Repl(object):
                     self.toker.tokenize_piece(line)
                 
                 tokens = self.toker.get_tokens()
-                exps = self.parser.parse(tokens)
-                for exp in exps:
-                    codes = self.compiler.compile(exp, self.env)
-                    self.vm.run(codes)
-                    if self.vm.result is not None:
-                        print(self.vm.result)
+                exps.extend(self.parser.parse(tokens))
             except SchemeError as e:
                 print(e)
                 break
+
+        try:
+            code = define_dumb(exps, self.env)
+            self.vm.run(code)
+            for exp in exps:
+                code = self.compiler.compile(exp, self.env)
+                self.vm.run(code)
+                if self.vm.result is not None:
+                    print(self.vm.result)
+        except SchemeError as e:
+            print(e)
         self.infile.close()
 
     def loop(self):

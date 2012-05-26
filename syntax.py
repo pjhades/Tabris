@@ -53,3 +53,21 @@ def let_vals(binds):
         binds = cdr(binds)
     return vall
 
+def scanout_defs(exp):
+    """Scan out the definitions, return the list of 
+    names that will be bound through such definitions.
+    This will be called before the compiler begin to
+    work on a sequence.
+    """
+    current = exp
+    varl = []
+    while current != []:
+        s = car(current)
+        if get_sexp_type(s) == 'define':
+            if lib_issymbol(cadr(s)):
+                varl.append(cadr(s))
+            else:
+                varl.append(caadr(s))
+        current = cdr(current)
+    return varl
+
