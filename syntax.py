@@ -2,8 +2,6 @@
 
 from scmlib import *
 
-# TODO: change these names to integer constant
-# to save comparing and equality checking time
 forms = (
     'if', 
     'let', 
