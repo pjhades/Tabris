@@ -17,8 +17,6 @@ def inst_loadi(vm, idx, val):
 def inst_refvar(vm, lexaddr):
     """Reference a variable.
     """
-    #if not isinstance(var, Symbol):
-    #    raise SchemeError('not a symbol: ' + str(var))
     if not isinstance(lexaddr, tuple):
         val = vm.toplevel[lexaddr]
     else:
@@ -30,8 +28,6 @@ def inst_refvar(vm, lexaddr):
 def inst_setvar(vm, lexaddr):
     """Set a variable to the value in VAL register.
     """
-    #if not isinstance(var, Symbol):
-    #    raise SchemeError('not a symbol: ' + str(var))
     if not isinstance(lexaddr, tuple):
         vm.toplevel[lexaddr] = vm.regs[vm.REG_VAL]
     else:
@@ -43,9 +39,6 @@ def inst_setvar(vm, lexaddr):
 def inst_bindvar(vm, lexaddr):
     """Add a new binding for variable and the value in VAL.
     """
-    #if not isinstance(var, Symbol):
-    #    raise SchemeError('not a symbol: ' + str(var))
-    #val = vm.regs[vm.REG_VAL]
     if isinstance(lexaddr, tuple):
         lexaddr = lexaddr[1]
     vm.regs[vm.REG_ENV].bindvar(lexaddr, vm.regs[vm.REG_VAL])
