@@ -105,11 +105,7 @@ def prim_gcd(a, b):
     return b
 
 def prim_lcm(a, b):
-    if a < b:
-        a, b = b, a
-    while a % b != 0:
-        a += a
-    return a
+    return int(a*b/prim_gcd(a, b))
 
 def prim_floor(val):
     return math.floor(val)
