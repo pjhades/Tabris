@@ -47,8 +47,6 @@ def lib_isprocedure(val):
 
 # Equivalence predicates
 def lib_iseqv(*args):
-    if len(args) < 2:
-        raise SchemeError('eqv? expects at least 2 arguments')
     prev = args[0]
     for now in args[1:]:
         if lib_isboolean(prev) and lib_isboolean(now) or \
@@ -83,8 +81,6 @@ def _lib_isequal(v1, v2, cont):
 def lib_isequal(*args):
     """(equal? x1 x2)
     """
-    if len(args) != 2:
-        raise SchemeError('equal? expects 2 arguments')
     return pogo_stick(bounce(_lib_isequal, args[0], args[1], lambda d:d))
 
 

@@ -47,7 +47,7 @@ class VM(object):
             if self.flags & DBG_SHOWINST:
                 print('exec:', inst)
                 p = self.regs[VM.REG_PC]
-                if p+1 < len(self.code):
+                if p+1 < self.codelen:
                     print('next:', self.code[p+1])
                 else:
                     print('next:', '---')

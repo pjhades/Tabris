@@ -131,19 +131,14 @@ def inst_call(vm):
         # bind parameters to arguments
         if closure.isvararg:
             # the last parameter is bound to a list
-            args = vm.regs[vm.REG_ARGS][:len(closure.params) - 1]
-            args.append(from_python_list(vm.regs[vm.REG_ARGS][len(closure.params) - 1:]))
-            if len(closure.params) != len(args):
-                print('call, vararg')
-                raise SchemeError('bad arguments')
+            args = vm.regs[vm.REG_ARGS][:closure.arity[0] - 1]
+            args.append(from_python_list(vm.regs[vm.REG_ARGS][closure.arity[0] - 1:]))
+            closure.check_arity(len(args))
             frm = Frame(args, closure.env)
         else:
-            if len(closure.params) != len(vm.regs[vm.REG_ARGS]):
-                print('call, not vararg')
-                print('closure.params:', closure.params)
-                print('ARGS_REG:', vm.regs[vm.REG_ARGS])
-                raise SchemeError('bad arguments')
+            closure.check_arity(len(vm.regs[vm.REG_ARGS]))
             frm = Frame(vm.regs[vm.REG_ARGS], closure.env)
+
         vm.regs[vm.REG_ENV] = frm
 
         # jump to the closure code
@@ -166,17 +161,14 @@ def inst_tailcall(vm):
         # bind parameters to arguments
         if closure.isvararg:
             # the last parameter is bound to a list
-            args = vm.regs[vm.REG_ARGS][:len(closure.params) - 1]
-            args.append(from_python_list(vm.regs[vm.REG_ARGS][len(closure.params) - 1:]))
-            if len(closure.params) != len(args):
-                print('tailcall, vararg')
-                raise SchemeError('bad arguments')
+            args = vm.regs[vm.REG_ARGS][:closure.arity[0] - 1]
+            args.append(from_python_list(vm.regs[vm.REG_ARGS][closure.arity[0] - 1:]))
+            closure.check_arity(len(args))
             frm = Frame(args, closure.env)
         else:
-            if len(closure.params) != len(vm.regs[vm.REG_ARGS]):
-                print('tailcall, not vararg')
-                raise SchemeError('bad arguments')
+            closure.check_arity(len(vm.regs[vm.REG_ARGS]))
             frm = Frame(vm.regs[vm.REG_ARGS], closure.env)
+
         vm.regs[vm.REG_ENV] = frm
 
         # jump to the closure code
@@ -202,10 +194,10 @@ def inst_clrargs(vm):
     vm.regs[vm.REG_PC] += 1
 
 
-def inst_closure(vm, params, body_code, isvararg):
+def inst_closure(vm, arity, body_code, isvararg):
     """Create a new closure and save it in VAL.
     """
-    closure = Closure(params, body_code, vm.regs[vm.REG_ENV], isvararg=isvararg)
+    closure = Closure(arity, body_code, vm.regs[vm.REG_ENV], isvararg=isvararg)
     vm.regs[vm.REG_VAL] = closure
     vm.regs[vm.REG_PC] += 1
 
@@ -231,12 +223,12 @@ def inst_restore(vm):
 #         (func (lambda (value)
 #                   (restore cc)
 #                   value))))
-LIB_CALLCC_CLOSURE = Closure([tsym('f')], [
+LIB_CALLCC_CLOSURE = Closure((1, 1), [
                          (inst_capture,),
                          (inst_extenv,),
                          (inst_bindvar, (0, 0)),
                          (inst_clrargs,),
-                         (inst_closure, [tsym('value')], [
+                         (inst_closure, (1, 1), [
                              (inst_refvar, (1, 0)),
                              (inst_restore,),
                              (inst_refvar, (0, 0)),

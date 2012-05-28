@@ -148,7 +148,7 @@ class Compiler(object):
             ]
 
             code = [
-                (inst_closure, params, body_code, isvararg),
+                (inst_closure, (len(params), len(params)), body_code, isvararg),
             ]
             return bounce(cont, code)
     
