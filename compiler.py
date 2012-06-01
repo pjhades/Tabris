@@ -96,8 +96,6 @@ class Compiler(object):
             'selfeval': self.compile_selfeval,
         }
 
-        self.exp_cache = {}
-
     def compile_selfeval(self, exp, env, cont, istail=False):
         code = [
             (inst_loadi, VM.REG_VAL, exp),
@@ -583,13 +581,6 @@ class Compiler(object):
         return bounce(self.compile_call_args, cdr(exp), code, env, got_args)
     
     def dispatch_exp(self, exp, env, cont, istail=False):
-        #def got_code(code):
-        #    self.exp_cache[exp] = code
-        #    return bounce(cont, code)
-
-        #if exp in self.exp_cache:
-        #    return bounce(cont, self.exp_cache[exp])
-
         return bounce(self.compiler_dispatch[get_sexp_type(exp)], 
                       exp, env, cont, istail=istail)
             
