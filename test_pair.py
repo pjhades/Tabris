@@ -12,27 +12,32 @@ class PairTest(unittest.TestCase):
         pass
 
     def testPairCreating(self):
-        self.assertEqual(Pair([1, 2]), [1, 2])
-        self.assertEqual(Pair([[1, 2], [3, 4]]), [[1, 2], [3, 4]])
+        self.assertEqual(to_str(Pair([1, 2])), '(1 . 2)')
+        self.assertEqual(to_str(Pair([
+                                    Pair([1, 2]), 
+                                    Pair([3, 4])
+                                ])), '((1 . 2) 3 . 4)')
 
     def testConsing(self):
-        self.assertEqual(cons(1, 2), [1, 2])
-        self.assertEqual(cons(1, [2, 3]), [1, [2, 3]])
-        self.assertEqual(cons([1, 2], [3, 4]), [[1, 2], [3, 4]])
+        self.assertEqual(to_str(cons(1, 2)), '(1 . 2)')
+        self.assertEqual(to_str(cons(1, Pair([2, 3]))), '(1 2 . 3)')
+        self.assertEqual(to_str(cons(Pair([1, 2]), 
+                                     Pair([3, 4]))), '((1 . 2) 3 . 4)')
 
     def testListMaking(self):
-        self.assertEqual(lib_list(1, 2), [1, [2, []]])
-        self.assertEqual(lib_list(1, [2, 3]), [1, [[2, 3], []]])
-        self.assertEqual(lib_list([1, 2], [3, 4]), [[1, 2], [[3, 4], []]])
+        self.assertEqual(to_str(lib_list(1, 2)), '(1 2)')
+        self.assertEqual(to_str(lib_list(1, Pair([2, 3]))), '(1 (2 . 3))')
+        self.assertEqual(to_str(lib_list(Pair([1, 2]), 
+                                         Pair([3, 4]))), '((1 . 2) (3 . 4))')
 
     def testCarCdr(self):
-        p = cons(1,2)
+        p = cons(1, 2)
         self.assertEqual(car(p), 1)
         self.assertEqual(cdr(p), 2)
 
         p = cons(
-                cons([1,2]), 
-                cons([3,4]))
+                cons(1, 2), 
+                cons(3, 4))
         self.assertEqual(caar(p), 1)
         self.assertEqual(cadr(p), 3)
         self.assertEqual(cdar(p), 2)
@@ -40,11 +45,11 @@ class PairTest(unittest.TestCase):
 
         p = cons(
                 cons(
-                    cons([1,2]),
-                    cons([3,4])), 
+                    cons(1, 2),
+                    cons(3, 4)), 
                 cons(
-                    cons([5,6]),
-                    cons([7,8])))
+                    cons(5, 6),
+                    cons(7, 8)))
         self.assertEqual(caaar(p), 1)
         self.assertEqual(caadr(p), 5)
         self.assertEqual(cadar(p), 3)
@@ -57,18 +62,18 @@ class PairTest(unittest.TestCase):
         p = cons(
                 cons(
                     cons(
-                        cons([1,2]),
-                        cons([3,4])), 
+                        cons(1, 2),
+                        cons(3, 4)), 
                     cons(
-                        cons([5,6]),
-                        cons([7,8]))), \
+                        cons(5, 6),
+                        cons(7, 8))), \
                 cons(
                     cons(
-                        cons([9,10]),
-                        cons([11,12])), 
+                        cons(9, 10),
+                        cons(11, 12)), 
                     cons(
-                        cons([13,14]),
-                        cons([15,16]))))
+                        cons(13, 14),
+                        cons(15, 16))))
         self.assertEqual(caaaar(p), 1)
         self.assertEqual(caaadr(p), 9)
         self.assertEqual(caadar(p), 5)
@@ -88,15 +93,10 @@ class PairTest(unittest.TestCase):
 
     def testLength(self):
         self.assertEqual(lib_length(lib_list(1, 2, 3)), 3)
-        self.assertEqual(lib_length(lib_list(1, (2, 2), 3)), 3)
+        self.assertEqual(lib_length(lib_list(1, Pair([2, 2]), 3)), 3)
         self.assertEqual(lib_length(lib_list()), 0)
         self.assertEqual(lib_length(NIL), 0)
         self.assertEqual(lib_length(lib_list(lib_list(1, 2, 3), lib_list(4, 5))), 2)
-
-        try:
-            lib_length(cons(1,2))
-        except SchemeError:
-            pass
 
     def testAppend(self):
         p1 = lib_list(1, 2, 3)
@@ -108,13 +108,9 @@ class PairTest(unittest.TestCase):
         self.assertEqual(lib_append(p1, p3), cons(1, cons(2, cons(3, p3))))
         self.assertEqual(lib_append(NIL, 123), 123)
         self.assertEqual(lib_append(NIL, p4), p4)
-        self.assertEqual(lib_append(p4, p2), cons(1, cons(cons(2, 3), cons(4, cons(4, cons(5, NIL))))))
+        self.assertEqual(lib_append(p4, p2), 
+                         lib_list(1, cons(2, 3), 4, 4, 5))
         self.assertEqual(lib_append(), NIL)
-
-        try:
-            lib_append(p1, 123, p2)
-        except SchemeError:
-            pass
 
     def testReverse(self):
         p1 = lib_list(1, 2, 3, 4, 5)
@@ -136,13 +132,8 @@ class PairTest(unittest.TestCase):
         self.assertEqual(lib_list_tail(p2, 1), 2)
         self.assertEqual(lib_list_tail(p3, 2), cons(3, 4))
 
-        try:
-            lib_list_tail(p1, 100)
-        except SchemeError:
-            pass
-
     def testToPythonList(self):
-        self.assertEqual(to_python_list(lib_list(1,2,3)), [1,2,3])
+        self.assertEqual(to_python_list(lib_list(1, 2, 3)), [1, 2, 3])
 
 
 def suite():

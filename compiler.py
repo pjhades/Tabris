@@ -96,6 +96,8 @@ class Compiler(object):
             'selfeval': self.compile_selfeval,
         }
 
+        self.exp_cache = {}
+
     def compile_selfeval(self, exp, env, cont, istail=False):
         code = [
             (inst_loadi, VM.REG_VAL, exp),
@@ -370,7 +372,7 @@ class Compiler(object):
             ]
             return bounce(self.compile_let_binds, cdr(binds), code, varl, env, cont)
     
-        if binds == []:
+        if binds.isnil:
             return bounce(cont, (code, varl))
         else:
             return bounce(self.dispatch_exp, cadar(binds), env, got_bind)
@@ -422,7 +424,7 @@ class Compiler(object):
             ]
             return bounce(self.compile_letstar_binds, cdr(binds), code, env, cont)
     
-        if binds == []:
+        if binds.isnil:
             return bounce(cont, code)
         else:
             return bounce(self.dispatch_exp, cadar(binds), env, got_bind)
@@ -464,7 +466,7 @@ class Compiler(object):
             ]
             return bounce(self.compile_letrec_binds, cdr(binds), code, env, cont)
     
-        if binds == []:
+        if binds.isnil:
             return bounce(cont, code)
         else:
             return bounce(self.dispatch_exp, cadar(binds), env, got_bind)
@@ -546,7 +548,7 @@ class Compiler(object):
             ]
             return bounce(self.compile_call_args, cdr(args), code, env, cont)
     
-        if args == []:
+        if args.isnil:
             return bounce(cont, code)
         return bounce(self.dispatch_exp, car(args), env, got_arg)
     
@@ -581,6 +583,13 @@ class Compiler(object):
         return bounce(self.compile_call_args, cdr(exp), code, env, got_args)
     
     def dispatch_exp(self, exp, env, cont, istail=False):
+        #def got_code(code):
+        #    self.exp_cache[exp] = code
+        #    return bounce(cont, code)
+
+        #if exp in self.exp_cache:
+        #    return bounce(cont, self.exp_cache[exp])
+
         return bounce(self.compiler_dispatch[get_sexp_type(exp)], 
                       exp, env, cont, istail=istail)
             

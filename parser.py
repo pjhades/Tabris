@@ -96,27 +96,33 @@ class Tokenizer(object):
                 self.cur_token += char
                 if char != '"':
                     continue
+
             if self.comment_not_end:
                 # ignore everything inside a comment
                 if char != '\n':
                     continue
+
             if char in DELIMS:
                 # meet a delimiter, save the token seen
                 if self.cur_token != '':
                     self.tokens.append(self.cur_token)
                     self.cur_token = ''
                     self.quote_not_end = False
+
                 if char == '"':
                     if not self.string_not_end:
                         self.cur_token += char
                     self.string_not_end = not self.string_not_end
+
                 elif char == "'":
                     self.tokens.append(char)
                     self.quote_not_end = True
+
                 elif char == ';': 
                     self.comment_not_end = True
                 elif char == '\n':
                     self.comment_not_end = False
+
                 elif char == '(':
                     self.quote_not_end = False
                     self.paren_count += 1
@@ -148,6 +154,7 @@ class Parser(object):
     def parse_lexeme_datum(self, tokens, cont):
         token = tokens[0]
         token_type = token[1]
+
         if token_type == TOKEN_TYPE_BOOLEAN:
             self.consume(tokens, TOKEN_TYPE_BOOLEAN)
             if token[0] == '#t':

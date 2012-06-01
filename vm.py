@@ -44,6 +44,7 @@ class VM(object):
 
         while self.regs[VM.REG_PC] < self.codelen:
             inst = self.code[self.regs[VM.REG_PC]]
+
             if self.flags & DBG_SHOWINST:
                 print('exec:', inst)
                 p = self.regs[VM.REG_PC]
@@ -51,7 +52,9 @@ class VM(object):
                     print('next:', self.code[p+1])
                 else:
                     print('next:', '---')
+
             inst[0](self, *inst[1:])
+
             if self.flags & DBG_STEPDUMP:
                 self.dump()
                 input('press enter to continue ...') 
@@ -64,8 +67,8 @@ class VM(object):
         self.flags = flags
 
     def dump(self):
-        print('<PC>', self.regs[VM.REG_PC], end='     ')
-        print('<VAL>', self.regs[VM.REG_VAL], end='     ')
+        print('<PC>', self.regs[VM.REG_PC], end=' '*5)
+        print('<VAL>', self.regs[VM.REG_VAL], end=' '*5)
         print('<ARGS>', self.regs[VM.REG_ARGS])
         print('<ENV>')
         if self.regs[VM.REG_ENV].outer is None:

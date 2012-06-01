@@ -39,14 +39,14 @@ def get_sexp_type(exp):
 
 def let_vars(binds):
     varl = []
-    while binds != []:
+    while not binds.isnil:
         varl.append(caar(binds))
         binds = cdr(binds)
     return varl
 
 def let_vals(binds):
     vall = []
-    while binds != []:
+    while not binds.isnil:
         vall.append(cadar(binds))
         binds = cdr(binds)
     return vall
@@ -59,7 +59,7 @@ def scanout_defs(exp):
     """
     current = exp
     varl = []
-    while current != []:
+    while not current.isnil:
         s = car(current)
         if get_sexp_type(s) == 'define':
             if lib_issymbol(cadr(s)):

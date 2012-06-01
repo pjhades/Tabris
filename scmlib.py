@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import sys
+
 from tsymbol import Symbol
 from tpair import Pair, to_str, NIL
 from closure import Closure
 from insts import LIB_CALLCC_CLOSURE
+
 from trampoline import *
 from errors import *
 
@@ -256,10 +258,10 @@ def lib_append(*args):
     res = lsts[-1]
     for lst in reversed(lsts[:-1]):
         try:
-            if lst == NIL:
+            if lst.isnil:
                 continue
             p = lst
-            while cdr(p) != NIL:
+            while not cdr(p).isnil:
                 p = cdr(p)
             p[1] = res
             res = lst
@@ -284,7 +286,7 @@ def lib_reverse(p):
     """(reverse '(a b c))
     """
     elems = []
-    while p != NIL:
+    while not p.isnil:
         elems.append(car(p))
         p = cdr(p)
     return lib_list(*list(reversed(elems)))

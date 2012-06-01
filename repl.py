@@ -81,6 +81,7 @@ class Repl(object):
                     print(self.vm.result)
         except SchemeError as e:
             print(e)
+        
         self.infile.close()
 
     def loop(self):
