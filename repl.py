@@ -21,10 +21,17 @@ class Repl(object):
         self.compiler = Compiler()
         self.vm = vm.VM()
         self.env = init_compiletime_env()
+
         if filename is None:
             self.infile = None
         else:
             self.infile = open(filename, 'r')
+
+    def reset(self):
+        self.ps = PS1
+        self.toker.reset()
+        self.parser.reset()
+        self.vm.reset()
 
     def loop_stdin(self):
         #self.vm.set_dbgflag(vm.DBG_STEPDUMP | vm.DBG_SHOWCODE | vm.DBG_SHOWINST)
@@ -92,12 +99,13 @@ class Repl(object):
 
     def runcode(self, code):
         try:
-            exps = self.parser.parse(self.toker.tokenize(code))
+            exps = self.parser.parse(self.toker.tokenize(code + '\n'))
             for exp in exps:
                 codes = self.compiler.compile(exp, self.env)
                 self.vm.run(codes)
                 if self.vm.result is not None:
                     print(self.vm.result)
+            self.reset()
         except SchemeError as e:
             print(e)
 

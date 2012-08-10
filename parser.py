@@ -54,6 +54,9 @@ def get_token_type(tok):
 
 class Tokenizer(object):
     def __init__(self):
+        self.reset()
+
+    def reset(self):
         self.tokens = []
         self.cur_token = ''
 
@@ -139,6 +142,10 @@ class Tokenizer(object):
 
 class Parser(object):
     def __init__(self):
+        self.reset()
+        #self.sexps = []
+
+    def reset(self):
         self.sexps = []
 
     def consume(self, tokens, exp_type):
