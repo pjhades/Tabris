@@ -217,12 +217,13 @@ def inst_restore(vm):
     vm.regs[vm.REG_PC] += 1
 
 
-# implementation of call/cc, equivalent to the code:
-# (define (call/cc func)
-#     (let ((cc (capture)))
-#         (func (lambda (value)
-#                   (restore cc)
-#                   value))))
+"""Implementation of call/cc, equivalent to the code:
+ (define (call/cc func)
+     (let ((cc (capture)))
+         (func (lambda (value)
+                   (restore cc)
+                   value))))
+"""
 LIB_CALLCC_CLOSURE = Closure((1, 1), [
                          (inst_capture,),
                          (inst_extenv,),

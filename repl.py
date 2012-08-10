@@ -28,10 +28,16 @@ class Repl(object):
             self.infile = open(filename, 'r')
 
     def reset(self):
+        """Rest the read-evaluate-print loop.
+        This will set the loop to the initial state,
+        where the command-line prompt, the tokenizer and the
+        parser will all be set to be restored, but the virual
+        machine will not be affected. This means that the 
+        runtime environment, registers, stack, instruction sequence
+        will remain unchanged."""
         self.ps = PS1
         self.toker.reset()
         self.parser.reset()
-        self.vm.reset()
 
     def loop_stdin(self):
         #self.vm.set_dbgflag(vm.DBG_STEPDUMP | vm.DBG_SHOWCODE | vm.DBG_SHOWINST)
@@ -98,14 +104,15 @@ class Repl(object):
             self.loop_file()
 
     def runcode(self, code):
-        try:
-            exps = self.parser.parse(self.toker.tokenize(code + '\n'))
-            for exp in exps:
-                codes = self.compiler.compile(exp, self.env)
-                self.vm.run(codes)
-                if self.vm.result is not None:
-                    print(self.vm.result)
-            self.reset()
-        except SchemeError as e:
-            print(e)
+        """Exceptions will be thrown out and are expected
+        to be handled in the applications that call this."""
+        # TODO
+        # different exception types should be defined I think.
+        exps = self.parser.parse(self.toker.tokenize(code + '\n'))
+        for exp in exps:
+            codes = self.compiler.compile(exp, self.env)
+            self.vm.run(codes)
+            if self.vm.result is not None:
+                print(self.vm.result)
+        self.reset()
 
