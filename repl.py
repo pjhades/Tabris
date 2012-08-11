@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import signal
 import vm
 from tpair import to_str, from_python_list
 from toplevel import top_bindings, init_compiletime_env
@@ -8,10 +9,12 @@ from compiler import Compiler, define_dumb
 from environment import Frame
 from errors import *
 
-# TODO: capture C-c C-\ signals, add (exit) to exit
-
 PS1 = 'Tabris >>> '
 PS2 = '       ... '
+
+def handle_exit(signum, frame):
+    raise SchemeKeyboardInterrupt('\nCall function `exit\' to quit.')
+
 
 class Repl(object):
     def __init__(self, filename=None):
@@ -40,17 +43,27 @@ class Repl(object):
         self.parser.reset()
 
     def loop_stdin(self):
+        signal.signal(signal.SIGINT, handle_exit)
+        signal.signal(signal.SIGQUIT, handle_exit)
+
         #self.vm.set_dbgflag(vm.DBG_STEPDUMP | vm.DBG_SHOWCODE | vm.DBG_SHOWINST)
         while True:
             try:
                 while self.toker.need_more_code():
                     self.toker.tokenize_piece(input(self.ps) + '\n')
                     self.ps = PS2
+            except SchemeKeyboardInterrupt as e:
+                print(e)
+                self.ps = PS1
+                self.toker.reset()
+                continue
             except SchemeError as e:
                 print(e)
-                self.ps = PS2
+                self.ps = PS1
                 if self.toker.need_more_code():
                     continue
+            except EOFError:
+                return
 
             try:
                 tokens = self.toker.get_tokens()
@@ -87,6 +100,7 @@ class Repl(object):
         try:
             code = define_dumb(exps, self.env)
             self.vm.run(code)
+
             for exp in exps:
                 code = self.compiler.compile(exp, self.env)
                 self.vm.run(code)
@@ -106,8 +120,16 @@ class Repl(object):
     def runcode(self, code):
         """Exceptions will be thrown out and are expected
         to be handled in the applications that call this."""
+
         # TODO
-        # different exception types should be defined I think.
+        # adding type mappings between tabris and python.
+        # this function should return the python types, i.e.
+        #
+        # >>> r = repl.Repl()
+        # >>> a = r.runcode('(+ 9 8)')
+        # >>> type(a)
+        # >>> <class 'int'>
+
         exps = self.parser.parse(self.toker.tokenize(code + '\n'))
         for exp in exps:
             codes = self.compiler.compile(exp, self.env)
