@@ -51,13 +51,13 @@ def let_vals(binds):
         binds = cdr(binds)
     return vall
 
-def scanout_defs(exp):
+def scanout_defs(exps):
     """Scan out the definitions, return the list of 
     names that will be bound through such definitions.
     This will be called before the compiler begin to
     work on a sequence.
     """
-    current = exp
+    current = exps
     varl = []
     while not current.isnil:
         s = car(current)

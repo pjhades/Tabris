@@ -47,19 +47,19 @@ def resolve_label(code):
     return insts
 
 
-def define_dumb(exp, env):
-    """Bind the names in `varl' in `env' to None,
-    indicating that those are unassigned. Later
-    definition forms will set them to actual values.
+def define_dumb(exps, env):
+    """Return the instructions to bind the names in 
+    `varl' in `env' to None, indicating that those are unassigned. 
+    Later definition forms will set them to actual values.
     Return the code to bind names at runtime.
     """
     # this is for the toplevel definitions, convert
     # the python list of expressions into a Scheme list
     # to work with scanout_defs()
-    if not isinstance(exp, Pair):
-        exp = lib_list(*exp)
+    if not isinstance(exps, Pair):
+        exps = lib_list(*exps)
 
-    varl = scanout_defs(exp)
+    varl = scanout_defs(exps)
     if varl != []:
         code = [
             (inst_loadi, VM.REG_VAL, None),
