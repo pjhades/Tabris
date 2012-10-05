@@ -76,16 +76,14 @@ code -> [tokenizer] -> tokens -> [parser] -> S-expressions -> [compiler] -> inst
 * Runtime enviroment contains only the lexical addresses of variables, no names are used.
 
 ## Continuations
-* Holds the stack of the VM;
-* The `call/cc` function is implemented directly as VM instructions, which is equivalent to the Scheme code:
-
+Continuations hold the stack of the VM. The `call/cc` function is implemented directly as VM instructions, 
+which is equivalent to the Scheme code:
 
     (define (call/cc func)
       (let ((cc (capture)))
         (func (lambda (value)
                 (restore cc)
                 value))))
-
 
 ## Trampolines
 * A method to simulate arbitrarily deep recursions;
