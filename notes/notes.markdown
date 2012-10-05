@@ -79,12 +79,11 @@ code -> [tokenizer] -> tokens -> [parser] -> S-expressions -> [compiler] -> inst
 * Holds the stack of the VM;
 * The `call/cc` function is implemented directly as VM instructions, which is equivalent to the Scheme code:
 
-	 (define (call/cc func)    
-	     (let ((cc (capture)))    
-	         (func (lambda (value)    
-	                   (restore cc)    
-	                   value))))    
-
+    (define (call/cc func) 
+      (let ((cc (capture)))    
+        (func (lambda (value)
+                (restore cc)    
+                value))))
 
 ## Trampolines
 * A method to simulate arbitrarily deep recursions;
