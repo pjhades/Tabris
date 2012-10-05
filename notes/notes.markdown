@@ -80,10 +80,10 @@ code -> [tokenizer] -> tokens -> [parser] -> S-expressions -> [compiler] -> inst
 * The `call/cc` function is implemented directly as VM instructions, which is equivalent to the Scheme code:
 
 
-    (define (call/cc func) 
-      (let ((cc (capture)))    
+    (define (call/cc func)
+      (let ((cc (capture)))
         (func (lambda (value)
-                (restore cc)    
+                (restore cc)
                 value))))
 
 
