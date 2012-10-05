@@ -16,7 +16,7 @@ code -> [tokenizer] -> tokens -> [parser] -> S-expressions -> [compiler] -> inst
 ## Parser
 * Parse the token streams in a recursive descent way with 1 lookahead token (operate directly on the token stream, no lookahead buffer):
 	* If we see a datum token, convert it to its actual type (e.g. token `#t` will be converted to Python `True`)
-	* If we see a quotation mark `\``, recursively parse the following S-expression, and then make the quotation `(quote xxx)`
+	* If we see a quotation mark, recursively parse the following S-expression, and then make the quotation `(quote xxx)`
 	* If we see a left parenthesis `(`, consume the `(`, recursively parse the list, and consume the `)`
 
 ## Compiler
@@ -25,7 +25,7 @@ code -> [tokenizer] -> tokens -> [parser] -> S-expressions -> [compiler] -> inst
 	* A label generator produces unique labels
 	* Resolve labels (recode the address and compute the offset between the source and destination of the jump) 
 	  before passing the compiled code to the VM
-* Find all `define`s in a sequence, bind the `define`d variables to Python `None` in the runtime environment.
+* Find all `define`s in a sequence, bind the `define`ed variables to Python `None` in the runtime environment.
   If their actual values are not set when being accessed, runtime error will be reported. This enables the mutual
   recursion like `even?` and `odd?`.
 
@@ -78,11 +78,13 @@ code -> [tokenizer] -> tokens -> [parser] -> S-expressions -> [compiler] -> inst
 ## Continuations
 * Holds the stack of the VM;
 * The `call/cc` function is implemented directly as VM instructions, which is equivalent to the Scheme code:
+
 	 (define (call/cc func)
 	     (let ((cc (capture)))
 	         (func (lambda (value)
 	                   (restore cc)
 	                   value))))
+
 
 ## Trampolines
 * A method to simulate arbitrarily deep recursions;
@@ -104,6 +106,6 @@ code -> [tokenizer] -> tokens -> [parser] -> S-expressions -> [compiler] -> inst
 
 ## Things to do
 * Write it in C
-* AST
-* Bytecode
+* Build AST
+* Compile bytecode
 * Improve the performance of VM
