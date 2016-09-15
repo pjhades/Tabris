@@ -321,3 +321,5 @@ def lib_newline():
     sys.stdout.flush()
     return None
 
+def lib_exit():
+    exit()

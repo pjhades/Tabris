@@ -93,4 +93,6 @@ top_bindings = {
     tsym('eqv?'): Closure((2, -1), lib_iseqv, None, isprim=True),
     tsym('eq?'): Closure((2, -1), lib_iseqv, None, isprim=True),
     tsym('equal?'): Closure((2, -1), lib_isequal, None, isprim=True),
+
+    tsym('exit'): Closure((0, 0), lib_exit, None, isprim=True),
 }
